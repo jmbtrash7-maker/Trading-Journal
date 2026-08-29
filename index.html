@@ -1445,7 +1445,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.08.27ax";
+const APP_VERSION = "2026.08.27ay";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -1887,7 +1887,10 @@ const STATE = {
 // WICHTIG: bewusst NICHT über saveTrades(), da das markDataChanged() auslösen und damit
 // unnötig den "letzte Änderung"-Zeitstempel für reine Demo-Daten setzen würde.
 if(STATE.trades.length === 0){
-  STATE.trades = buildDemoTrades();
+  // WICHTIG: auch die Demo-Trades durch migrateTrades() schicken — sonst bleiben Felder
+  // wie "level" dort als alter Einzelwert (z.B. "50") statt als Liste (["50"]) stehen,
+  // was z.B. auf der Bericht-Seite zu einem Absturz führt (.map() auf einem String).
+  STATE.trades = migrateTrades(buildDemoTrades());
   localStorage.setItem(LS_TRADES, JSON.stringify(STATE.trades));
 }
 
