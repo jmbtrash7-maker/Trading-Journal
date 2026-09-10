@@ -129,11 +129,11 @@ function weekdayShort(iso) {
 const today = new Date();
 
 const initialProjects = [
-  { id: "p1", name: "Trading Journal v2", icon: "LineChart", color: "violet", status: "in-progress", progress: 68 },
-  { id: "p2", name: "Home Gym Umbau", icon: "Dumbbell", color: "amber", status: "planning", progress: 15 },
-  { id: "p3", name: "Content Kalender", icon: "CalendarDays", color: "cyan", status: "on-track", progress: 82 },
-  { id: "p4", name: "Steuererklärung 2026", icon: "FileWarning", color: "rose", status: "at-risk", progress: 30 },
-  { id: "p5", name: "JMB HQ Redesign", icon: "LayoutDashboard", color: "violet", status: "in-progress", progress: 45 },
+  { id: "p1", name: "Trading Journal v2", icon: "LineChart", color: "violet", statusOverride: "in-progress", progress: 68 },
+  { id: "p2", name: "Home Gym Umbau", icon: "Dumbbell", color: "amber", statusOverride: "planning", progress: 15 },
+  { id: "p3", name: "Content Kalender", icon: "CalendarDays", color: "cyan", statusOverride: "on-track", progress: 82 },
+  { id: "p4", name: "Steuererklärung 2026", icon: "FileWarning", color: "rose", statusOverride: "at-risk", progress: 30 },
+  { id: "p5", name: "JMB HQ Redesign", icon: "LayoutDashboard", color: "violet", statusOverride: "in-progress", progress: 45 },
 ];
 
 const initialEvents = [
@@ -149,6 +149,21 @@ const initialEvents = [
 ];
 
 function uid() { return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// Berechnet den Status automatisch aus Fortschritt + überfälligen offenen Terminen/Tasks.
+// Eine manuelle Überschreibung (project.statusOverride) hat immer Vorrang, damit man den
+// Status jederzeit bewusst selbst setzen kann.
+function computeAutoStatus(project, projectEvents) {
+  if (project.progress >= 100) return "done";
+  const today = isoDate(new Date());
+  const hasOverdue = (projectEvents || []).some((e) => !e.done && e.date < today);
+  if (hasOverdue) return "at-risk";
+  if (project.progress > 0) return "in-progress";
+  return "planning";
+}
+function getEffectiveStatus(project, projectEvents) {
+  return project.statusOverride || computeAutoStatus(project, projectEvents);
+}
 
 /* ============================================================
    KLEINTEILE
@@ -220,7 +235,7 @@ function CoverArt({ project }) {
 /* ============================================================
    PROJEKT-KACHEL
    ============================================================ */
-function ProjectCard({ project, nextDue, openCount, onOpen }) {
+function ProjectCard({ project, status, nextDue, openCount, onOpen }) {
   const tokens = COLOR_TOKENS[project.color] || COLOR_TOKENS.violet;
   return (
     <button
@@ -243,7 +258,7 @@ function ProjectCard({ project, nextDue, openCount, onOpen }) {
           </h3>
           <ChevronRight size={15} className="mt-0.5 flex-shrink-0 opacity-40 group-hover:opacity-80 transition-opacity" style={{ color: tokens.accent }} />
         </div>
-        <div className="mb-2"><StatusPill status={project.status} /></div>
+        <div className="mb-2"><StatusPill status={status} /></div>
         <ProgressBar value={project.progress} color={project.color} />
         <div className="flex items-center justify-between mt-2 text-xs" style={{ color: "#8b93a7" }}>
           <span className="inline-flex items-center gap-1 truncate">
@@ -310,6 +325,9 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
   const open = sorted.filter((e) => !e.done);
   const done = sorted.filter((e) => e.done);
   const fileInputRef = useRef(null);
+  const isAuto = !project.statusOverride;
+  const effectiveStatus = getEffectiveStatus(project, events);
+  const autoStatus = computeAutoStatus(project, events);
 
   function handleImagePick(e) {
     const file = e.target.files && e.target.files[0];
@@ -319,6 +337,11 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
       reader.readAsDataURL(file);
     }
     e.target.value = "";
+  }
+
+  function handleStatusChange(e) {
+    const val = e.target.value;
+    onUpdateProject(project.id, { statusOverride: val === "auto" ? null : val });
   }
 
   return (
@@ -345,7 +368,7 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
               <h1 className="text-2xl font-bold mb-2" style={{ fontFamily: "'Rajdhani',sans-serif", color: "#fff", letterSpacing: "0.3px" }}>
                 {project.name}
               </h1>
-              <StatusPill status={project.status} />
+              <StatusPill status={effectiveStatus} />
             </div>
             <div className="flex items-center gap-1.5 flex-shrink-0">
               <button
@@ -374,6 +397,22 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
             <span style={{ color: tokens.accent }}>{project.progress}%</span>
           </div>
           <ProgressBar value={project.progress} color={project.color} />
+
+          <div className="flex items-center justify-between mt-4 text-xs" style={{ color: "#8b93a7" }}>
+            <span>Status</span>
+            {isAuto && <span>Automatisch berechnet</span>}
+          </div>
+          <select
+            value={project.statusOverride || "auto"}
+            onChange={handleStatusChange}
+            className="w-full mt-1.5 rounded-lg px-3 py-2 text-sm outline-none"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8", colorScheme: "dark" }}
+          >
+            <option value="auto">Automatisch ({STATUS_CONFIG[autoStatus].label})</option>
+            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
+              <option key={key} value={key}>{cfg.label} (manuell)</option>
+            ))}
+          </select>
         </div>
       </div>
 
@@ -678,7 +717,7 @@ function ProjectModal({ onSave, onClose }) {
           </button>
           <button
             disabled={!canSave}
-            onClick={() => canSave && onSave({ name: name.trim(), color, icon, image, status: "planning", progress: 0 })}
+            onClick={() => canSave && onSave({ name: name.trim(), color, icon, image, statusOverride: null, progress: 0 })}
             className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
             style={{ background: "linear-gradient(135deg,#8b7bff,#5b4fe0)", color: "#0a0e1a" }}
           >
@@ -1034,6 +1073,7 @@ function ProjekteDashboard() {
                     <ProjectCard
                       key={p.id}
                       project={p}
+                      status={getEffectiveStatus(p, projEvents)}
                       nextDue={nextDue}
                       openCount={openEvents.length}
                       onOpen={setSelectedProjectId}
