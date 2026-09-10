@@ -6,23 +6,58 @@
 <title>Projekte · Julian</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <script src="https://cdn.tailwindcss.com"></script>
-<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone@7.24.7/babel.min.js"></script>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   html,body{margin:0;background:#0a0e1a;}
   #root{min-height:100vh;}
+  #boot-status{
+    position:fixed; inset:0; display:flex; flex-direction:column; align-items:center; justify-content:center;
+    gap:10px; color:#8b93a7; font:14px/1.5 system-ui,sans-serif; text-align:center; padding:24px;
+  }
+  #boot-status.error{ color:#ff9db0; }
+  #boot-status pre{
+    max-width:90vw; overflow:auto; background:rgba(255,255,255,0.06); border:1px solid rgba(255,77,109,0.4);
+    border-radius:8px; padding:12px 14px; text-align:left; font:12px/1.5 ui-monospace,monospace; color:#ffd0d8;
+  }
 </style>
 </head>
 <body>
 <div id="root"></div>
+<div id="boot-status">Projekte werden geladen …</div>
+
+<!-- Sichtbare Fehleranzeige: greift JEDEN Fehler ab (Script-Ladefehler, JS-Fehler, verworfene
+     Promises) und zeigt ihn direkt auf der Seite an, statt dass nur ein leerer schwarzer
+     Bildschirm übrig bleibt. Läuft VOR dem eigentlichen React-Code, damit auch Fehler beim
+     Laden von React/Babel/Icons selbst abgefangen werden. -->
+<script>
+  function showBootError(msg){
+    var el = document.getElementById('boot-status');
+    if(!el) return;
+    el.classList.add('error');
+    el.innerHTML = '⚠ Beim Laden ist ein Fehler aufgetreten:<br><pre></pre><div style="margin-top:6px;">Bitte diesen Text an Claude schicken.</div>';
+    el.querySelector('pre').textContent = msg;
+  }
+  window.addEventListener('error', function(e){ showBootError(e.message + (e.filename ? ('\n' + e.filename + ':' + e.lineno) : '')); });
+  window.addEventListener('unhandledrejection', function(e){ showBootError(String(e.reason && e.reason.stack || e.reason)); });
+  // Falls nach 8 Sekunden immer noch nichts gerendert wurde (z.B. weil ein <script>-Tag von
+  // einem CDN blockiert/geblockt wurde, ohne dass ein JS-Fehler ausgelöst wurde): auch das
+  // sichtbar machen, statt stumm schwarz zu bleiben.
+  setTimeout(function(){
+    if(!window.__projekteMounted){
+      showBootError('Timeout: Die Seite hat nach 8 Sekunden nicht geladen. Vermutlich konnte eine externe Ressource (Tailwind/Babel/React/Icons von einem CDN) nicht geladen werden — z.B. durch Internet-Filter, Adblocker oder fehlenden Internetzugriff.');
+    }
+  }, 8000);
+</script>
 
 <script type="text/babel" data-presets="react" data-type="module">
-import React, { useState, useMemo, useRef } from "https://esm.sh/react@18.3.1";
+import React, { useState, useMemo, useRef, useEffect } from "https://esm.sh/react@18.3.1";
 import { createRoot } from "https://esm.sh/react-dom@18.3.1/client";
 import {
   ArrowLeft, Plus, X, Search, LayoutGrid, CalendarClock, Clock,
   CheckCircle2, Circle, AlertTriangle, Loader, ChevronRight,
   LineChart, Dumbbell, CalendarDays, FileWarning, LayoutDashboard,
-  Rocket, Trash2, ListChecks, ImagePlus
+  Rocket, Trash2, ListChecks, ImagePlus, Cloud
 } from "https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1";
 
 /* ============================================================
@@ -658,6 +693,182 @@ function ProjectModal({ onSave, onClose }) {
 /* ============================================================
    HAUPTKOMPONENTE
    ============================================================ */
+/* ============================================================
+   GOOGLE DRIVE SYNC — sichert Projekte & Termine automatisch in einer
+   JSON-Datei im eigenen Google Drive des Nutzers (Scope "drive.file": die
+   App sieht NUR Dateien, die sie selbst angelegt hat). Nutzt bewusst
+   dieselbe OAuth-Client-ID und denselben Sync-Ansatz (Google Identity
+   Services + Multipart-Upload) wie Kalender und Trading Journal.
+   ============================================================ */
+const DRIVE_CLIENT_ID = "273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com";
+const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+const DRIVE_FILENAME = "projekte-julian-backup.json";
+const LS_DRIVE_FILEID = "pj_drivefileid_v1";
+const LS_DRIVE_CONNECTED = "pj_driveconnected_v1";
+const LS_DRIVE_LASTSYNC = "pj_drivelastsync_v1";
+
+function useDriveSync(getPayload, applyPayload) {
+  const [status, setStatus] = useState({ connected: false, syncing: false, lastSync: null });
+  const tokenClientRef = useRef(null);
+  const accessTokenRef = useRef(null);
+  const expiresAtRef = useRef(0);
+  const saveTimerRef = useRef(null);
+  const connectedRef = useRef(false);
+  const syncingRef = useRef(false);
+
+  function setConnected(v) { connectedRef.current = v; setStatus((s) => ({ ...s, connected: v })); }
+  function setSyncing(v) { syncingRef.current = v; setStatus((s) => ({ ...s, syncing: v })); }
+  function setLastSync(t) { setStatus((s) => ({ ...s, lastSync: t })); }
+
+  function buildMultipart(metadata, content) {
+    const boundary = "pj_drive_boundary_" + Date.now();
+    const body =
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n` +
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n` +
+      `--${boundary}--`;
+    return { body, contentType: `multipart/related; boundary=${boundary}` };
+  }
+
+  async function findFile() {
+    const cachedId = localStorage.getItem(LS_DRIVE_FILEID);
+    if (cachedId) {
+      const check = await fetch(`https://www.googleapis.com/drive/v3/files/${cachedId}?fields=id`, {
+        headers: { Authorization: `Bearer ${accessTokenRef.current}` },
+      });
+      if (check.ok) return cachedId;
+      localStorage.removeItem(LS_DRIVE_FILEID);
+    }
+    const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`, {
+      headers: { Authorization: `Bearer ${accessTokenRef.current}` },
+    });
+    const data = await res.json();
+    if (data.files && data.files.length > 0) {
+      localStorage.setItem(LS_DRIVE_FILEID, data.files[0].id);
+      return data.files[0].id;
+    }
+    return null;
+  }
+
+  async function saveNow() {
+    if (syncingRef.current) return;
+    setSyncing(true);
+    try {
+      await ensureFreshToken();
+      const content = JSON.stringify(getPayload());
+      const fileId = await findFile();
+      const { body, contentType } = buildMultipart({ name: DRIVE_FILENAME, mimeType: "application/json" }, content);
+      const url = fileId
+        ? `https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`
+        : `https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart`;
+      const res = await fetch(url, {
+        method: fileId ? "PATCH" : "POST",
+        headers: { Authorization: `Bearer ${accessTokenRef.current}`, "Content-Type": contentType },
+        body,
+      });
+      const data = await res.json();
+      if (data.id) localStorage.setItem(LS_DRIVE_FILEID, data.id);
+      const now = Date.now();
+      localStorage.setItem(LS_DRIVE_LASTSYNC, String(now));
+      setLastSync(now);
+    } catch (err) {
+      console.error("Drive-Sicherung fehlgeschlagen:", err);
+    } finally {
+      setSyncing(false);
+    }
+  }
+
+  // Lädt einen vorhandenen Drive-Stand. Gibt true zurück, wenn eine Datei gefunden und
+  // (nach Bestätigung, falls gefordert) geladen wurde — sonst false, damit der Aufrufer
+  // weiß, dass stattdessen ein initialer Upload nötig ist.
+  async function loadNow(askConfirm) {
+    try {
+      await ensureFreshToken();
+      const fileId = await findFile();
+      if (!fileId) return false;
+      const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+        headers: { Authorization: `Bearer ${accessTokenRef.current}` },
+      });
+      const data = await res.json();
+      if (!data || !Array.isArray(data.projects) || !Array.isArray(data.events)) return false;
+      if (askConfirm && !window.confirm("Daten aus Google Drive laden? Das ersetzt deine aktuellen lokalen Projekte & Termine.")) return true;
+      applyPayload(data);
+      const now = Date.now();
+      localStorage.setItem(LS_DRIVE_LASTSYNC, String(now));
+      setLastSync(now);
+      return true;
+    } catch (err) {
+      console.error("Laden aus Drive fehlgeschlagen:", err);
+      return false;
+    }
+  }
+
+  function ensureFreshToken() {
+    return new Promise((resolve, reject) => {
+      if (accessTokenRef.current && Date.now() < expiresAtRef.current) { resolve(accessTokenRef.current); return; }
+      if (!tokenClientRef.current) { reject(new Error("Google-Anmeldung noch nicht bereit")); return; }
+      const prev = tokenClientRef.current.callback;
+      tokenClientRef.current.callback = (resp) => {
+        tokenClientRef.current.callback = prev;
+        onTokenResponse(resp);
+        if (resp && !resp.error) resolve(resp.access_token); else reject(new Error("Google-Anmeldung abgelaufen"));
+      };
+      tokenClientRef.current.requestAccessToken({ prompt: "" });
+    });
+  }
+
+  async function onTokenResponse(resp) {
+    if (!resp || resp.error) { setConnected(false); return; }
+    accessTokenRef.current = resp.access_token;
+    expiresAtRef.current = Date.now() + (parseInt(resp.expires_in, 10) || 3500) * 1000 - 60000;
+    setConnected(true);
+    localStorage.setItem(LS_DRIVE_CONNECTED, "1");
+    setTimeout(() => {
+      if (connectedRef.current && tokenClientRef.current) tokenClientRef.current.requestAccessToken({ prompt: "" });
+    }, Math.max(expiresAtRef.current - Date.now() - 300000, 60000));
+    // Ein vorhandenes Drive-Backup gewinnt immer gegen den lokalen Stand (der ohne
+    // Backup nur die Demo-Projekte wäre) — nur wenn wirklich noch nichts in Drive liegt,
+    // wird der aktuelle lokale Stand als allererstes Backup hochgeladen.
+    const found = await loadNow(false);
+    if (!found) saveNow();
+  }
+
+  useEffect(() => {
+    let tries = 0;
+    function init() {
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+        tokenClientRef.current = window.google.accounts.oauth2.initTokenClient({
+          client_id: DRIVE_CLIENT_ID,
+          scope: DRIVE_SCOPE,
+          callback: onTokenResponse,
+        });
+        if (localStorage.getItem(LS_DRIVE_CONNECTED) === "1") {
+          tokenClientRef.current.requestAccessToken({ prompt: "" });
+        }
+        return;
+      }
+      if (tries < 50) { tries += 1; setTimeout(init, 200); }
+    }
+    init();
+  }, []);
+
+  function connect() {
+    if (tokenClientRef.current) tokenClientRef.current.requestAccessToken({});
+  }
+  function disconnect() {
+    setConnected(false);
+    localStorage.removeItem(LS_DRIVE_CONNECTED);
+    accessTokenRef.current = null;
+  }
+  function scheduleSave() {
+    if (!connectedRef.current) return;
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(saveNow, 4000);
+  }
+
+  return { status, connect, disconnect, scheduleSave, loadNow: () => loadNow(true) };
+}
+
 function ProjekteDashboard() {
   const [projects, setProjects] = useState(initialProjects);
   const [events, setEvents] = useState(initialEvents);
@@ -666,6 +877,22 @@ function ProjekteDashboard() {
   const [search, setSearch] = useState("");
   const [eventModalProjectId, setEventModalProjectId] = useState(undefined); // undefined = geschlossen, null/id = offen
   const [showProjectModal, setShowProjectModal] = useState(false);
+
+  // Refs mit dem jeweils aktuellsten Stand — so bekommt der Drive-Sync-Hook (der seinen
+  // Google-Callback nur einmal beim Start einrichtet) immer die frischen Daten, statt an
+  // einem alten Stand von damals festzuhängen.
+  const projectsRef = useRef(projects);
+  const eventsRef = useRef(events);
+  useEffect(() => { projectsRef.current = projects; }, [projects]);
+  useEffect(() => { eventsRef.current = events; }, [events]);
+
+  const drive = useDriveSync(
+    () => ({ projects: projectsRef.current, events: eventsRef.current }),
+    (data) => { setProjects(data.projects); setEvents(data.events); }
+  );
+  // Bei jeder Änderung an Projekten/Terminen (debounced 4s) automatisch nach Drive
+  // sichern — genauso wie im Kalender und Trading Journal.
+  useEffect(() => { drive.scheduleSave(); }, [projects, events]);
 
   const projectsById = useMemo(() => Object.fromEntries(projects.map((p) => [p.id, p])), [projects]);
 
@@ -732,13 +959,36 @@ function ProjekteDashboard() {
                   {projects.length} Projekte · {events.filter((e) => !e.done).length} offene Termine &amp; Tasks
                 </p>
               </div>
-              <button
-                onClick={() => setShowProjectModal(true)}
-                className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition-transform hover:scale-105"
-                style={{ background: "linear-gradient(135deg,#8b7bff,#5b4fe0)", color: "#0a0e1a" }}
-              >
-                <Plus size={16} strokeWidth={2.5} /> Neues Projekt
-              </button>
+              <div className="flex items-center gap-2 flex-wrap">
+                <button
+                  onClick={drive.status.connected ? drive.disconnect : drive.connect}
+                  title={drive.status.connected ? "Google Drive trennen" : "Mit Google Drive verbinden — sichert Projekte & Termine automatisch"}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold transition-colors"
+                  style={
+                    drive.status.connected
+                      ? { background: "rgba(43,217,185,0.14)", border: "1px solid rgba(43,217,185,0.4)", color: "#2bd9b9" }
+                      : { background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#8b93a7" }
+                  }
+                >
+                  {drive.status.syncing ? (
+                    <Loader size={14} className="animate-spin" />
+                  ) : drive.status.connected ? (
+                    <CheckCircle2 size={14} />
+                  ) : (
+                    <Cloud size={14} />
+                  )}
+                  {drive.status.connected
+                    ? `Google Drive${drive.status.lastSync ? " · " + new Date(drive.status.lastSync).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : ""}`
+                    : "Google Drive verbinden"}
+                </button>
+                <button
+                  onClick={() => setShowProjectModal(true)}
+                  className="inline-flex items-center gap-1.5 rounded-lg px-4 py-2.5 text-sm font-semibold transition-transform hover:scale-105"
+                  style={{ background: "linear-gradient(135deg,#8b7bff,#5b4fe0)", color: "#0a0e1a" }}
+                >
+                  <Plus size={16} strokeWidth={2.5} /> Neues Projekt
+                </button>
+              </div>
             </div>
 
             {/* Tabs + Suche */}
@@ -833,6 +1083,9 @@ function ProjekteDashboard() {
 
 const root = createRoot(document.getElementById("root"));
 root.render(<ProjekteDashboard />);
+window.__projekteMounted = true;
+const bootStatus = document.getElementById('boot-status');
+if(bootStatus) bootStatus.remove();
 </script>
 </body>
 </html>
