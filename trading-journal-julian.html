@@ -119,7 +119,7 @@
     padding-top:calc(14px + env(safe-area-inset-top));
     gap:12px;
   }
-  .topnav-left{display:flex; align-items:center; gap:12px; margin-left:112px;}
+  .topnav-left{display:flex; align-items:center; gap:12px;}
   .topnav-right{display:flex; align-items:center; gap:12px; justify-content:flex-end;}
   .brand{font-weight:800; font-size:17px; letter-spacing:.1px; background:linear-gradient(90deg,var(--text) 0%, var(--violet) 140%); -webkit-background-clip:text; background-clip:text; color:transparent;}
   nav.tabs{display:flex; gap:3px; background:var(--bg-panel); padding:4px; border-radius:13px; flex-wrap:wrap; justify-content:center; border:1px solid var(--border);}
@@ -1657,7 +1657,6 @@
     .filter-row{grid-template-columns:1fr;}
     header.topnav{padding:12px 14px; padding-top:calc(12px + env(safe-area-inset-top)); grid-template-columns:1fr; justify-items:center; row-gap:10px;}
     .topnav-right{justify-content:center;}
-    .topnav-left{justify-self:start; margin-left:96px;}
     main{padding:18px 14px 70px;}
     .trade-card{display:flex !important; flex-direction:column; align-items:stretch; gap:6px;}
     .cat-table-header-bar{display:none;}
@@ -1827,7 +1826,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.08.31aw";
+const APP_VERSION = "2026.08.31ax";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -2814,9 +2813,10 @@ function challengeStats(trades){
     sqn = stdDev>0 ? (meanR/stdDev)*Math.sqrt(rVals.length) : null;
   }
 
-  // MAE/MFE (Maximum Adverse/Favorable Excursion) — rein optionale, manuell im
-  // Trade-Formular eingetragene Felder (t.mae/t.mfe, in R). Ohne Kursverlauf-Tracking kann
-  // die App das nicht selbst berechnen; Durchschnitt nur über Trades mit eingetragenem Wert.
+  // MAE/MFE (Maximum Adverse/Favorable Excursion) — die Eingabefelder im Trade-Formular
+  // wurden entfernt; diese Auswertung bleibt nur für alte Trades mit bereits gespeicherten
+  // t.mae/t.mfe-Werten erhalten (wird aktuell nirgends angezeigt). Durchschnitt nur über
+  // Trades mit vorhandenem Wert.
   const maeVals = trades.filter(t=>t.mae!==null && t.mae!==undefined && t.mae!=="").map(t=>Number(t.mae));
   const mfeVals = trades.filter(t=>t.mfe!==null && t.mfe!==undefined && t.mfe!=="").map(t=>Number(t.mfe));
   const avgMae = maeVals.length ? maeVals.reduce((a,b)=>a+b,0)/maeVals.length : null;
@@ -6526,8 +6526,6 @@ function emptyTrade(area){
     risikoProzent: STATE.config.lastRisikoProzent ?? null,
     rr: null,
     eurResult: null,
-    mae: null,
-    mfe: null,
     genommen: area==="eod" ? null : undefined,
     grundNichtGenommen: "",
     kriterienBegruendung: "",
@@ -6946,18 +6944,6 @@ function renderModal(){
         <textarea id="f_kriterienBegruendung" placeholder="Welche Kriterien haben gefehlt und warum?">${escHtml(d.kriterienBegruendung||"")}</textarea>
       </div>` : ""}
 
-      ${d.area==="live" ? `
-      <div class="two-col">
-        <div class="field-group">
-          <label class="fg-label">MAE <span class="label-sub">optional, in R — tiefster Punkt im Minus</span></label>
-          <input type="number" step="0.1" id="f_mae" placeholder="z.B. -0,8" value="${d.mae!==null && d.mae!==undefined ? d.mae : ""}">
-        </div>
-        <div class="field-group">
-          <label class="fg-label">MFE <span class="label-sub">optional, in R — höchster Punkt im Plus</span></label>
-          <input type="number" step="0.1" id="f_mfe" placeholder="z.B. 3,2" value="${d.mfe!==null && d.mfe!==undefined ? d.mfe : ""}">
-        </div>
-      </div>` : ""}
-
       <div class="field-group">
         <label class="fg-label">${categoryLabel("invalidierung","Invalidierungskriterien")}</label>
         ${chipGroupHtml("invalidierung", cfg.invalidierung, d.invalidierung, {multi:true})}
@@ -7339,11 +7325,6 @@ function saveDraft(){
   const kriterienBegruendungInput = document.getElementById("f_kriterienBegruendung");
   if(kriterienBegruendungInput) d.kriterienBegruendung = kriterienBegruendungInput.value;
   if(d.kriterien !== "Nicht erfüllt") d.kriterienBegruendung = ""; // nur relevant, wenn Kriterien nicht erfüllt
-  // MAE/MFE (optional, in R) — nur im Live-Formular sichtbar, siehe renderTradeForm.
-  const maeInput = document.getElementById("f_mae");
-  if(maeInput) d.mae = maeInput.value==="" ? null : Number(maeInput.value);
-  const mfeInput = document.getElementById("f_mfe");
-  if(mfeInput) d.mfe = mfeInput.value==="" ? null : Number(mfeInput.value);
   const grundInput = document.getElementById("f_grundNichtGenommen");
   if(grundInput) d.grundNichtGenommen = grundInput.value;
   if(d.genommen !== false) d.grundNichtGenommen = ""; // nur relevant, wenn nicht genommen
@@ -10964,24 +10945,10 @@ function wireDriveSyncPanel(){
 /* =========================================================================
    INIT
    ========================================================================= */
-// Wird von der Startseite (index.html) kurz vor einem gewollten Wechsel zu einer
-// anderen Kachel gesetzt/gesendet, damit der native "Seite verlassen?"-Dialog des
-// Browsers hier NICHT nochmal aufploppt (das eigene Bestätigungs-Modal auf der
-// Startseite hat den Nutzer ja bereits gefragt). Bei echtem Tab schließen/Neuladen
-// bleibt die Warnung weiterhin aktiv, da diese Nachricht dann nie ankommt.
-let jmbSuppressUnloadWarning = false;
-window.addEventListener("message", (e)=>{
-  if(e.data && e.data.type === "jmb-suppress-unload"){
-    jmbSuppressUnloadWarning = true;
-    // Direkt zurückbestätigen, damit die Startseite weiß, dass wir es mitbekommen
-    // haben, und erst DANN den iframe wirklich wechselt (verhindert Race Condition,
-    // v.a. wichtig unter file:// wo direkter Property-Zugriff geblockt ist).
-    try{ e.source && e.source.postMessage({type:"jmb-suppress-unload-ack"}, "*"); }catch(err){}
-  }
-});
-
+// Warnt beim Schließen/Verlassen der Seite, falls es Änderungen gibt, die noch in
+// keinem JSON-Backup stecken (Browser zeigt dafür seinen eigenen Standard-Dialog,
+// der Text lässt sich aus Sicherheitsgründen nicht anpassen).
 window.addEventListener("beforeunload", (e)=>{
-  if(jmbSuppressUnloadWarning) return;
   if(hasUnbackedChanges()){
     e.preventDefault();
     e.returnValue = "";
