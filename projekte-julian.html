@@ -57,7 +57,7 @@ import {
   ArrowLeft, Plus, X, Search, LayoutGrid, CalendarClock, Clock,
   CheckCircle2, Circle, AlertTriangle, Loader, ChevronRight,
   LineChart, Dumbbell, CalendarDays, FileWarning, LayoutDashboard,
-  Rocket, Trash2, ListChecks, ImagePlus, Cloud, Sparkles, ChevronDown
+  Rocket, Trash2, ListChecks, ImagePlus, Cloud, Sparkles
 } from "https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1";
 
 /* ============================================================
@@ -324,61 +324,39 @@ function EventRow({ ev, project, onToggleDone, showProject }) {
    PROJEKT-DETAILANSICHT
    ============================================================ */
 /* ============================================================
-   EIGENER STATUS-DROPDOWN (bewusst kein natives <select> — das lässt
-   sich vom Browser aus nicht ins dunkle Design einfärben, siehe der
-   weiße Aufklapp-Bug vorher. Volle Kontrolle über Farben & Look.)
+   STATUS-FELDER — direkt anklickbare Pillen statt Dropdown, damit alle
+   5 Kategorien immer sofort sichtbar sind und man nichts erst aufklappen
+   muss. Komplett eigenes Markup, keine Browser-native Komponente
+   beteiligt.
    ============================================================ */
-function StatusSelect({ project, autoStatus, onChange }) {
-  const [open, setOpen] = useState(false);
-  const currentCfg = project.statusOverride ? STATUS_CONFIG[project.statusOverride] : STATUS_CONFIG[autoStatus];
+function StatusPicker({ project, autoStatus, onChange }) {
+  const options = [
+    { key: null, label: `Automatisch (${STATUS_CONFIG[autoStatus].label})`, color: STATUS_CONFIG[autoStatus].color },
+    ...Object.entries(STATUS_CONFIG).map(([key, cfg]) => ({ key, label: cfg.label, color: cfg.color })),
+  ];
+  const activeKey = project.statusOverride || null;
 
   return (
-    <div className="relative">
-      <button
-        type="button"
-        onClick={() => setOpen((o) => !o)}
-        className="w-full flex items-center justify-between rounded-lg px-3 py-2 text-sm transition-colors hover:bg-white/5"
-        style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8" }}
-      >
-        <span className="inline-flex items-center gap-2">
-          <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: currentCfg.color }} />
-          {project.statusOverride ? currentCfg.label : `Automatisch (${currentCfg.label})`}
-        </span>
-        <ChevronDown size={15} style={{ color: "#8b93a7", transform: open ? "rotate(180deg)" : "none", transition: "transform .15s" }} />
-      </button>
-
-      {open && (
-        <React.Fragment>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div
-            className="absolute z-50 mt-1.5 w-full rounded-xl overflow-hidden"
-            style={{ background: "rgba(16,20,34,0.98)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 12px 30px rgba(0,0,0,0.5)" }}
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => {
+        const active = activeKey === opt.key;
+        return (
+          <button
+            key={opt.key || "auto"}
+            type="button"
+            onClick={() => onChange(opt.key)}
+            className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors"
+            style={
+              active
+                ? { background: `${opt.color}22`, border: `1px solid ${opt.color}`, color: opt.color }
+                : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }
+            }
           >
-            <button
-              type="button"
-              onClick={() => { onChange(null); setOpen(false); }}
-              className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left transition-colors hover:bg-white/5"
-              style={!project.statusOverride ? { color: "#a996ff", background: "rgba(124,92,255,0.12)" } : { color: "#eef1f8" }}
-            >
-              <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: STATUS_CONFIG[autoStatus].color }} />
-              Automatisch ({STATUS_CONFIG[autoStatus].label})
-            </button>
-            <div style={{ height: 1, background: "rgba(255,255,255,0.08)" }} />
-            {Object.entries(STATUS_CONFIG).map(([key, cfg]) => (
-              <button
-                key={key}
-                type="button"
-                onClick={() => { onChange(key); setOpen(false); }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-sm text-left transition-colors hover:bg-white/5"
-                style={project.statusOverride === key ? { color: cfg.color, background: `${cfg.color}18` } : { color: "#eef1f8" }}
-              >
-                <span className="h-2 w-2 rounded-full flex-shrink-0" style={{ background: cfg.color }} />
-                {cfg.label}
-              </button>
-            ))}
-          </div>
-        </React.Fragment>
-      )}
+            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: opt.color }} />
+            {opt.label}
+          </button>
+        );
+      })}
     </div>
   );
 }
@@ -457,7 +435,7 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
           <ProgressBar value={project.progress} color={project.color} />
 
           <div className="mt-4 mb-1.5 text-xs" style={{ color: "#8b93a7" }}>Status</div>
-          <StatusSelect
+          <StatusPicker
             project={project}
             autoStatus={autoStatus}
             onChange={(val) => onUpdateProject(project.id, { statusOverride: val })}
