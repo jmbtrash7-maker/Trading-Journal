@@ -298,7 +298,7 @@ function ProjectCard({ project, status, nextDue, openCount, onOpen }) {
 /* ============================================================
    TERMIN/TASK-ZEILE (wiederverwendet in Detail- & Kalenderansicht)
    ============================================================ */
-function EventRow({ ev, project, category, onToggleDone, showProject }) {
+function EventRow({ ev, project, category, onToggleDone, onEdit, showProject }) {
   const tokens = project ? (COLOR_TOKENS[project.color] || COLOR_TOKENS.violet) : COLOR_TOKENS.violet;
   const [notesOpen, setNotesOpen] = useState(false);
   const hasNotes = !!(ev.notes && ev.notes.trim());
@@ -311,7 +311,7 @@ function EventRow({ ev, project, category, onToggleDone, showProject }) {
         <button onClick={() => onToggleDone(ev.id)} className="flex-shrink-0" title={ev.done ? "Als offen markieren" : "Als erledigt markieren"}>
           {ev.done ? <CheckCircle2 size={18} style={{ color: "#2bd9b9" }} /> : <Circle size={18} style={{ color: "#8b93a7" }} />}
         </button>
-        <div className="min-w-0 flex-1">
+        <div className="min-w-0 flex-1 cursor-pointer" onClick={() => onEdit && onEdit(ev)}>
           <div className={`text-sm font-medium truncate ${ev.done ? "line-through opacity-50" : ""}`} style={{ color: "#eef1f8" }}>
             {ev.title}
           </div>
@@ -346,6 +346,16 @@ function EventRow({ ev, project, category, onToggleDone, showProject }) {
             style={{ color: notesOpen ? "#a996ff" : "#8b93a7" }}
           >
             <StickyNote size={14} />
+          </button>
+        )}
+        {onEdit && (
+          <button
+            onClick={() => onEdit(ev)}
+            className="flex-shrink-0 rounded-md p-1 transition-colors hover:bg-white/10"
+            title="Bearbeiten"
+            style={{ color: "#8b93a7" }}
+          >
+            <Pencil size={14} />
           </button>
         )}
         <span
@@ -470,7 +480,7 @@ function StatusPicker({ project, autoStatus, onChange }) {
   );
 }
 
-function ProjectDetail({ project, events, categories, categoriesById, onToggleDone, onBack, onAddEvent, onDeleteProject, onUpdateProject, onManageCategories }) {
+function ProjectDetail({ project, events, categories, categoriesById, onToggleDone, onEditEvent, onBack, onAddEvent, onDeleteProject, onUpdateProject, onManageCategories }) {
   const tokens = COLOR_TOKENS[project.color] || COLOR_TOKENS.violet;
   const [categoryFilter, setCategoryFilter] = useState(null);
   const filteredEvents = categoryFilter ? events.filter((e) => e.categoryId === categoryFilter) : events;
@@ -578,13 +588,13 @@ function ProjectDetail({ project, events, categories, categoriesById, onToggleDo
           </div>
         )}
         {open.map((ev) => (
-          <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} showProject={false} />
+          <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} onEdit={onEditEvent} showProject={false} />
         ))}
         {done.length > 0 && (
           <>
             <div className="text-xs font-semibold uppercase tracking-wide pt-3 pb-1" style={{ color: "#8b93a7" }}>Erledigt</div>
             {done.map((ev) => (
-              <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} showProject={false} />
+              <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} onEdit={onEditEvent} showProject={false} />
             ))}
           </>
         )}
@@ -596,7 +606,7 @@ function ProjectDetail({ project, events, categories, categoriesById, onToggleDo
 /* ============================================================
    GLOBALE KALENDER-/TIMELINE-ANSICHT
    ============================================================ */
-function TimelineView({ events, projectsById, categories, categoriesById, onToggleDone, onAddEvent, onManageCategories }) {
+function TimelineView({ events, projectsById, categories, categoriesById, onToggleDone, onEditEvent, onAddEvent, onManageCategories }) {
   const [categoryFilter, setCategoryFilter] = useState(null);
   const upcoming = events
     .filter((e) => !e.done)
@@ -642,7 +652,7 @@ function TimelineView({ events, projectsById, categories, categoriesById, onTogg
             </div>
             <div className="flex-1 space-y-2">
               {g.items.map((ev) => (
-                <EventRow key={ev.id} ev={ev} project={projectsById[ev.projectId]} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} showProject={true} />
+                <EventRow key={ev.id} ev={ev} project={projectsById[ev.projectId]} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} onEdit={onEditEvent} showProject={true} />
               ))}
             </div>
           </div>
@@ -655,14 +665,15 @@ function TimelineView({ events, projectsById, categories, categoriesById, onTogg
 /* ============================================================
    MODAL: NEUER TERMIN/TASK
    ============================================================ */
-function EventModal({ projects, categories, defaultProjectId, onSave, onClose, onCreateCategory }) {
-  const [title, setTitle] = useState("");
-  const [date, setDate] = useState(isoDate(new Date()));
-  const [time, setTime] = useState("");
-  const [type, setType] = useState("task");
-  const [projectId, setProjectId] = useState(defaultProjectId || "");
-  const [categoryId, setCategoryId] = useState(null);
-  const [notes, setNotes] = useState("");
+function EventModal({ projects, categories, defaultProjectId, initialEvent, onSave, onClose, onCreateCategory, onDelete }) {
+  const isEditing = !!initialEvent;
+  const [title, setTitle] = useState(initialEvent ? initialEvent.title : "");
+  const [date, setDate] = useState(initialEvent ? initialEvent.date : isoDate(new Date()));
+  const [time, setTime] = useState(initialEvent ? initialEvent.time || "" : "");
+  const [type, setType] = useState(initialEvent ? initialEvent.type : "task");
+  const [projectId, setProjectId] = useState(initialEvent ? initialEvent.projectId || "" : defaultProjectId || "");
+  const [categoryId, setCategoryId] = useState(initialEvent ? initialEvent.categoryId || null : null);
+  const [notes, setNotes] = useState(initialEvent ? initialEvent.notes || "" : "");
   const [showNewCategory, setShowNewCategory] = useState(false);
   const [newCatName, setNewCatName] = useState("");
   const [newCatColor, setNewCatColor] = useState(CATEGORY_SWATCHES[0]);
@@ -685,7 +696,9 @@ function EventModal({ projects, categories, defaultProjectId, onSave, onClose, o
         style={{ background: "rgba(16,20,34,0.95)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
       >
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-base font-semibold" style={{ fontFamily: "'Rajdhani',sans-serif", color: "#fff" }}>Neuer Eintrag</h3>
+          <h3 className="text-base font-semibold" style={{ fontFamily: "'Rajdhani',sans-serif", color: "#fff" }}>
+            {isEditing ? "Eintrag bearbeiten" : "Neuer Eintrag"}
+          </h3>
           <button onClick={onClose} className="opacity-60 hover:opacity-100 transition-opacity"><X size={18} /></button>
         </div>
 
@@ -852,18 +865,29 @@ function EventModal({ projects, categories, defaultProjectId, onSave, onClose, o
           style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8" }}
         />
 
-        <div className="flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5" style={{ color: "#8b93a7" }}>
-            Abbrechen
-          </button>
-          <button
-            disabled={!canSave}
-            onClick={() => canSave && onSave({ title: title.trim(), date, time: time || null, type, projectId: projectId || null, categoryId: categoryId || null, notes: notes.trim() || null })}
-            className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
-            style={{ background: "linear-gradient(135deg,#8b7bff,#5b4fe0)", color: "#0a0e1a" }}
-          >
-            Speichern
-          </button>
+        <div className="flex items-center justify-between gap-2">
+          {isEditing && onDelete ? (
+            <button
+              onClick={onDelete}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2 text-sm font-semibold transition-colors hover:bg-white/5"
+              style={{ color: "#ff8098" }}
+            >
+              <Trash2 size={14} /> Löschen
+            </button>
+          ) : <span />}
+          <div className="flex justify-end gap-2">
+            <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5" style={{ color: "#8b93a7" }}>
+              Abbrechen
+            </button>
+            <button
+              disabled={!canSave}
+              onClick={() => canSave && onSave({ title: title.trim(), date, time: time || null, type, projectId: projectId || null, categoryId: categoryId || null, notes: notes.trim() || null })}
+              className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
+              style={{ background: "linear-gradient(135deg,#8b7bff,#5b4fe0)", color: "#0a0e1a" }}
+            >
+              Speichern
+            </button>
+          </div>
         </div>
       </div>
     </div>
@@ -1371,6 +1395,7 @@ function ProjekteDashboard() {
   const [tab, setTab] = useState("projects"); // 'projects' | 'timeline'
   const [search, setSearch] = useState("");
   const [eventModalProjectId, setEventModalProjectId] = useState(undefined); // undefined = geschlossen, null/id = offen
+  const [editingEvent, setEditingEvent] = useState(null); // gesetzt = Bearbeiten-Modal für diesen Termin/Task offen
   const [showProjectModal, setShowProjectModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
 
@@ -1411,6 +1436,16 @@ function ProjekteDashboard() {
   function addEvent(newEv) {
     setEvents((prev) => [...prev, { id: uid(), done: false, ...newEv }]);
     setEventModalProjectId(undefined);
+  }
+
+  function updateEvent(id, patch) {
+    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+    setEditingEvent(null);
+  }
+
+  function deleteEvent(id) {
+    setEvents((prev) => prev.filter((e) => e.id !== id));
+    setEditingEvent(null);
   }
 
   function addProject(newProj) {
@@ -1576,6 +1611,7 @@ function ProjekteDashboard() {
                 categories={categories}
                 categoriesById={categoriesById}
                 onToggleDone={toggleDone}
+                onEditEvent={setEditingEvent}
                 onAddEvent={setEventModalProjectId}
                 onManageCategories={() => setShowCategoryModal(true)}
               />
@@ -1589,6 +1625,7 @@ function ProjekteDashboard() {
             categoriesById={categoriesById}
             onBack={() => setSelectedProjectId(null)}
             onToggleDone={toggleDone}
+            onEditEvent={setEditingEvent}
             onAddEvent={setEventModalProjectId}
             onDeleteProject={deleteProject}
             onUpdateProject={updateProject}
@@ -1605,6 +1642,19 @@ function ProjekteDashboard() {
           onSave={addEvent}
           onClose={() => setEventModalProjectId(undefined)}
           onCreateCategory={addCategory}
+        />
+      )}
+      {editingEvent && (
+        <EventModal
+          projects={projects}
+          categories={categories}
+          initialEvent={editingEvent}
+          onSave={(patch) => updateEvent(editingEvent.id, patch)}
+          onClose={() => setEditingEvent(null)}
+          onCreateCategory={addCategory}
+          onDelete={() => {
+            if (window.confirm(`"${editingEvent.title}" wirklich löschen?`)) deleteEvent(editingEvent.id);
+          }}
         />
       )}
       {showProjectModal && <ProjectModal onSave={addProject} onClose={() => setShowProjectModal(false)} />}
