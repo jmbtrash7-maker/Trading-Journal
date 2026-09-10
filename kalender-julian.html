@@ -1539,8 +1539,40 @@
      JavaScript origin" hinterlegt sein.
      ============================================================ */
   const GOOGLE_CLIENT_ID = "273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com";
-  const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.events";
-  const LS_CAL_CONNECTED = 'kalenderJulian_calconnected_v1';
+  /* ============================================================
+     HUB-WEITER GOOGLE-LOGIN-CACHE — wortgleicher Block auch in
+     trading-journal-julian.html und projekte-julian.html. Alle drei Apps
+     fragen denselben (kombinierten) Scope an und liegen auf derselben
+     Domain, teilen sich also über localStorage EIN Google-Access-Token:
+     wer sich in einer Kachel anmeldet, ist beim Wechsel zur nächsten
+     schon angemeldet, solange das Token noch gültig ist (~55 Min.) —
+     kein erneuter Google-Dialog beim Kachel-Wechsel mehr nötig.
+     ============================================================ */
+  const JMB_SCOPE = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events";
+  const JMB_TOKEN_KEY = "jmb_google_token_v1";
+  const JMB_TOKEN_EXP_KEY = "jmb_google_token_exp_v1";
+  const JMB_CONNECTED_KEY = "jmb_google_connected_v1";
+  function jmbSaveToken(token, expiresAt){
+    try{
+      localStorage.setItem(JMB_TOKEN_KEY, token);
+      localStorage.setItem(JMB_TOKEN_EXP_KEY, String(expiresAt));
+      localStorage.setItem(JMB_CONNECTED_KEY, "1");
+    }catch(err){ /* z.B. localStorage voll/blockiert — Token bleibt dann nur im Speicher dieser Seite */ }
+  }
+  function jmbLoadSharedToken(){
+    const token = localStorage.getItem(JMB_TOKEN_KEY);
+    const expiresAt = parseInt(localStorage.getItem(JMB_TOKEN_EXP_KEY), 10) || 0;
+    if(token && Date.now() < expiresAt) return { token, expiresAt };
+    return null;
+  }
+  function jmbClearToken(){
+    localStorage.removeItem(JMB_TOKEN_KEY);
+    localStorage.removeItem(JMB_TOKEN_EXP_KEY);
+    localStorage.removeItem(JMB_CONNECTED_KEY);
+  }
+
+  const CAL_SCOPE = JMB_SCOPE;
+  const LS_CAL_CONNECTED = JMB_CONNECTED_KEY;
   const LS_CAL_LASTSYNC = 'kalenderJulian_callastsync_v1';
   const CAL_SYNC_PAST_DAYS = 30;    // wie weit rückwirkend mit Google abgeglichen wird
   const CAL_SYNC_FUTURE_DAYS = 180; // wie weit im Voraus mit Google abgeglichen wird
@@ -1568,6 +1600,21 @@
       calTokenClient = google.accounts.oauth2.initTokenClient({
         client_id: GOOGLE_CLIENT_ID, scope: CAL_SCOPE, callback: onCalTokenResponse
       });
+      // 1. Erst prüfen, ob eine ANDERE Hub-Kachel (Journal/Projekte) schon ein gültiges
+      //    Token im gemeinsamen Cache hinterlegt hat -> direkt übernehmen, ganz ohne
+      //    Google-Anfrage (kein Aufblitzen, kein erneuter Login beim Kachel-Wechsel).
+      const shared = jmbLoadSharedToken();
+      if(shared){
+        calAccessToken = shared.token;
+        calTokenExpiresAt = shared.expiresAt;
+        calConnected = true;
+        updateCalSyncPanel();
+        scheduleCalTokenRefresh();
+        if(!calPollTimer) calPollTimer = setInterval(() => { if(calConnected) calSyncNow(); }, 120000);
+        calSyncNow();
+        return;
+      }
+      // 2. Kein gültiger Cache, aber früher schon mal verbunden -> stiller Reconnect-Versuch.
       if(localStorage.getItem(LS_CAL_CONNECTED) === '1'){
         calTokenClient.requestAccessToken({ prompt: '' }); // stiller Reconnect, falls Google-Session noch aktiv
       }
@@ -1576,14 +1623,18 @@
     if(tries < 50) setTimeout(() => initGoogleCalendar(tries+1), 200);
   }
 
+  function scheduleCalTokenRefresh(){
+    setTimeout(() => { if(calConnected) calTokenClient.requestAccessToken({ prompt: '' }); }, Math.max(calTokenExpiresAt - Date.now() - 300000, 60000));
+  }
+
   function onCalTokenResponse(resp){
     if(!resp || resp.error){ calConnected = false; updateCalSyncPanel(); return; }
     calAccessToken = resp.access_token;
     calTokenExpiresAt = Date.now() + (parseInt(resp.expires_in,10) || 3500) * 1000 - 60000;
     calConnected = true;
-    localStorage.setItem(LS_CAL_CONNECTED, '1');
+    jmbSaveToken(calAccessToken, calTokenExpiresAt); // im HUB-WEITEN Cache speichern, nicht nur lokal
     updateCalSyncPanel();
-    setTimeout(() => { if(calConnected) calTokenClient.requestAccessToken({ prompt: '' }); }, Math.max(calTokenExpiresAt - Date.now() - 300000, 60000));
+    scheduleCalTokenRefresh();
     if(!calPollTimer) calPollTimer = setInterval(() => { if(calConnected) calSyncNow(); }, 120000); // alle 2 Min. nach Änderungen am Handy schauen
     calSyncNow();
   }
@@ -1607,7 +1658,7 @@
     if(calAccessToken) google.accounts.oauth2.revoke(calAccessToken, () => {});
     calAccessToken = null; calTokenExpiresAt = 0; calConnected = false;
     clearInterval(calPollTimer); calPollTimer = null;
-    localStorage.removeItem(LS_CAL_CONNECTED);
+    jmbClearToken(); // trennt hub-weit — Journal/Projekte fragen beim nächsten Öffnen wieder neu an
     updateCalSyncPanel();
     showToast('Google-Kalender-Verbindung getrennt');
   }

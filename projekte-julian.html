@@ -767,10 +767,42 @@ function ProjectModal({ onSave, onClose }) {
    Services + Multipart-Upload) wie Kalender und Trading Journal.
    ============================================================ */
 const DRIVE_CLIENT_ID = "273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com";
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+/* ============================================================
+   HUB-WEITER GOOGLE-LOGIN-CACHE — wortgleicher Block auch in
+   kalender-julian.html und trading-journal-julian.html. Alle drei Apps
+   fragen denselben (kombinierten) Scope an und liegen auf derselben
+   Domain, teilen sich also über localStorage EIN Google-Access-Token:
+   wer sich in einer Kachel anmeldet, ist beim Wechsel zur nächsten schon
+   angemeldet, solange das Token noch gültig ist (~55 Min.) — kein
+   erneuter Google-Dialog beim Kachel-Wechsel mehr nötig.
+   ============================================================ */
+const JMB_SCOPE = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events";
+const JMB_TOKEN_KEY = "jmb_google_token_v1";
+const JMB_TOKEN_EXP_KEY = "jmb_google_token_exp_v1";
+const JMB_CONNECTED_KEY = "jmb_google_connected_v1";
+function jmbSaveToken(token, expiresAt) {
+  try {
+    localStorage.setItem(JMB_TOKEN_KEY, token);
+    localStorage.setItem(JMB_TOKEN_EXP_KEY, String(expiresAt));
+    localStorage.setItem(JMB_CONNECTED_KEY, "1");
+  } catch (err) { /* z.B. localStorage voll/blockiert — Token bleibt dann nur im Speicher dieser Seite */ }
+}
+function jmbLoadSharedToken() {
+  const token = localStorage.getItem(JMB_TOKEN_KEY);
+  const expiresAt = parseInt(localStorage.getItem(JMB_TOKEN_EXP_KEY), 10) || 0;
+  if (token && Date.now() < expiresAt) return { token, expiresAt };
+  return null;
+}
+function jmbClearToken() {
+  localStorage.removeItem(JMB_TOKEN_KEY);
+  localStorage.removeItem(JMB_TOKEN_EXP_KEY);
+  localStorage.removeItem(JMB_CONNECTED_KEY);
+}
+
+const DRIVE_SCOPE = JMB_SCOPE;
 const DRIVE_FILENAME = "projekte-julian-backup.json";
 const LS_DRIVE_FILEID = "pj_drivefileid_v1";
-const LS_DRIVE_CONNECTED = "pj_driveconnected_v1";
+const LS_DRIVE_CONNECTED = JMB_CONNECTED_KEY;
 const LS_DRIVE_LASTSYNC = "pj_drivelastsync_v1";
 
 function useDriveSync(getPayload, applyPayload) {
@@ -883,15 +915,19 @@ function useDriveSync(getPayload, applyPayload) {
     });
   }
 
+  function scheduleTokenRefresh() {
+    setTimeout(() => {
+      if (connectedRef.current && tokenClientRef.current) tokenClientRef.current.requestAccessToken({ prompt: "" });
+    }, Math.max(expiresAtRef.current - Date.now() - 300000, 60000));
+  }
+
   async function onTokenResponse(resp) {
     if (!resp || resp.error) { setConnected(false); return; }
     accessTokenRef.current = resp.access_token;
     expiresAtRef.current = Date.now() + (parseInt(resp.expires_in, 10) || 3500) * 1000 - 60000;
     setConnected(true);
-    localStorage.setItem(LS_DRIVE_CONNECTED, "1");
-    setTimeout(() => {
-      if (connectedRef.current && tokenClientRef.current) tokenClientRef.current.requestAccessToken({ prompt: "" });
-    }, Math.max(expiresAtRef.current - Date.now() - 300000, 60000));
+    jmbSaveToken(accessTokenRef.current, expiresAtRef.current); // im HUB-WEITEN Cache speichern, nicht nur lokal
+    scheduleTokenRefresh();
     // Ein vorhandenes Drive-Backup gewinnt immer gegen den lokalen Stand (der ohne
     // Backup nur die Demo-Projekte wäre) — nur wenn wirklich noch nichts in Drive liegt,
     // wird der aktuelle lokale Stand als allererstes Backup hochgeladen.
@@ -908,6 +944,19 @@ function useDriveSync(getPayload, applyPayload) {
           scope: DRIVE_SCOPE,
           callback: onTokenResponse,
         });
+        // 1. Erst prüfen, ob eine ANDERE Hub-Kachel (Kalender/Journal) schon ein gültiges
+        //    Token im gemeinsamen Cache hinterlegt hat -> direkt übernehmen, ganz ohne
+        //    Google-Anfrage (kein Aufblitzen, kein erneuter Login beim Kachel-Wechsel).
+        const shared = jmbLoadSharedToken();
+        if (shared) {
+          accessTokenRef.current = shared.token;
+          expiresAtRef.current = shared.expiresAt;
+          setConnected(true);
+          scheduleTokenRefresh();
+          loadNow(false);
+          return;
+        }
+        // 2. Kein gültiger Cache, aber früher schon mal verbunden -> stiller Reconnect-Versuch.
         if (localStorage.getItem(LS_DRIVE_CONNECTED) === "1") {
           tokenClientRef.current.requestAccessToken({ prompt: "" });
         }
@@ -923,7 +972,7 @@ function useDriveSync(getPayload, applyPayload) {
   }
   function disconnect() {
     setConnected(false);
-    localStorage.removeItem(LS_DRIVE_CONNECTED);
+    jmbClearToken(); // trennt hub-weit — Kalender/Journal fragen beim nächsten Öffnen wieder neu an
     accessTokenRef.current = null;
   }
   function scheduleSave() {

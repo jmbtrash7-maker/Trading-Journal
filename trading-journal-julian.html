@@ -10690,10 +10690,42 @@ function renderDailyChecklist(){
    Export/Import, damit hier nie ein Datentopf vergessen wird.
    ========================================================================= */
 const GOOGLE_CLIENT_ID = "273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com";
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive.file";
+/* ============================================================
+   HUB-WEITER GOOGLE-LOGIN-CACHE — wortgleicher Block auch in
+   kalender-julian.html und projekte-julian.html. Alle drei Apps fragen
+   denselben (kombinierten) Scope an und liegen auf derselben Domain,
+   teilen sich also über localStorage EIN Google-Access-Token: wer sich
+   in einer Kachel anmeldet, ist beim Wechsel zur nächsten schon
+   angemeldet, solange das Token noch gültig ist (~55 Min.) — kein
+   erneuter Google-Dialog beim Kachel-Wechsel mehr nötig.
+   ============================================================ */
+const JMB_SCOPE = "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/calendar.events";
+const JMB_TOKEN_KEY = "jmb_google_token_v1";
+const JMB_TOKEN_EXP_KEY = "jmb_google_token_exp_v1";
+const JMB_CONNECTED_KEY = "jmb_google_connected_v1";
+function jmbSaveToken(token, expiresAt){
+  try{
+    localStorage.setItem(JMB_TOKEN_KEY, token);
+    localStorage.setItem(JMB_TOKEN_EXP_KEY, String(expiresAt));
+    localStorage.setItem(JMB_CONNECTED_KEY, "1");
+  }catch(err){ /* z.B. localStorage voll/blockiert — Token bleibt dann nur im Speicher dieser Seite */ }
+}
+function jmbLoadSharedToken(){
+  const token = localStorage.getItem(JMB_TOKEN_KEY);
+  const expiresAt = parseInt(localStorage.getItem(JMB_TOKEN_EXP_KEY), 10) || 0;
+  if(token && Date.now() < expiresAt) return { token, expiresAt };
+  return null;
+}
+function jmbClearToken(){
+  localStorage.removeItem(JMB_TOKEN_KEY);
+  localStorage.removeItem(JMB_TOKEN_EXP_KEY);
+  localStorage.removeItem(JMB_CONNECTED_KEY);
+}
+
+const DRIVE_SCOPE = JMB_SCOPE;
 const DRIVE_BACKUP_FILENAME = "trading-journal-backup.json";
 const LS_DRIVE_FILEID = "tj_drivefileid_v1";       // Google-Drive-Datei-ID der eigenen Backup-Datei, einmal gefunden/angelegt
-const LS_DRIVE_CONNECTED = "tj_driveconnected_v1"; // "1" = Nutzer hat sich schon einmal verbunden -> beim nächsten Start still neu anmelden
+const LS_DRIVE_CONNECTED = JMB_CONNECTED_KEY;      // "1" = schon einmal verbunden (hub-weit) -> beim nächsten Start still neu anmelden
 const LS_DRIVE_LASTSYNC = "tj_drivelastsync_v1";   // Zeitstempel (ms) der letzten erfolgreichen Drive-Sicherung
 
 let driveTokenClient = null;   // Google Identity Services Token-Client (einmalig erzeugt)
@@ -10715,16 +10747,33 @@ function initGoogleDrive(tries){
       scope: DRIVE_SCOPE,
       callback: onDriveTokenResponse
     });
-    // Falls der Nutzer sich beim letzten Mal schon verbunden hatte: automatisch, ohne
-    // Klick, ein neues Token im Hintergrund holen (funktioniert, solange die Google-
-    // Anmeldung im Browser noch aktiv ist — sonst bleibt die App einfach "nicht verbunden"
-    // und der Nutzer kann ganz normal über den Button neu verbinden).
+    // 1. Erst prüfen, ob eine ANDERE Hub-Kachel (Kalender/Projekte) schon ein gültiges
+    //    Token im gemeinsamen Cache hinterlegt hat -> direkt übernehmen, ganz ohne
+    //    Google-Anfrage (kein Aufblitzen, kein erneuter Login beim Kachel-Wechsel).
+    const shared = jmbLoadSharedToken();
+    if(shared){
+      driveAccessToken = shared.token;
+      driveTokenExpiresAt = shared.expiresAt;
+      driveConnected = true;
+      updateDriveSyncPanel();
+      scheduleDriveTokenRefresh();
+      if(STATE.trades.length === 0){ driveLoadNow(false); }
+      return;
+    }
+    // 2. Kein gültiger Cache, aber früher schon mal verbunden -> stiller Reconnect-Versuch
+    //    (funktioniert, solange die Google-Anmeldung im Browser noch aktiv ist — sonst
+    //    bleibt die App einfach "nicht verbunden" und der Nutzer kann über den Button
+    //    neu verbinden).
     if(localStorage.getItem(LS_DRIVE_CONNECTED) === "1"){
       driveTokenClient.requestAccessToken({ prompt: "" });
     }
     return;
   }
   if(tries < 50) setTimeout(()=>initGoogleDrive(tries+1), 200);
+}
+
+function scheduleDriveTokenRefresh(){
+  setTimeout(()=>{ if(driveConnected) driveTokenClient.requestAccessToken({ prompt: "" }); }, Math.max(driveTokenExpiresAt - Date.now() - 300000, 60000));
 }
 
 // Wird von Google nach jedem requestAccessToken()-Aufruf aufgerufen — egal ob durch
@@ -10740,11 +10789,11 @@ function onDriveTokenResponse(resp){
   driveAccessToken = resp.access_token;
   driveTokenExpiresAt = Date.now() + (parseInt(resp.expires_in,10) || 3500) * 1000 - 60000;
   driveConnected = true;
-  localStorage.setItem(LS_DRIVE_CONNECTED, "1");
+  jmbSaveToken(driveAccessToken, driveTokenExpiresAt); // im HUB-WEITEN Cache speichern, nicht nur lokal
   updateDriveSyncPanel();
   // Fünf Minuten vor Ablauf automatisch ein neues Token im Hintergrund holen, damit die
   // Verbindung ohne erneuten Klick bestehen bleibt, solange die Seite offen ist.
-  setTimeout(()=>{ if(driveConnected) driveTokenClient.requestAccessToken({ prompt: "" }); }, Math.max(driveTokenExpiresAt - Date.now() - 300000, 60000));
+  scheduleDriveTokenRefresh();
   // Direkt nach dem (Wieder-)Verbinden einmal synchronisieren: wenn hier lokal noch gar
   // keine Trades liegen (z.B. neues Gerät/Browser), automatisch von Drive laden — sonst
   // den aktuellen lokalen Stand hochladen, damit Drive nicht veraltet ist.
@@ -10886,7 +10935,7 @@ function driveDisconnect(){
   driveAccessToken = null;
   driveTokenExpiresAt = 0;
   driveConnected = false;
-  localStorage.removeItem(LS_DRIVE_CONNECTED);
+  jmbClearToken(); // trennt hub-weit — Kalender/Projekte fragen beim nächsten Öffnen wieder neu an
   updateDriveSyncPanel();
   toast("Google Drive getrennt.");
 }
