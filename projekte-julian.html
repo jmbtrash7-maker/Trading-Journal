@@ -388,26 +388,31 @@ function CategoryFilterBar({ categories, activeId, onChange, onManage }) {
     return (
       <button
         onClick={onManage}
-        className="inline-flex items-center gap-[9px] font-semibold transition-opacity hover:opacity-70"
-        style={{ color: "#8b93a7", fontSize: "18px" }}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-70"
+        style={{ color: "#8b93a7" }}
       >
-        <Tag size={18} /> Kategorien anlegen
+        <Tag size={12} /> Kategorien anlegen
       </button>
     );
   }
   return (
-    <div className="flex items-center gap-[9px] flex-wrap">
-      <Filter size={18} className="flex-shrink-0" style={{ color: "#8b93a7" }} />
+    <div
+      className="inline-flex items-center gap-1.5 flex-wrap rounded-xl"
+      style={{
+        background: "rgba(255,255,255,0.02)",
+        border: "1px solid rgba(255,255,255,0.07)",
+        padding: "6px 8px",
+      }}
+    >
+      <Filter size={12} className="flex-shrink-0" style={{ color: "#8b93a7" }} />
       <button
         onClick={() => onChange(null)}
-        className="inline-flex items-center rounded-full font-semibold transition-colors"
-        style={{
-          padding: "6px 15px",
-          fontSize: "18px",
-          ...(activeId === null
+        className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+        style={
+          activeId === null
             ? { background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", color: "#eef1f8" }
-            : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }),
-        }}
+            : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }
+        }
       >
         Alle
       </button>
@@ -417,27 +422,25 @@ function CategoryFilterBar({ categories, activeId, onChange, onManage }) {
           <button
             key={c.id}
             onClick={() => onChange(active ? null : c.id)}
-            className="inline-flex items-center gap-[9px] rounded-full font-semibold transition-colors"
-            style={{
-              padding: "6px 15px",
-              fontSize: "18px",
-              ...(active
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+            style={
+              active
                 ? { background: `${c.color}22`, border: `1px solid ${c.color}`, color: c.color }
-                : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }),
-            }}
+                : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }
+            }
           >
-            <span className="rounded-full flex-shrink-0" style={{ background: c.color, height: "9px", width: "9px" }} />
+            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: c.color }} />
             {c.name}
           </button>
         );
       })}
       <button
         onClick={onManage}
-        className="inline-flex items-center rounded-full transition-colors hover:bg-white/10"
+        className="inline-flex items-center rounded-full p-1 transition-colors hover:bg-white/10"
         title="Kategorien verwalten"
-        style={{ color: "#8b93a7", padding: "6px" }}
+        style={{ color: "#8b93a7" }}
       >
-        <Pencil size={18} />
+        <Pencil size={12} />
       </button>
     </div>
   );
