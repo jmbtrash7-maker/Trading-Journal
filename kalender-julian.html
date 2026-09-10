@@ -71,6 +71,10 @@
     overflow:hidden;
     font-size:14px;
     -webkit-font-smoothing:antialiased;
+    /* Native Browser-Widgets (u.a. das Kalender-/Uhrzeit-Popup von <input type=date/time>)
+       lassen sich inhaltlich nicht per CSS umstyeln, da sie kein DOM sind — aber der
+       Browser bringt dafür eine fertige dunkle Variante mit, die man hierüber aktiviert. */
+    color-scheme: dark;
   }
   button, input, select, textarea{ font-family:inherit; font-size:inherit; color:inherit; }
   button{ cursor:pointer; }
@@ -85,7 +89,7 @@
     height:64px; flex-shrink:0; display:flex; align-items:center; gap:14px;
     padding:0 18px; border:1px solid var(--glass-border); border-radius:var(--radius-lg);
     background:var(--glass-grad); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
-    box-shadow:var(--shadow-card);
+    box-shadow:var(--shadow-card); position:relative; z-index:50;
   }
   .icon-btn{
     width:36px; height:36px; border-radius:50%; background:transparent; border:none;
@@ -296,6 +300,7 @@
   .event-chip .t{ font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .event-chip .r{ opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .dragging{ opacity:.6; box-shadow:0 6px 18px rgba(0,0,0,0.5); z-index:20; }
+  .dragging.duplicating{ outline:2px dashed var(--teal); outline-offset:1px; cursor:copy; }
   .event-chip:active{ cursor:grabbing; }
   .resize-handle{ position:absolute; left:4px; right:4px; height:8px; cursor:ns-resize; z-index:2; }
   .resize-handle.top{ top:-2px; }
@@ -376,6 +381,15 @@
   .cat-opt.active{ border-color:currentColor; }
   .checkbox-row{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
   .checkbox-row label{ font-size:13px; }
+  .weekday-picker{ display:flex; gap:6px; margin:-4px 0 14px; }
+  .weekday-pill{
+    flex:1; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 4px; text-align:center;
+    font-size:12px; font-weight:600; cursor:pointer; background:rgba(255,255,255,0.03); color:var(--text-muted);
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .weekday-pill:hover{ background:rgba(255,255,255,0.07); }
+  .weekday-pill.active{ border-color:var(--primary); background:var(--primary-dim); color:var(--primary); }
+  .field-hint{ font-size:11.5px; color:var(--text-faint); margin:-8px 0 14px; line-height:1.4; }
   .modal-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:18px; }
   .modal-actions .right{ display:flex; gap:8px; }
 
@@ -519,7 +533,19 @@
     <div class="checkbox-row">
       <input type="checkbox" id="fieldAllDay">
       <label for="fieldAllDay">Ganztägig</label>
+      <input type="checkbox" id="fieldRecurring" style="margin-left:18px;">
+      <label for="fieldRecurring">Wiederholend</label>
     </div>
+    <div class="weekday-picker" id="weekdayPicker" style="display:none;">
+      <button type="button" class="weekday-pill" data-wd="0">Mo</button>
+      <button type="button" class="weekday-pill" data-wd="1">Di</button>
+      <button type="button" class="weekday-pill" data-wd="2">Mi</button>
+      <button type="button" class="weekday-pill" data-wd="3">Do</button>
+      <button type="button" class="weekday-pill" data-wd="4">Fr</button>
+      <button type="button" class="weekday-pill" data-wd="5">Sa</button>
+      <button type="button" class="weekday-pill" data-wd="6">So</button>
+    </div>
+    <div class="field-hint" id="recurringHint" style="display:none;">Legt an den ausgewählten Wochentagen jeweils einen eigenen Termin zur gleichen Uhrzeit an — für die nächsten 26 Wochen ab dem gewählten Datum.</div>
     <div class="row-2" id="timeRow">
       <div class="field">
         <label>Start</label>
@@ -1233,6 +1259,13 @@
     if(!dragCtx.moved) return;
     dragCtx.chip.classList.add('dragging');
 
+    // Strg (bzw. Cmd auf Mac) gedrückt halten = Termin beim Ablegen DUPLIZIEREN statt
+    // verschieben. Wird laufend aktualisiert, damit auch ein Drücken/Loslassen mitten im
+    // Ziehen erkannt wird — entscheidend ist der Zustand beim Loslassen der Maus.
+    dragCtx.isDuplicate = (e.ctrlKey || e.metaKey) && dragCtx.type !== 'resize-top' && dragCtx.type !== 'resize-bottom';
+    dragCtx.chip.classList.toggle('duplicating', dragCtx.isDuplicate);
+    const dupPrefix = dragCtx.isDuplicate ? '+ Kopie · ' : '';
+
     if(dragCtx.type === 'move-timed'){
       const deltaMin = snap15(dy / state.hourHeight * 60);
       const newStart = clamp(dragCtx.origStart + deltaMin, 0, 24*60 - dragCtx.duration);
@@ -1243,7 +1276,7 @@
         dragCtx.chip.style.top = (newStart/60*state.hourHeight) + 'px';
       }
       setDropHover(dragCtx, targetCol);
-      showDragTooltip(e.clientX, e.clientY, `${minutesToTime(newStart)}–${minutesToTime(newStart+dragCtx.duration)}` + (targetDate!==dragCtx.origDate ? ' · ' + formatDateShort(targetDate) : ''));
+      showDragTooltip(e.clientX, e.clientY, dupPrefix + `${minutesToTime(newStart)}–${minutesToTime(newStart+dragCtx.duration)}` + (targetDate!==dragCtx.origDate ? ' · ' + formatDateShort(targetDate) : ''));
 
     } else if(dragCtx.type === 'resize-top'){
       const deltaMin = snap15(dy / state.hourHeight * 60);
@@ -1266,13 +1299,13 @@
       const targetCell = findByX(dragCtx.targets, e.clientX);
       dragCtx.previewDate = targetCell ? targetCell.dataset.date : dragCtx.origDate;
       setDropHover(dragCtx, targetCell);
-      showDragTooltip(e.clientX, e.clientY, formatDateShort(dragCtx.previewDate));
+      showDragTooltip(e.clientX, e.clientY, dupPrefix + formatDateShort(dragCtx.previewDate));
 
     } else if(dragCtx.type === 'move-month'){
       const targetCell = findByXY(dragCtx.targets, e.clientX, e.clientY);
       dragCtx.previewDate = targetCell ? targetCell.dataset.date : dragCtx.origDate;
       setDropHover(dragCtx, targetCell);
-      showDragTooltip(e.clientX, e.clientY, formatDateShort(dragCtx.previewDate));
+      showDragTooltip(e.clientX, e.clientY, dupPrefix + formatDateShort(dragCtx.previewDate));
     }
   }
 
@@ -1298,6 +1331,25 @@
     const idx = state.events.findIndex(ev => ev.id === ctx.eventId);
     if(idx === -1) return;
     const ev = state.events[idx];
+
+    if(ctx.isDuplicate && (ctx.type === 'move-timed' || ctx.type === 'move-allday' || ctx.type === 'move-month')){
+      // Strg war beim Ablegen gedrückt -> Original bleibt unangetastet an seinem Platz,
+      // stattdessen wird eine Kopie mit neuer ID am Zielort angelegt. gcalId wird bewusst
+      // NICHT übernommen, damit die Kopie beim nächsten Sync als eigenständiger, neuer
+      // Termin zu Google Kalender hochgeladen wird (statt den Original-Termin zu überschreiben).
+      const clone = { ...ev, id: uid(), gcalId: null, updatedAt: Date.now() };
+      if(ctx.type === 'move-timed'){
+        clone.date = ctx.previewDate; clone.start = minutesToTime(ctx.previewStart); clone.end = minutesToTime(ctx.previewStart + ctx.duration);
+      } else {
+        clone.date = ctx.previewDate;
+      }
+      state.events.push(clone);
+      saveState(); renderAll();
+      showToast('Termin dupliziert');
+      markCalDirty(clone.id); scheduleCalAutoSync();
+      return;
+    }
+
     if(ctx.type === 'move-timed'){
       ev.date = ctx.previewDate; ev.start = minutesToTime(ctx.previewStart); ev.end = minutesToTime(ctx.previewStart + ctx.duration);
     } else if(ctx.type === 'resize-top'){
@@ -1351,10 +1403,52 @@
     document.getElementById('timeRow').style.display = prefill.allDay ? 'none' : 'flex';
     renderCatOptions(prefill.category || categoryKeys()[0]);
     document.getElementById('btnDeleteEvent').style.display = isEdit ? 'inline-flex' : 'none';
+
+    // "Wiederholend" gibt es nur beim NEU-Anlegen: einmal erzeugte Serien-Termine sind
+    // danach ganz normale, unabhängige Einzeltermine (kein Serien-Bearbeiten/-Löschen) —
+    // beim Bearbeiten eines bestehenden Eintrags macht die Option daher keinen Sinn.
+    const recurringRow = document.getElementById('fieldRecurring');
+    recurringRow.checked = false;
+    recurringRow.closest('.checkbox-row').querySelectorAll('#fieldRecurring, label[for="fieldRecurring"]').forEach(el => el.style.display = isEdit ? 'none' : '');
+    document.getElementById('weekdayPicker').style.display = 'none';
+    document.getElementById('recurringHint').style.display = 'none';
+    document.getElementById('weekdayPicker').querySelectorAll('.weekday-pill').forEach(p => p.classList.remove('active'));
+    if(!isEdit){
+      // Wochentag des gewählten Datums vorab anhaken, damit der Tag, an dem man gerade
+      // eh schon anlegt, nicht extra nochmal angeklickt werden muss.
+      const wdOfDate = (parseIso(document.getElementById('fieldDate').value).getDay() + 6) % 7;
+      const pill = document.getElementById('weekdayPicker').querySelector(`[data-wd="${wdOfDate}"]`);
+      if(pill) pill.classList.add('active');
+    }
+
     document.getElementById('modalOverlay').classList.add('open');
     document.getElementById('fieldTitle').focus();
   }
+  document.getElementById('fieldRecurring').addEventListener('change', () => {
+    const on = document.getElementById('fieldRecurring').checked;
+    document.getElementById('weekdayPicker').style.display = on ? 'flex' : 'none';
+    document.getElementById('recurringHint').style.display = on ? 'block' : 'none';
+  });
+  document.getElementById('weekdayPicker').querySelectorAll('.weekday-pill').forEach(pill => {
+    pill.addEventListener('click', () => pill.classList.toggle('active'));
+  });
   function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+
+  // Erzeugt für die kommenden `weeks` Wochen je einen Termin an jedem ausgewählten
+  // Wochentag (inkl. Startdatum selbst, falls dessen Wochentag mit ausgewählt ist).
+  // 26 Wochen ~ deckungsgleich mit dem Google-Sync-Fenster (CAL_SYNC_FUTURE_DAYS),
+  // damit keine der erzeugten Termine beim Sync "hinten rausfällt".
+  function generateRecurringDates(startDateISO, weekdaySet, weeks){
+    const dates = [];
+    const start = parseIso(startDateISO);
+    const totalDays = weeks * 7;
+    for(let i=0; i<totalDays; i++){
+      const d = addDays(start, i);
+      const wd = (d.getDay() + 6) % 7; // 0=Mo ... 6=So, wie WOCHENTAGE_KURZ
+      if(weekdaySet.has(wd)) dates.push(isoDate(d));
+    }
+    return dates;
+  }
 
   function saveEventFromModal(){
     const title = document.getElementById('fieldTitle').value.trim();
@@ -1366,6 +1460,25 @@
     const start = allDay ? null : document.getElementById('fieldStart').value;
     const end = allDay ? null : document.getElementById('fieldEnd').value;
     const notes = document.getElementById('fieldNotes').value.trim();
+
+    const isRecurring = !state.editingId && document.getElementById('fieldRecurring').checked;
+    const selectedWeekdays = new Set(Array.from(document.querySelectorAll('.weekday-pill.active')).map(p => Number(p.dataset.wd)));
+
+    if(isRecurring && selectedWeekdays.size > 0){
+      const seriesId = uid();
+      const dates = generateRecurringDates(date, selectedWeekdays, 26);
+      const touchedIds = [];
+      dates.forEach(d => {
+        const ev = { id: uid(), seriesId, title, category, date: d, allDay, start, end, notes, updatedAt: Date.now() };
+        state.events.push(ev);
+        touchedIds.push(ev.id);
+      });
+      saveState(); closeModal(); renderAll();
+      showToast(`${dates.length} Termine angelegt`);
+      touchedIds.forEach(id => markCalDirty(id));
+      scheduleCalAutoSync();
+      return;
+    }
 
     let touchedId;
     if(state.editingId){
