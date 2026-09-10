@@ -57,7 +57,8 @@ import {
   ArrowLeft, Plus, X, Search, LayoutGrid, CalendarClock, Clock,
   CheckCircle2, Circle, AlertTriangle, Loader, ChevronRight,
   LineChart, Dumbbell, CalendarDays, FileWarning, LayoutDashboard,
-  Rocket, Trash2, ListChecks, ImagePlus, Cloud, Sparkles
+  Rocket, Trash2, ListChecks, ImagePlus, Cloud, Sparkles,
+  Tag, Pencil, StickyNote, Check, Filter
 } from "https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1";
 
 /* ============================================================
@@ -86,6 +87,12 @@ const STATUS_CONFIG = {
 const PROJECT_ICONS = { LineChart, Dumbbell, CalendarDays, FileWarning, LayoutDashboard, Rocket };
 const ICON_CHOICES = Object.keys(PROJECT_ICONS);
 const COLOR_CHOICES = Object.keys(COLOR_TOKENS);
+
+// Schnellauswahl-Farben für selbst angelegte Kategorien (Termine/Tasks). Bewusst eine
+// eigene, etwas größere Palette als die Projekt-Farben — Kategorien sind freier und
+// Julian legt sie sich selbst an, daher zusätzlich ein freies Farbfeld (<input type="color">)
+// für jede Farbe, die hier nicht vorkommt.
+const CATEGORY_SWATCHES = ["#7c5cff", "#36c6ff", "#2bd9b9", "#22c55e", "#f0a63d", "#ff4d6d", "#ec4899", "#eab308", "#8b93a7"];
 
 /* ============================================================
    DATUMS-HILFSFUNKTIONEN
@@ -146,6 +153,15 @@ const initialEvents = [
   { id: "e7", title: "Belege sortieren", date: isoDate(addDays(today, 3)), time: null, projectId: "p4", type: "task", done: false },
   { id: "e8", title: "Termin Steuerberater", date: isoDate(addDays(today, 6)), time: "11:30", projectId: "p4", type: "termin", done: false },
   { id: "e9", title: "Farbschema abstimmen", date: isoDate(addDays(today, 5)), time: "16:00", projectId: "p5", type: "termin", done: false },
+];
+
+// Selbst angelegte Kategorien für Termine/Tasks — unabhängig vom Status-System der
+// Projekte. Julian legt Name + Farbe frei selbst an (siehe CategoryManagerModal weiter
+// unten); hier nur ein paar Demo-Einträge zum Ausprobieren.
+const initialCategories = [
+  { id: "cat1", name: "Design", color: "#7c5cff" },
+  { id: "cat2", name: "Technik", color: "#36c6ff" },
+  { id: "cat3", name: "Recherche", color: "#f0a63d" },
 ];
 
 function uid() { return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
@@ -282,40 +298,133 @@ function ProjectCard({ project, status, nextDue, openCount, onOpen }) {
 /* ============================================================
    TERMIN/TASK-ZEILE (wiederverwendet in Detail- & Kalenderansicht)
    ============================================================ */
-function EventRow({ ev, project, onToggleDone, showProject }) {
+function EventRow({ ev, project, category, onToggleDone, showProject }) {
   const tokens = project ? (COLOR_TOKENS[project.color] || COLOR_TOKENS.violet) : COLOR_TOKENS.violet;
+  const [notesOpen, setNotesOpen] = useState(false);
+  const hasNotes = !!(ev.notes && ev.notes.trim());
   return (
     <div
-      className="flex items-center gap-3 rounded-xl px-3 py-2.5 transition-colors"
+      className="rounded-xl px-3 py-2.5 transition-colors"
       style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.06)" }}
     >
-      <button onClick={() => onToggleDone(ev.id)} className="flex-shrink-0" title={ev.done ? "Als offen markieren" : "Als erledigt markieren"}>
-        {ev.done ? <CheckCircle2 size={18} style={{ color: "#2bd9b9" }} /> : <Circle size={18} style={{ color: "#8b93a7" }} />}
-      </button>
-      <div className="min-w-0 flex-1">
-        <div className={`text-sm font-medium truncate ${ev.done ? "line-through opacity-50" : ""}`} style={{ color: "#eef1f8" }}>
-          {ev.title}
+      <div className="flex items-center gap-3">
+        <button onClick={() => onToggleDone(ev.id)} className="flex-shrink-0" title={ev.done ? "Als offen markieren" : "Als erledigt markieren"}>
+          {ev.done ? <CheckCircle2 size={18} style={{ color: "#2bd9b9" }} /> : <Circle size={18} style={{ color: "#8b93a7" }} />}
+        </button>
+        <div className="min-w-0 flex-1">
+          <div className={`text-sm font-medium truncate ${ev.done ? "line-through opacity-50" : ""}`} style={{ color: "#eef1f8" }}>
+            {ev.title}
+          </div>
+          <div className="flex items-center gap-2 mt-0.5 text-xs flex-wrap" style={{ color: "#8b93a7" }}>
+            <span>{relativeDateLabel(ev.date)}</span>
+            {ev.time && <><span>·</span><span>{ev.time}</span></>}
+            {showProject && project && (
+              <>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1" style={{ color: tokens.accent }}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: tokens.accent }} />
+                  {project.name}
+                </span>
+              </>
+            )}
+            {category && (
+              <>
+                <span>·</span>
+                <span className="inline-flex items-center gap-1 font-semibold" style={{ color: category.color }}>
+                  <span className="h-1.5 w-1.5 rounded-full" style={{ background: category.color }} />
+                  {category.name}
+                </span>
+              </>
+            )}
+          </div>
         </div>
-        <div className="flex items-center gap-2 mt-0.5 text-xs" style={{ color: "#8b93a7" }}>
-          <span>{relativeDateLabel(ev.date)}</span>
-          {ev.time && <><span>·</span><span>{ev.time}</span></>}
-          {showProject && project && (
-            <>
-              <span>·</span>
-              <span className="inline-flex items-center gap-1" style={{ color: tokens.accent }}>
-                <span className="h-1.5 w-1.5 rounded-full" style={{ background: tokens.accent }} />
-                {project.name}
-              </span>
-            </>
-          )}
-        </div>
+        {hasNotes && (
+          <button
+            onClick={() => setNotesOpen((v) => !v)}
+            className="flex-shrink-0 rounded-md p-1 transition-colors hover:bg-white/10"
+            title={notesOpen ? "Notiz ausblenden" : "Notiz anzeigen"}
+            style={{ color: notesOpen ? "#a996ff" : "#8b93a7" }}
+          >
+            <StickyNote size={14} />
+          </button>
+        )}
+        <span
+          className="flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide rounded-md px-1.5 py-0.5"
+          style={{ color: tokens.accent, background: tokens.dim }}
+        >
+          {ev.type === "task" ? "Task" : "Termin"}
+        </span>
       </div>
-      <span
-        className="flex-shrink-0 text-[10px] font-semibold uppercase tracking-wide rounded-md px-1.5 py-0.5"
-        style={{ color: tokens.accent, background: tokens.dim }}
+      {hasNotes && notesOpen && (
+        <div
+          className="mt-2 ml-7 rounded-lg px-3 py-2 text-xs whitespace-pre-wrap"
+          style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.06)", color: "#c3c8d6" }}
+        >
+          {ev.notes}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ============================================================
+   KATEGORIE-FILTERLEISTE — wiederverwendet in Projekt-Detail &
+   Timeline. Zeigt "Alle" + je eine Pille pro vorhandener Kategorie;
+   Klick filtert die Liste, erneuter Klick auf die aktive Pille hebt
+   den Filter wieder auf.
+   ============================================================ */
+function CategoryFilterBar({ categories, activeId, onChange, onManage }) {
+  if (categories.length === 0) {
+    return (
+      <button
+        onClick={onManage}
+        className="inline-flex items-center gap-1.5 text-xs font-semibold transition-opacity hover:opacity-70"
+        style={{ color: "#8b93a7" }}
       >
-        {ev.type === "task" ? "Task" : "Termin"}
-      </span>
+        <Tag size={12} /> Kategorien anlegen
+      </button>
+    );
+  }
+  return (
+    <div className="flex items-center gap-1.5 flex-wrap">
+      <Filter size={12} className="flex-shrink-0" style={{ color: "#8b93a7" }} />
+      <button
+        onClick={() => onChange(null)}
+        className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+        style={
+          activeId === null
+            ? { background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", color: "#eef1f8" }
+            : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }
+        }
+      >
+        Alle
+      </button>
+      {categories.map((c) => {
+        const active = activeId === c.id;
+        return (
+          <button
+            key={c.id}
+            onClick={() => onChange(active ? null : c.id)}
+            className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+            style={
+              active
+                ? { background: `${c.color}22`, border: `1px solid ${c.color}`, color: c.color }
+                : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }
+            }
+          >
+            <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: c.color }} />
+            {c.name}
+          </button>
+        );
+      })}
+      <button
+        onClick={onManage}
+        className="inline-flex items-center rounded-full p-1 transition-colors hover:bg-white/10"
+        title="Kategorien verwalten"
+        style={{ color: "#8b93a7" }}
+      >
+        <Pencil size={12} />
+      </button>
     </div>
   );
 }
@@ -361,9 +470,11 @@ function StatusPicker({ project, autoStatus, onChange }) {
   );
 }
 
-function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDeleteProject, onUpdateProject }) {
+function ProjectDetail({ project, events, categories, categoriesById, onToggleDone, onBack, onAddEvent, onDeleteProject, onUpdateProject, onManageCategories }) {
   const tokens = COLOR_TOKENS[project.color] || COLOR_TOKENS.violet;
-  const sorted = [...events].sort((a, b) => a.date.localeCompare(b.date));
+  const [categoryFilter, setCategoryFilter] = useState(null);
+  const filteredEvents = categoryFilter ? events.filter((e) => e.categoryId === categoryFilter) : events;
+  const sorted = [...filteredEvents].sort((a, b) => a.date.localeCompare(b.date));
   const open = sorted.filter((e) => !e.done);
   const done = sorted.filter((e) => e.done);
   const fileInputRef = useRef(null);
@@ -443,7 +554,7 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
         <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "#8b93a7" }}>Termine &amp; Tasks</h2>
         <button
           onClick={() => onAddEvent(project.id)}
@@ -454,20 +565,26 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
         </button>
       </div>
 
+      <div className="mb-3">
+        <CategoryFilterBar categories={categories} activeId={categoryFilter} onChange={setCategoryFilter} onManage={onManageCategories} />
+      </div>
+
       <div className="space-y-2">
         {open.length === 0 && done.length === 0 && (
           <div className="rounded-xl py-8 text-center text-sm" style={{ color: "#8b93a7", border: "1px dashed rgba(255,255,255,0.1)" }}>
-            Noch keine Termine oder Tasks — leg den ersten mit "Hinzufügen" an.
+            {events.length === 0
+              ? 'Noch keine Termine oder Tasks — leg den ersten mit "Hinzufügen" an.'
+              : "Keine Einträge in dieser Kategorie."}
           </div>
         )}
         {open.map((ev) => (
-          <EventRow key={ev.id} ev={ev} project={project} onToggleDone={onToggleDone} showProject={false} />
+          <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} showProject={false} />
         ))}
         {done.length > 0 && (
           <>
             <div className="text-xs font-semibold uppercase tracking-wide pt-3 pb-1" style={{ color: "#8b93a7" }}>Erledigt</div>
             {done.map((ev) => (
-              <EventRow key={ev.id} ev={ev} project={project} onToggleDone={onToggleDone} showProject={false} />
+              <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} showProject={false} />
             ))}
           </>
         )}
@@ -479,9 +596,11 @@ function ProjectDetail({ project, events, onBack, onToggleDone, onAddEvent, onDe
 /* ============================================================
    GLOBALE KALENDER-/TIMELINE-ANSICHT
    ============================================================ */
-function TimelineView({ events, projectsById, onToggleDone, onAddEvent }) {
+function TimelineView({ events, projectsById, categories, categoriesById, onToggleDone, onAddEvent, onManageCategories }) {
+  const [categoryFilter, setCategoryFilter] = useState(null);
   const upcoming = events
     .filter((e) => !e.done)
+    .filter((e) => !categoryFilter || e.categoryId === categoryFilter)
     .sort((a, b) => a.date.localeCompare(b.date) || (a.time || "99:99").localeCompare(b.time || "99:99"));
 
   const groups = [];
@@ -504,9 +623,13 @@ function TimelineView({ events, projectsById, onToggleDone, onAddEvent }) {
         </button>
       </div>
 
+      <div className="mb-4">
+        <CategoryFilterBar categories={categories} activeId={categoryFilter} onChange={setCategoryFilter} onManage={onManageCategories} />
+      </div>
+
       {groups.length === 0 && (
         <div className="rounded-xl py-10 text-center text-sm" style={{ color: "#8b93a7", border: "1px dashed rgba(255,255,255,0.1)" }}>
-          Nichts Anstehendes — alles erledigt.
+          {categoryFilter ? "Keine Einträge in dieser Kategorie." : "Nichts Anstehendes — alles erledigt."}
         </div>
       )}
 
@@ -519,7 +642,7 @@ function TimelineView({ events, projectsById, onToggleDone, onAddEvent }) {
             </div>
             <div className="flex-1 space-y-2">
               {g.items.map((ev) => (
-                <EventRow key={ev.id} ev={ev} project={projectsById[ev.projectId]} onToggleDone={onToggleDone} showProject={true} />
+                <EventRow key={ev.id} ev={ev} project={projectsById[ev.projectId]} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} showProject={true} />
               ))}
             </div>
           </div>
@@ -532,14 +655,28 @@ function TimelineView({ events, projectsById, onToggleDone, onAddEvent }) {
 /* ============================================================
    MODAL: NEUER TERMIN/TASK
    ============================================================ */
-function EventModal({ projects, defaultProjectId, onSave, onClose }) {
+function EventModal({ projects, categories, defaultProjectId, onSave, onClose, onCreateCategory }) {
   const [title, setTitle] = useState("");
   const [date, setDate] = useState(isoDate(new Date()));
   const [time, setTime] = useState("");
   const [type, setType] = useState("task");
   const [projectId, setProjectId] = useState(defaultProjectId || "");
+  const [categoryId, setCategoryId] = useState(null);
+  const [notes, setNotes] = useState("");
+  const [showNewCategory, setShowNewCategory] = useState(false);
+  const [newCatName, setNewCatName] = useState("");
+  const [newCatColor, setNewCatColor] = useState(CATEGORY_SWATCHES[0]);
 
   const canSave = title.trim().length > 0;
+
+  function handleCreateCategory() {
+    const name = newCatName.trim();
+    if (!name) return;
+    const id = onCreateCategory({ name, color: newCatColor });
+    setCategoryId(id);
+    setNewCatName("");
+    setShowNewCategory(false);
+  }
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(5,7,14,0.7)", backdropFilter: "blur(4px)" }}>
@@ -616,17 +753,259 @@ function EventModal({ projects, defaultProjectId, onSave, onClose }) {
           ))}
         </select>
 
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: "#8b93a7" }}>Kategorie (optional)</label>
+        <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setCategoryId(null)}
+            className="inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+            style={
+              categoryId === null
+                ? { background: "rgba(255,255,255,0.12)", border: "1px solid rgba(255,255,255,0.25)", color: "#eef1f8" }
+                : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }
+            }
+          >
+            Keine
+          </button>
+          {categories.map((c) => {
+            const active = categoryId === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => setCategoryId(c.id)}
+                className="inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+                style={
+                  active
+                    ? { background: `${c.color}22`, border: `1px solid ${c.color}`, color: c.color }
+                    : { background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.1)", color: "#8b93a7" }
+                }
+              >
+                <span className="h-1.5 w-1.5 rounded-full flex-shrink-0" style={{ background: c.color }} />
+                {c.name}
+              </button>
+            );
+          })}
+          <button
+            type="button"
+            onClick={() => setShowNewCategory((v) => !v)}
+            className="inline-flex items-center gap-1 rounded-full px-2.5 py-1 text-xs font-semibold transition-colors"
+            style={{ background: "rgba(255,255,255,0.04)", border: "1px dashed rgba(255,255,255,0.2)", color: "#8b93a7" }}
+          >
+            <Plus size={11} strokeWidth={2.5} /> Neu
+          </button>
+        </div>
+
+        {showNewCategory && (
+          <div className="rounded-lg p-3 mb-4" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}>
+            <input
+              autoFocus
+              value={newCatName}
+              onChange={(e) => setNewCatName(e.target.value)}
+              placeholder="Name der Kategorie"
+              className="w-full rounded-lg px-3 py-1.5 text-sm mb-2 outline-none"
+              style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8" }}
+            />
+            <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+              {CATEGORY_SWATCHES.map((sw) => (
+                <button
+                  key={sw}
+                  type="button"
+                  onClick={() => setNewCatColor(sw)}
+                  className="h-6 w-6 rounded-full flex-shrink-0 transition-transform hover:scale-110"
+                  style={{ background: sw, boxShadow: newCatColor === sw ? `0 0 0 2px #10141f, 0 0 0 4px ${sw}` : "none" }}
+                />
+              ))}
+              <input
+                type="color"
+                value={newCatColor}
+                onChange={(e) => setNewCatColor(e.target.value)}
+                title="Eigene Farbe wählen"
+                className="h-6 w-6 rounded-full flex-shrink-0 cursor-pointer bg-transparent"
+                style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+              />
+            </div>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setShowNewCategory(false)} className="rounded-md px-3 py-1 text-xs font-semibold" style={{ color: "#8b93a7" }}>
+                Abbrechen
+              </button>
+              <button
+                type="button"
+                disabled={!newCatName.trim()}
+                onClick={handleCreateCategory}
+                className="rounded-md px-3 py-1 text-xs font-semibold disabled:opacity-40"
+                style={{ background: newCatColor, color: "#0a0e1a" }}
+              >
+                Anlegen
+              </button>
+            </div>
+          </div>
+        )}
+
+        <label className="block text-xs font-semibold mb-1.5 mt-4" style={{ color: "#8b93a7" }}>Notiz (optional)</label>
+        <textarea
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Weitere Details, Kontext, Links …"
+          rows={3}
+          className="w-full rounded-lg px-3 py-2 text-sm mb-5 outline-none resize-none"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8" }}
+        />
+
         <div className="flex justify-end gap-2">
           <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5" style={{ color: "#8b93a7" }}>
             Abbrechen
           </button>
           <button
             disabled={!canSave}
-            onClick={() => canSave && onSave({ title: title.trim(), date, time: time || null, type, projectId: projectId || null })}
+            onClick={() => canSave && onSave({ title: title.trim(), date, time: time || null, type, projectId: projectId || null, categoryId: categoryId || null, notes: notes.trim() || null })}
             className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
             style={{ background: "linear-gradient(135deg,#8b7bff,#5b4fe0)", color: "#0a0e1a" }}
           >
             Speichern
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   MODAL: KATEGORIEN VERWALTEN — freies Anlegen/Umbenennen/Löschen
+   eigener Kategorien (Name + Farbe). Löschen entfernt die Kategorie
+   nur von den Terminen/Tasks (categoryId -> null), löscht diese aber
+   nicht.
+   ============================================================ */
+function CategoryManagerModal({ categories, onCreate, onUpdate, onDelete, onClose }) {
+  const [newName, setNewName] = useState("");
+  const [newColor, setNewColor] = useState(CATEGORY_SWATCHES[0]);
+  const [editingId, setEditingId] = useState(null);
+  const [editName, setEditName] = useState("");
+  const [editColor, setEditColor] = useState("");
+
+  function startEdit(c) {
+    setEditingId(c.id);
+    setEditName(c.name);
+    setEditColor(c.color);
+  }
+  function saveEdit() {
+    if (editName.trim()) onUpdate(editingId, { name: editName.trim(), color: editColor });
+    setEditingId(null);
+  }
+  function handleCreate() {
+    const name = newName.trim();
+    if (!name) return;
+    onCreate({ name, color: newColor });
+    setNewName("");
+    setNewColor(CATEGORY_SWATCHES[0]);
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(5,7,14,0.7)", backdropFilter: "blur(4px)" }}>
+      <div
+        className="w-full max-w-sm rounded-2xl p-5"
+        style={{ background: "rgba(16,20,34,0.95)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold inline-flex items-center gap-2" style={{ fontFamily: "'Rajdhani',sans-serif", color: "#fff" }}>
+            <Tag size={16} style={{ color: "#a996ff" }} /> Kategorien
+          </h3>
+          <button onClick={onClose} className="opacity-60 hover:opacity-100 transition-opacity"><X size={18} /></button>
+        </div>
+
+        <div className="space-y-2 mb-4 max-h-64 overflow-y-auto">
+          {categories.length === 0 && (
+            <div className="text-xs py-4 text-center" style={{ color: "#8b93a7" }}>Noch keine Kategorien angelegt.</div>
+          )}
+          {categories.map((c) => (
+            <div key={c.id} className="rounded-lg p-2.5" style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}>
+              {editingId === c.id ? (
+                <div>
+                  <input
+                    autoFocus
+                    value={editName}
+                    onChange={(e) => setEditName(e.target.value)}
+                    className="w-full rounded-md px-2 py-1 text-sm mb-2 outline-none"
+                    style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8" }}
+                  />
+                  <div className="flex items-center gap-1.5 mb-2 flex-wrap">
+                    {CATEGORY_SWATCHES.map((sw) => (
+                      <button
+                        key={sw}
+                        onClick={() => setEditColor(sw)}
+                        className="h-5 w-5 rounded-full flex-shrink-0 transition-transform hover:scale-110"
+                        style={{ background: sw, boxShadow: editColor === sw ? `0 0 0 2px #10141f, 0 0 0 3px ${sw}` : "none" }}
+                      />
+                    ))}
+                    <input
+                      type="color"
+                      value={editColor}
+                      onChange={(e) => setEditColor(e.target.value)}
+                      className="h-5 w-5 rounded-full flex-shrink-0 cursor-pointer bg-transparent"
+                      style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-1.5">
+                    <button onClick={() => setEditingId(null)} className="rounded-md px-2 py-1 text-xs font-semibold" style={{ color: "#8b93a7" }}>Abbrechen</button>
+                    <button onClick={saveEdit} className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-xs font-semibold" style={{ background: editColor, color: "#0a0e1a" }}>
+                      <Check size={12} /> Speichern
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="inline-flex items-center gap-2 text-sm font-medium truncate" style={{ color: "#eef1f8" }}>
+                    <span className="h-2.5 w-2.5 rounded-full flex-shrink-0" style={{ background: c.color }} />
+                    {c.name}
+                  </span>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <button onClick={() => startEdit(c)} className="rounded-md p-1.5 transition-colors hover:bg-white/10" style={{ color: "#8b93a7" }} title="Bearbeiten">
+                      <Pencil size={13} />
+                    </button>
+                    <button onClick={() => onDelete(c.id)} className="rounded-md p-1.5 transition-colors hover:bg-white/10" style={{ color: "#ff8098" }} title="Löschen">
+                      <Trash2 size={13} />
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        <div className="pt-3" style={{ borderTop: "1px solid rgba(255,255,255,0.08)" }}>
+          <label className="block text-xs font-semibold mb-1.5" style={{ color: "#8b93a7" }}>Neue Kategorie</label>
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="z.B. Wartet auf Antwort"
+            className="w-full rounded-lg px-3 py-2 text-sm mb-2 outline-none"
+            style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8" }}
+          />
+          <div className="flex items-center gap-1.5 mb-3 flex-wrap">
+            {CATEGORY_SWATCHES.map((sw) => (
+              <button
+                key={sw}
+                onClick={() => setNewColor(sw)}
+                className="h-6 w-6 rounded-full flex-shrink-0 transition-transform hover:scale-110"
+                style={{ background: sw, boxShadow: newColor === sw ? `0 0 0 2px #10141f, 0 0 0 4px ${sw}` : "none" }}
+              />
+            ))}
+            <input
+              type="color"
+              value={newColor}
+              onChange={(e) => setNewColor(e.target.value)}
+              title="Eigene Farbe wählen"
+              className="h-6 w-6 rounded-full flex-shrink-0 cursor-pointer bg-transparent"
+              style={{ border: "1px solid rgba(255,255,255,0.2)" }}
+            />
+          </div>
+          <button
+            disabled={!newName.trim()}
+            onClick={handleCreate}
+            className="w-full inline-flex items-center justify-center gap-1.5 rounded-lg py-2 text-sm font-semibold disabled:opacity-40"
+            style={{ background: "linear-gradient(135deg,#8b7bff,#5b4fe0)", color: "#0a0e1a" }}
+          >
+            <Plus size={14} strokeWidth={2.5} /> Anlegen
           </button>
         </div>
       </div>
@@ -987,29 +1366,34 @@ function useDriveSync(getPayload, applyPayload) {
 function ProjekteDashboard() {
   const [projects, setProjects] = useState(initialProjects);
   const [events, setEvents] = useState(initialEvents);
+  const [categories, setCategories] = useState(initialCategories);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
   const [tab, setTab] = useState("projects"); // 'projects' | 'timeline'
   const [search, setSearch] = useState("");
   const [eventModalProjectId, setEventModalProjectId] = useState(undefined); // undefined = geschlossen, null/id = offen
   const [showProjectModal, setShowProjectModal] = useState(false);
+  const [showCategoryModal, setShowCategoryModal] = useState(false);
 
   // Refs mit dem jeweils aktuellsten Stand — so bekommt der Drive-Sync-Hook (der seinen
   // Google-Callback nur einmal beim Start einrichtet) immer die frischen Daten, statt an
   // einem alten Stand von damals festzuhängen.
   const projectsRef = useRef(projects);
   const eventsRef = useRef(events);
+  const categoriesRef = useRef(categories);
   useEffect(() => { projectsRef.current = projects; }, [projects]);
   useEffect(() => { eventsRef.current = events; }, [events]);
+  useEffect(() => { categoriesRef.current = categories; }, [categories]);
 
   const drive = useDriveSync(
-    () => ({ projects: projectsRef.current, events: eventsRef.current }),
-    (data) => { setProjects(data.projects); setEvents(data.events); }
+    () => ({ projects: projectsRef.current, events: eventsRef.current, categories: categoriesRef.current }),
+    (data) => { setProjects(data.projects); setEvents(data.events); setCategories(Array.isArray(data.categories) ? data.categories : []); }
   );
-  // Bei jeder Änderung an Projekten/Terminen (debounced 4s) automatisch nach Drive
-  // sichern — genauso wie im Kalender und Trading Journal.
-  useEffect(() => { drive.scheduleSave(); }, [projects, events]);
+  // Bei jeder Änderung an Projekten/Terminen/Kategorien (debounced 4s) automatisch nach
+  // Drive sichern — genauso wie im Kalender und Trading Journal.
+  useEffect(() => { drive.scheduleSave(); }, [projects, events, categories]);
 
   const projectsById = useMemo(() => Object.fromEntries(projects.map((p) => [p.id, p])), [projects]);
+  const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories]);
 
   const eventsByProject = useMemo(() => {
     const map = {};
@@ -1042,6 +1426,21 @@ function ProjekteDashboard() {
     setProjects((prev) => prev.filter((p) => p.id !== id));
     setEvents((prev) => prev.map((e) => (e.projectId === id ? { ...e, projectId: null } : e)));
     setSelectedProjectId(null);
+  }
+
+  // Kategorien: frei anlegbar/umbenennbar/löschbar. Löschen entfernt die Zuordnung von
+  // betroffenen Terminen/Tasks (categoryId -> null), löscht diese aber nicht selbst.
+  function addCategory(newCat) {
+    const id = uid();
+    setCategories((prev) => [...prev, { id, ...newCat }]);
+    return id;
+  }
+  function updateCategory(id, patch) {
+    setCategories((prev) => prev.map((c) => (c.id === id ? { ...c, ...patch } : c)));
+  }
+  function deleteCategory(id) {
+    setCategories((prev) => prev.filter((c) => c.id !== id));
+    setEvents((prev) => prev.map((e) => (e.categoryId === id ? { ...e, categoryId: null } : e)));
   }
 
   const selectedProject = selectedProjectId ? projectsById[selectedProjectId] : null;
@@ -1095,6 +1494,14 @@ function ProjekteDashboard() {
                   {drive.status.connected
                     ? `Google Drive${drive.status.lastSync ? " · " + new Date(drive.status.lastSync).toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" }) : ""}`
                     : "Google Drive verbinden"}
+                </button>
+                <button
+                  onClick={() => setShowCategoryModal(true)}
+                  title="Eigene Kategorien für Termine & Tasks anlegen/verwalten"
+                  className="inline-flex items-center gap-1.5 rounded-lg px-3 py-2.5 text-xs font-semibold transition-colors"
+                  style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.12)", color: "#8b93a7" }}
+                >
+                  <Tag size={14} /> Kategorien
                 </button>
                 <button
                   onClick={() => setShowProjectModal(true)}
@@ -1166,8 +1573,11 @@ function ProjekteDashboard() {
               <TimelineView
                 events={events}
                 projectsById={projectsById}
+                categories={categories}
+                categoriesById={categoriesById}
                 onToggleDone={toggleDone}
                 onAddEvent={setEventModalProjectId}
+                onManageCategories={() => setShowCategoryModal(true)}
               />
             )}
           </>
@@ -1175,11 +1585,14 @@ function ProjekteDashboard() {
           <ProjectDetail
             project={selectedProject}
             events={eventsByProject[selectedProject.id] || []}
+            categories={categories}
+            categoriesById={categoriesById}
             onBack={() => setSelectedProjectId(null)}
             onToggleDone={toggleDone}
             onAddEvent={setEventModalProjectId}
             onDeleteProject={deleteProject}
             onUpdateProject={updateProject}
+            onManageCategories={() => setShowCategoryModal(true)}
           />
         )}
       </div>
@@ -1187,12 +1600,23 @@ function ProjekteDashboard() {
       {eventModalProjectId !== undefined && (
         <EventModal
           projects={projects}
+          categories={categories}
           defaultProjectId={eventModalProjectId}
           onSave={addEvent}
           onClose={() => setEventModalProjectId(undefined)}
+          onCreateCategory={addCategory}
         />
       )}
       {showProjectModal && <ProjectModal onSave={addProject} onClose={() => setShowProjectModal(false)} />}
+      {showCategoryModal && (
+        <CategoryManagerModal
+          categories={categories}
+          onCreate={addCategory}
+          onUpdate={updateCategory}
+          onDelete={deleteCategory}
+          onClose={() => setShowCategoryModal(false)}
+        />
+      )}
     </div>
   );
 }
