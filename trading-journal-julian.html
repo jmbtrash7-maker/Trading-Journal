@@ -127,9 +127,9 @@
     backdrop-filter:blur(14px);
     border-bottom:1px solid var(--border);
     display:grid; grid-template-columns:1fr auto 1fr; align-items:center;
-    padding:14px 24px 14px 12px;
+    padding:14px 24px 14px 90px;
     padding-top:calc(14px + env(safe-area-inset-top));
-    padding-left:calc(12px + env(safe-area-inset-left));
+    padding-left:calc(90px + env(safe-area-inset-left));
     gap:12px;
   }
   .topnav-left{display:flex; align-items:center; gap:12px;}
@@ -490,8 +490,7 @@
   .mental-week-section-arrow.collapsed{transform:rotate(-90deg);}
   .mental-eval-panel{border-color:var(--green); background:var(--bg-panel);}
   .mental-eval-text{color:var(--text); font-size:13.5px; line-height:1.5; white-space:pre-wrap;}
-  .mental-eval-textarea{width:100%; min-height:110px; resize:vertical; background:var(--bg-card); border:1px solid var(--border); border-radius:8px; color:var(--text); font:inherit; font-size:13.5px; padding:10px; box-sizing:border-box;}
-  .mental-eval-textarea:focus{outline:none; border-color:var(--green);}
+  .mental-eval-textarea{min-height:320px;}
   .mental-week-day-label{font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.4px; color:var(--text-faint); margin-bottom:3px;}
   .mental-week-day-text{font-size:14px; color:var(--text); line-height:1.55; white-space:pre-wrap;}
   .stat-card .label{font-size:11px; letter-spacing:.6px; color:var(--text-faint); font-weight:700; text-transform:uppercase; margin-bottom:10px;}
@@ -1042,6 +1041,20 @@
   .note-item-head{display:flex; align-items:center; gap:6px; flex-wrap:wrap; margin-bottom:8px;}
   .note-item-text{color:var(--text); font-size:13.5px; line-height:1.55; white-space:pre-wrap;}
   .note-item-text mark{background:var(--green); color:#06281c; border-radius:3px; padding:0 2px;}
+  /* Erkenntnisse sind quasi "goldene Regeln" — bewusst stärker hervorgehoben als normale
+     Notiz-Listen (siehe .note-item oben, das auch für andere Listen genutzt wird). Eigene
+     Klasse statt .note-item selbst umzustylen, damit die anderen Listen unangetastet bleiben. */
+  .insight-item{
+    position:relative; padding:14px 16px 14px 34px;
+    background:linear-gradient(135deg, var(--amber-dim) 0%, var(--bg-card) 70%);
+    border:1px solid #6b4f18; box-shadow:0 0 0 1px rgba(245,181,68,.05);
+  }
+  .insight-item:hover{border-color:var(--amber);}
+  .insight-item::before{
+    content:"✦"; position:absolute; left:12px; top:15px; color:var(--amber); font-size:14px; line-height:1;
+  }
+  .insight-item .note-item-title{color:var(--amber); font-size:15.5px;}
+  .insight-item .note-item-text{font-weight:600; font-size:14px; color:var(--text);}
 
   /* ---------- "Mindset of a Trader": Buch-/Themen-Einträge als Karten-Grid ---------- */
   .book-grid{display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:14px;}
@@ -1866,7 +1879,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.11b";
+const APP_VERSION = "2026.09.11c";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -5753,8 +5766,6 @@ function renderDiaryView(){
       <p>Tägliche mentale Manöverkritik — wird pro Tag erfasst und im Kalender gespeichert, damit sich wöchentlich Muster erkennen lassen.</p>
     </div>
 
-    ${mentalReviewHtml()}
-
     ${formOrCtaHtml}
 
     <div class="top-with-weeksidebar">
@@ -5868,13 +5879,25 @@ function renderMentalWeekDetail(view){
     <div class="section-title" style="margin-top:22px;">Auswertung hinzufügen</div>
     <div class="panel mental-eval-panel">
       ${evalEditing ? `
-        <textarea id="mentalWeekEvalInput" class="mental-eval-textarea" placeholder="Auswertung dieser Woche...">${escHtml(evalText)}</textarea>
+        <div class="rte-toolbar">
+          <button type="button" class="rte-btn" id="mentalWeekEval_bold" title="Fett"><b>F</b></button>
+          <button type="button" class="rte-btn" id="mentalWeekEval_h3" title="Als Überschrift">Überschrift</button>
+          <button type="button" class="rte-btn" id="mentalWeekEval_p" title="Zurück zu normalem Text">Normal</button>
+          <select class="rte-size-select" id="mentalWeekEval_size" title="Schriftgröße für markierten Text">
+            <option value="">Schriftgröße…</option>
+            <option value="12">Klein</option>
+            <option value="14">Normal</option>
+            <option value="18">Groß</option>
+            <option value="24">Sehr groß</option>
+          </select>
+        </div>
+        <div id="mentalWeekEvalInput" class="rte-editable mental-eval-textarea" contenteditable="true" data-placeholder="Auswertung dieser Woche...">${buchTextForEditor(evalText)}</div>
         <div class="row-between" style="margin-top:10px;">
           ${evalText ? `<button type="button" class="btn btn-ghost btn-sm" id="mentalWeekEvalCancelBtn">Abbrechen</button>` : `<span></span>`}
           <button type="button" class="btn btn-sm" id="mentalWeekEvalSaveBtn">Speichern</button>
         </div>
       ` : `
-        <div class="mental-eval-text">${escHtml(evalText).replace(/\n/g,"<br>")}</div>
+        <div class="mental-eval-text buch-view-text">${buchTextForEditor(evalText)}</div>
         <div class="row-between" style="margin-top:10px;">
           <span></span>
           <button type="button" class="btn btn-ghost btn-sm" id="mentalWeekEvalEditBtn">✎ Bearbeiten</button>
@@ -5901,6 +5924,17 @@ function renderMentalWeekDetail(view){
 // letzten) exakt in der Reihenfolge, wie sie auf der Seite angezeigt wird — für den
 // "Kopieren"-Button. Tage ohne Eintrag werden als "– Kein Eintrag –" mitkopiert, damit die
 // Struktur (immer alle 7 Wochentage) beim Einfügen erhalten bleibt.
+// Wandelt Rich-Text-HTML (Überschriften/Fett/Listen) in einfachen Text mit Zeilenumbrüchen
+// um — für den "📋 Kopieren"-Button der Wochen-Zusammenfassung, der reinen Text braucht.
+function richHtmlToPlainText(html){
+  if(!html) return "";
+  const tmp = document.createElement("div");
+  tmp.innerHTML = html;
+  tmp.querySelectorAll("br").forEach(br=>br.replaceWith("\n"));
+  tmp.querySelectorAll("h1,h2,h3,h4,p,div,li").forEach(el=>{ el.append("\n"); });
+  return tmp.textContent.replace(/\n{3,}/g,"\n\n").trim();
+}
+
 function buildMentalWeekCopyText(view){
   const { year, month, weekIndex } = view;
   const weeks = monthMondaySundayWeeks(year, month);
@@ -5922,7 +5956,7 @@ function buildMentalWeekCopyText(view){
     });
   });
   const evalText = (STATE.mentalWeekEvaluations[mentalWeekKey(year, month, weekIndex)] || "").trim();
-  if(evalText) out += `\nAuswertung hinzufügen\n\n${evalText}\n`;
+  if(evalText) out += `\nAuswertung hinzufügen\n\n${richHtmlToPlainText(evalText)}\n`;
   return out.trim();
 }
 
@@ -5992,13 +6026,36 @@ function wireMentalWeekDetail(){
 
   // "Auswertung hinzufügen": Speichern legt den Text ab und wechselt in die Lese-Ansicht mit
   // "Bearbeiten"-Button; Abbrechen verwirft Änderungen und kehrt (falls schon ein Text
-  // existierte) ebenfalls zur Lese-Ansicht zurück.
+  // existierte) ebenfalls zur Lese-Ansicht zurück. Rich-Text-Feld analog zur Buch-Zusammenfassung
+  // (siehe wireBuchModal) — Überschriften/Fett/Schriftgröße direkt im Feld sichtbar.
+  const evalInput = document.getElementById("mentalWeekEvalInput");
+  if(evalInput){
+    evalInput.addEventListener("paste",(e)=>{
+      e.preventDefault();
+      const clip = e.clipboardData || window.clipboardData;
+      const html = clip.getData("text/html");
+      const insertHtml = html ? sanitizeRichHtml(html) : escHtml(clip.getData("text/plain")).replace(/\n/g, "<br>");
+      document.execCommand("insertHTML", false, insertHtml);
+    });
+    const boldBtn = document.getElementById("mentalWeekEval_bold");
+    if(boldBtn) boldBtn.addEventListener("click", ()=>{ evalInput.focus(); document.execCommand("bold"); });
+    const h3Btn = document.getElementById("mentalWeekEval_h3");
+    if(h3Btn) h3Btn.addEventListener("click", ()=>{ evalInput.focus(); document.execCommand("formatBlock", false, "<H3>"); });
+    const pBtn = document.getElementById("mentalWeekEval_p");
+    if(pBtn) pBtn.addEventListener("click", ()=>{ evalInput.focus(); document.execCommand("formatBlock", false, "<P>"); });
+    const sizeSelect = document.getElementById("mentalWeekEval_size");
+    if(sizeSelect) sizeSelect.addEventListener("change", ()=>{
+      if(sizeSelect.value) applyBuchFontSize(evalInput, parseInt(sizeSelect.value, 10));
+      sizeSelect.value = "";
+    });
+  }
   const evalSaveBtn = document.getElementById("mentalWeekEvalSaveBtn");
   if(evalSaveBtn) evalSaveBtn.addEventListener("click", ()=>{
     const input = document.getElementById("mentalWeekEvalInput");
-    const text = input ? input.value.trim() : "";
+    const text = input ? input.innerHTML.trim() : "";
+    const isEmpty = !text || text === "<br>";
     const key = mentalWeekKey(STATE.viewingMentalWeek.year, STATE.viewingMentalWeek.month, STATE.viewingMentalWeek.weekIndex);
-    if(text) STATE.mentalWeekEvaluations[key] = text;
+    if(!isEmpty) STATE.mentalWeekEvaluations[key] = text;
     else delete STATE.mentalWeekEvaluations[key];
     saveMentalWeekEvaluations();
     STATE.mentalWeekEvalEditing = false;
@@ -10432,8 +10489,6 @@ function renderErkenntnisse(){
       <p>Learnings aus dem Markt — mit eigener Notiz und optionalem Screenshot festhalten.</p>
     </div>
 
-    ${weeklyPatternSummaryHtml()}
-
     <div class="row-between">
       <div style="color:var(--text-dim); font-size:13.5px;">${STATE.insights.length} Erkenntnis${STATE.insights.length===1?"":"se"}</div>
       <button class="btn btn-primary" id="btnAddInsight">+ Erkenntnis hinzufügen</button>
@@ -10462,7 +10517,7 @@ function insightListHtml(insights, query){
   }
 
   return `<div class="notes-list">${sorted.map(i=>`
-    <div class="note-item" data-insightedit="${i.id}">
+    <div class="note-item insight-item" data-insightedit="${i.id}">
       ${i.titel ? `<div class="note-item-title">${highlightQuery(i.titel, q)}</div>` : ""}
       <div class="note-item-head">
         <span class="tag">${formatDateShort(i.date)}</span>
