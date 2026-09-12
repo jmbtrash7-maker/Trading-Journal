@@ -990,6 +990,29 @@
   .area-toggle button[data-area=eod].on{background:var(--amber); border-color:var(--amber);}
 
   .equity-card{background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:26px;}
+
+  /* ---------- Trade-Übersicht (20-Trade-Challenge) — Raster aller 20 Slots ---------- */
+  .challenge-grid{display:grid; grid-template-columns:repeat(auto-fill, minmax(64px, 1fr)); gap:8px;}
+  .challenge-cell{
+    position:relative; aspect-ratio:1/1; border-radius:12px; border:1px solid var(--border);
+    display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;
+  }
+  .challenge-cell-num{position:absolute; top:5px; left:7px; font-size:9px; font-weight:700; color:rgba(255,255,255,.25);}
+  .challenge-cell-r{font-family:var(--mono); font-size:13px; font-weight:800;}
+  .cc-tp{background:var(--green-dim); border-color:#1c3c30;}
+  .cc-tp .challenge-cell-r{color:var(--green);}
+  .cc-sl{background:var(--red-dim); border-color:#3c2222;}
+  .cc-sl .challenge-cell-r{color:var(--red);}
+  .cc-be{background:var(--amber-dim); border-color:#3a2c10;}
+  .cc-be .challenge-cell-r{color:var(--amber);}
+  .cc-open{background:var(--bg-card); border-color:var(--border-light);}
+  .cc-open .challenge-cell-r{color:var(--text-faint); font-weight:700;}
+  .cc-empty{background:transparent; border-style:dashed; border-color:var(--border);}
+  .cc-empty .challenge-cell-num{position:static; font-size:12px; color:var(--text-faint);}
+  @media (max-width:640px){
+    .challenge-grid{grid-template-columns:repeat(auto-fill, minmax(48px, 1fr));}
+    .challenge-cell-r{font-size:11px;}
+  }
   .chart-wrap{position:relative; height:190px; width:100%;}
   .dot{width:9px; height:9px; border-radius:50%; display:inline-block; margin-right:7px;}
 
@@ -1345,12 +1368,27 @@
     background:linear-gradient(160deg, var(--violet-dim) 0%, var(--bg-panel) 75%);
     border:1px solid #4a3d80; border-radius:10px; padding:12px 14px;
     display:flex; flex-direction:column; gap:8px; box-shadow:0 0 0 1px rgba(167,139,250,.08), 0 4px 16px rgba(167,139,250,.08);
+    cursor:pointer; transition:border-color .18s, box-shadow .18s;
+  }
+  .daily-goal-panel:hover, .daily-goal-panel:focus-visible{
+    border-color:var(--violet); box-shadow:0 0 0 1px rgba(167,139,250,.22), 0 8px 22px -10px rgba(167,139,250,.4);
+    outline:none;
   }
   .daily-goal-eyebrow{font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--violet);}
   .daily-goal-list{display:flex; flex-direction:column; gap:4px;}
   .daily-goal-item{display:flex; align-items:baseline; gap:7px;}
   .daily-goal-num{font-family:var(--mono); font-size:16px; font-weight:800; color:var(--text); min-width:16px;}
   .daily-goal-label{font-size:12.5px; color:var(--text-dim);}
+
+  .daily-goal-modal-sub{color:var(--text-dim); font-size:13px; margin:2px 0 18px;}
+  .daily-goal-example-table th, .daily-goal-example-table td{text-align:center;}
+  .daily-goal-example-table th:first-child, .daily-goal-example-table td:first-child{text-align:left;}
+  .daily-goal-example-table td:first-child{font-weight:800; color:var(--text);}
+  .daily-goal-example-table td{font-size:13px; font-weight:700;}
+  .val-tp{color:var(--green);}
+  .val-sl{color:var(--red);}
+  .val-be{color:var(--amber);}
+  .val-x{color:var(--text-faint); font-weight:600;}
 
   /* ---------- FTMO-Challenge-Prognose (Startseite) ---------- */
   .ftmo-eta-panel{
@@ -1973,7 +2011,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.12c";
+const APP_VERSION = "2026.09.12g";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -2874,9 +2912,10 @@ function challengeStats(trades){
   const winners = closed.filter(t=>t.r>0);
   const losers = closed.filter(t=>t.r<0);
 
-  // Hit Rate bewusst wie vorgegeben auf die volle 20er-Runde bezogen (nicht nur auf
-  // bereits geschlossene Trades) — zeigt den Fortschritt innerhalb der laufenden Challenge.
-  const hitRate = (winners.length / 20) * 100;
+  // Hit Rate ohne Break-Even: nur TP/SL fließen in Zähler und Nenner ein — ein BE-Trade
+  // zählt weder als Gewinn noch als Verlust und verändert die Quote nicht (0 R-Trades
+  // fallen automatisch aus winners/losers heraus, da r>0 bzw. r<0 geprüft wird).
+  const hitRate = (winners.length + losers.length) ? (winners.length / (winners.length + losers.length)) * 100 : 0;
 
   const eurClosed = closed.filter(t=>t.eurResult!==null && t.eurResult!==undefined);
   const totalEur = eurClosed.length ? eurClosed.reduce((a,t)=>a+t.eurResult,0) : null;
@@ -3033,6 +3072,31 @@ function monteCarloEquityBands(closedTrades, runs, steps){
   return { median, p10, p90 };
 }
 
+// Visuelles Raster aller 20 Slots der laufenden Challenge-Runde — grüne Fläche mit gewonnener
+// RR bei TP, rote Fläche mit RR bei SL, Amber bei Break-Even, neutral bei noch offenem Trade,
+// gestrichelt bei noch nicht genommenem Slot. Bewusst ohne Haken-/X-Icon — nur Feldfarbe + RR-
+// Wert. `trades` MUSS chronologisch aufsteigend sein (Trade 1 = ältester), exakt wie bei
+// challengeStats.
+function challengeTradeGridHtml(trades){
+  const cells = [];
+  for(let i=0; i<20; i++){
+    const t = trades[i];
+    const num = i+1;
+    if(!t){
+      cells.push(`<div class="challenge-cell cc-empty"><span class="challenge-cell-num">${num}</span></div>`);
+    } else if(t.r===null || t.r===undefined){
+      cells.push(`<div class="challenge-cell cc-open"><span class="challenge-cell-num">${num}</span><span class="challenge-cell-r">…</span></div>`);
+    } else if(t.r>0){
+      cells.push(`<div class="challenge-cell cc-tp"><span class="challenge-cell-num">${num}</span><span class="challenge-cell-r">${formatR(t.r)}</span></div>`);
+    } else if(t.r<0){
+      cells.push(`<div class="challenge-cell cc-sl"><span class="challenge-cell-num">${num}</span><span class="challenge-cell-r">${formatR(t.r)}</span></div>`);
+    } else {
+      cells.push(`<div class="challenge-cell cc-be"><span class="challenge-cell-num">${num}</span><span class="challenge-cell-r">BE</span></div>`);
+    }
+  }
+  return `<div class="challenge-grid">${cells.join("")}</div>`;
+}
+
 // Analyse-Panel für die "20 Trade Challenge" — ersetzt den Kalender in diesem Filter (siehe
 // renderAreaView/refreshAreaListForFilter). `tradesDesc` kommt (wie die Trade-Liste
 // darüber) absteigend sortiert rein und wird hier für die Auswertung umgedreht, damit
@@ -3052,9 +3116,12 @@ function challengeAnalysisHtml(tradesDesc){
   const mfeDisplay = s.avgMfe===null ? "—" : formatR(Math.abs(s.avgMfe));
 
   return `
-    <div class="section-title" style="margin-top:26px;">Analyse · 20 Trade Challenge</div>
+    <div class="section-title" style="margin-top:26px;">Trade-Übersicht <span class="label-sub">alle 20 Slots der Runde</span></div>
+    <div class="panel">${challengeTradeGridHtml(trades)}</div>
+
+    <div class="section-title">Analyse · 20 Trade Challenge</div>
     <div class="stat-grid">
-      ${statCardHtml("Hit Rate (Win Rate)", "", s.hitRate.toFixed(1).replace(".", ",")+"%", `${s.winnersCount} von 20 Trades gewonnen`, "Gewonnene Trades ÷ 20 × 100")}
+      ${statCardHtml("Hit Rate (Win Rate)", "", s.hitRate.toFixed(1).replace(".", ",")+"%", `${s.winnersCount} von ${s.winnersCount + s.losersCount} Trades gewonnen (ohne Break-Even)`, "Gewonnene Trades ÷ (Gewonnene + Verlorene Trades) × 100 — Break-Even zählt nicht mit")}
       ${statCardHtml("Gesamt-P&L", s.totalEur===null?"":(s.totalEur>=0?"pos":"neg"), s.totalEur===null?"—":formatEUR(s.totalEur), `${s.closedCount} geschlossene Trades`, "Summe aller €-Ergebnisse der geschlossenen Trades")}
       ${statCardHtml("Gesamt-Ertrag in R", s.totalR>=0?"pos":"neg", formatR(s.totalR), "", "Summe aller R-Werte der geschlossenen Trades")}
       ${statCardHtml("Profit-Faktor", "", pfDisplay, "Ziel: &gt; 1,5", "Summe Gewinne (€) ÷ Summe Verluste (€)")}
@@ -3909,7 +3976,7 @@ function getCurrentSessionInfo(){
 // später auf Wunsch editierbar machen (wie z.B. bei "Mental").
 function dailyGoalPanelHtml(){
   return `
-    <div class="daily-goal-panel" id="dailyGoalPanel">
+    <div class="daily-goal-panel" id="dailyGoalPanel" tabindex="0" role="button" aria-label="Tagesziel — Beispiele anzeigen">
       <div class="daily-goal-eyebrow">Tagesziel</div>
       <div class="daily-goal-list">
         <div class="daily-goal-item"><span class="daily-goal-num">3</span><span class="daily-goal-label">Märkte</span></div>
@@ -3918,6 +3985,66 @@ function dailyGoalPanelHtml(){
       </div>
     </div>
   `;
+}
+
+// Kleines Info-Modal zur Tagesziel-Karte — zeigt anhand von drei Beispiel-Tagesverläufen,
+// wie ein Ergebnis über bis zu drei Trades zustande kommen kann. Rein statischer Inhalt,
+// gleiches Modal-Muster wie renderEntryModal (siehe dort für die Kommentare zur Anim-Klasse).
+function openDailyGoalModal(){
+  renderDailyGoalModal();
+}
+
+function closeDailyGoalModal(){
+  document.getElementById("modalRoot").innerHTML = "";
+}
+
+function renderDailyGoalModal(){
+  const root = document.getElementById("modalRoot");
+  const prevBackdrop = document.getElementById("dailyGoalModalBackdrop");
+  const animClass = prevBackdrop ? "" : " modal-anim-in";
+
+  root.innerHTML = `
+    <div class="modal-backdrop${animClass}" id="dailyGoalModalBackdrop">
+      <div class="modal">
+        <div class="modal-header-row">
+          <div><h2>Tagesziel — 3 Märkte, 3 Trades, 3 RR</h2></div>
+          <button type="button" class="icon-btn modal-close" id="dailyGoalModalCloseBtn">✕</button>
+        </div>
+        <p class="daily-goal-modal-sub">Beispielhafte Tagesverläufe bei bis zu drei Trades.</p>
+        <table class="strategy-table daily-goal-example-table">
+          <tr><th></th><th>1. Trade</th><th>2. Trade</th><th>3. Trade</th><th>Result</th></tr>
+          <tr>
+            <td>Bsp. 1</td>
+            <td><span class="val-tp">TP</span></td>
+            <td><span class="val-tp">TP</span></td>
+            <td><span class="val-x">X</span></td>
+            <td><span class="val-tp">Profit</span></td>
+          </tr>
+          <tr>
+            <td>Bsp. 2</td>
+            <td><span class="val-tp">TP</span></td>
+            <td><span class="val-sl">SL</span></td>
+            <td><span class="val-tp">TP</span>/<span class="val-sl">SL</span></td>
+            <td><span class="val-be">BE</span>/<span class="val-tp">Profit</span></td>
+          </tr>
+          <tr>
+            <td>Bsp. 3</td>
+            <td><span class="val-sl">SL</span></td>
+            <td><span class="val-sl">SL</span></td>
+            <td><span class="val-x">X</span></td>
+            <td><span class="val-sl">Drawdown</span></td>
+          </tr>
+        </table>
+        <div class="modal-footer" style="justify-content:flex-end;">
+          <button type="button" class="btn btn-primary" id="dailyGoalModalDoneBtn">Schließen</button>
+        </div>
+      </div>
+    </div>`;
+
+  const backdrop = document.getElementById("dailyGoalModalBackdrop");
+  backdrop.addEventListener("click", (e)=>{ if(e.target===backdrop) closeDailyGoalModal(); });
+  document.getElementById("dailyGoalModalCloseBtn").addEventListener("click", closeDailyGoalModal);
+  document.getElementById("dailyGoalModalDoneBtn").addEventListener("click", closeDailyGoalModal);
 }
 
 function sessionPanelHtml(){
@@ -5644,6 +5771,7 @@ function wireAreaView(area){
 
   const liveInfoRow = document.querySelector(".live-info-row");
   if(liveInfoRow) liveInfoRow.addEventListener("click", (e)=>{
+    if(e.target.closest("#dailyGoalPanel")){ openDailyGoalModal(); return; }
     if(e.target.closest("#sessionPanel")){ window.open(TRADINGVIEW_CHART_URL, "_blank"); return; }
     // Bewusst per Delegation auf die (stabile) .live-info-row statt direkt auf die Buttons/
     // Zeilen im News-Panel gebunden — das Panel wird nach dem Löschen/Speichern einer News
@@ -5657,6 +5785,10 @@ function wireAreaView(area){
     }
     if(e.target.closest("#btnAddNews")){ openNewsModal(null); return; }
     if(e.target.closest("#btnListNews")){ openNewsListModal(); return; }
+  });
+  const dailyGoalPanel = document.getElementById("dailyGoalPanel");
+  if(dailyGoalPanel) dailyGoalPanel.addEventListener("keydown", (e)=>{
+    if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openDailyGoalModal(); }
   });
   document.querySelectorAll("[data-edit]").forEach(b=>{
     b.addEventListener("click", ()=>{
