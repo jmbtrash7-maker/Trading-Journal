@@ -1590,6 +1590,91 @@
   .strategy-table th{color:var(--text-faint); font-weight:800; font-size:10.5px; text-transform:uppercase; letter-spacing:.4px;}
   .strategy-table td{color:var(--text-dim); line-height:1.5;}
   .strategy-table tr:last-child td{border-bottom:none;}
+  /* ===== Cheat Sheet (Strategie) ===== */
+  .cheat-sheet-head{display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:10px; margin-bottom:4px;}
+  .cheat-sheet-tag{font-size:10.5px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:var(--text-faint); border:1px solid var(--border); border-radius:999px; padding:4px 10px;}
+
+  .cheat-phase{margin-top:26px; padding-top:20px; border-top:1px solid var(--border);}
+  .cheat-phase:first-of-type{margin-top:20px;}
+  .cheat-phase-label{display:flex; align-items:center; gap:10px; font-weight:800; font-size:14.5px; color:var(--text); margin-bottom:14px; letter-spacing:.2px;}
+  .cheat-phase-num{
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    width:24px; height:24px; border-radius:50%;
+    background:linear-gradient(135deg, var(--cyan), var(--violet));
+    color:#06131a; font-weight:900; font-size:12.5px;
+  }
+
+  .cheat-flow-label{font-weight:800; color:var(--text); font-size:13.5px; margin-bottom:12px;}
+  .cheat-flow{display:flex; align-items:stretch; gap:10px; flex-wrap:wrap;}
+  .cheat-flow-step{
+    flex:1 1 180px; min-width:150px;
+    background:var(--bg-card); border:1px solid var(--border); border-radius:14px;
+    padding:18px 14px; text-align:center; transition:border-color .18s;
+  }
+  .cheat-flow-step:hover{border-color:var(--violet);}
+  .cheat-flow-n{font-size:19px; font-weight:900; color:var(--text); margin-bottom:6px;}
+  .cheat-flow-title{font-size:13px; font-weight:700; color:var(--text); margin-bottom:7px;}
+  .cheat-flow-text{font-size:12px; color:var(--text-faint); line-height:1.5;}
+  .cheat-flow-arrow{display:flex; align-items:center; justify-content:center; flex:0 0 auto; width:20px; color:var(--text-faint); font-size:17px;}
+  @media (max-width:640px){
+    .cheat-flow{flex-direction:column;}
+    .cheat-flow-arrow{width:auto; transform:rotate(90deg); margin:-2px 0;}
+  }
+
+  .cheat-crit-head{display:flex; align-items:center; gap:10px; font-weight:800; color:var(--text); font-size:13.5px; margin:4px 0 12px;}
+  .cheat-crit-goal{font-size:10.5px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:#06131a; background:var(--green); border-radius:999px; padding:3px 9px;}
+
+  .cheat-crit-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(150px,1fr)); gap:10px; margin-bottom:18px;}
+  .cheat-crit{
+    display:flex; gap:10px; align-items:flex-start;
+    background:var(--bg-card); border:1px solid var(--border); border-radius:12px; padding:11px 12px;
+    transition:border-color .18s;
+  }
+  .cheat-crit:hover{border-color:var(--violet);}
+  .cheat-crit-n{
+    display:flex; align-items:center; justify-content:center; flex-shrink:0;
+    width:22px; height:22px; border-radius:7px;
+    background:var(--green-dim); color:var(--green); font-weight:900; font-size:12px;
+  }
+  .cheat-crit strong{display:block; color:var(--text); font-size:13px; margin-bottom:2px;}
+  .cheat-crit small{display:block; color:var(--text-faint); font-size:11.5px; line-height:1.4;}
+
+  .cheat-tag{display:inline-block; padding:3px 9px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:.2px;}
+  .cheat-tag-limit{background:var(--green-dim); color:var(--green);}
+  .cheat-tag-ce{background:var(--amber-dim); color:var(--amber);}
+  .cheat-tag-none{background:var(--red-dim); color:var(--red);}
+
+  .risk-ampel{display:flex; flex-direction:column; gap:8px; margin-bottom:18px;}
+  .risk-row{
+    display:flex; align-items:flex-start; gap:10px;
+    padding:10px 12px; border-radius:10px; border:1px solid var(--border);
+    font-size:12.8px; color:var(--text-dim); line-height:1.5;
+  }
+  .risk-row strong{color:var(--text); font-size:13px; min-width:44px; flex-shrink:0;}
+  .risk-dot{width:9px; height:9px; border-radius:50%; margin-top:4px; flex-shrink:0;}
+  .risk-full{border-color:#1c3c30; background:var(--green-dim);}
+  .risk-full .risk-dot{background:var(--green);}
+  .risk-half{border-color:#3a2c10; background:var(--amber-dim);}
+  .risk-half .risk-dot{background:var(--amber);}
+  .risk-none{border-color:#3a2230; background:var(--red-dim);}
+  .risk-none .risk-dot{background:var(--red);}
+
+  .cheat-inline-note{color:var(--text-faint); font-size:12.5px; line-height:1.6; margin:0 0 14px;}
+
+  .cheat-bullets{margin:0 0 14px; padding-left:22px; color:var(--text-dim); font-size:13.5px; line-height:1.7;}
+  .cheat-bullets li{margin-bottom:5px;}
+  .cheat-bullets li strong{color:var(--text);}
+  .cheat-bullets li::marker{color:var(--green);}
+  .cheat-bullets-danger li::marker{color:var(--red);}
+
+  .cheat-checklist-box{
+    margin-top:26px; padding:18px 18px 8px;
+    border-radius:14px; border:1px solid rgba(139,123,255,.35);
+    background:linear-gradient(180deg, rgba(139,123,255,.08), rgba(139,123,255,0) 60%);
+  }
+  .cheat-checklist-head{font-weight:800; color:var(--violet); font-size:14px; margin-bottom:10px; letter-spacing:.2px;}
+  .cheat-checklist li::before{color:var(--violet);}
+
   .strategy-checklist{list-style:none; padding:0; margin:0 0 6px;}
   .strategy-checklist li{
     display:flex; align-items:flex-start; gap:10px; padding:8px 2px; border-bottom:1px solid var(--border);
@@ -1694,6 +1779,15 @@
   .entry-modal-body .strategy-sub-title:first-child{margin-top:0;}
   .entry-modal-body ul, .entry-modal-body ol{margin:0 0 14px; padding-left:22px; color:var(--text-dim); font-size:13.5px; line-height:1.7;}
   .entry-modal-body li strong{color:var(--text);}
+  .entry-modal-body ul li::marker{color:var(--green); font-weight:700;}
+  .entry-modal-body ol li::marker{color:var(--violet); font-weight:800;}
+  .entry-modal-body .cheat-callout{
+    margin:0 0 14px; padding:10px 12px;
+    border-radius:10px; border:1px solid #3a2c10; background:var(--amber-dim);
+    color:var(--text-dim); font-size:12.8px; line-height:1.6;
+  }
+  .entry-modal-body .cheat-callout strong{color:var(--amber);}
+  .entry-modal-body .risk-ampel{margin:0 0 14px;}
   .entry-modal-body .strategy-table{width:100%; border-collapse:collapse; margin:6px 0 16px; font-size:12.8px;}
   .entry-modal-body .strategy-table th, .entry-modal-body .strategy-table td{text-align:left; padding:8px 10px; border-bottom:1px solid var(--border);}
   .entry-modal-body .strategy-table th{color:var(--text-faint); font-weight:800; font-size:10.5px; text-transform:uppercase;}
@@ -1879,7 +1973,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.11c";
+const APP_VERSION = "2026.09.12c";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -8937,10 +9031,10 @@ const ENTRY_MODELS = {
         <li>Es gibt eine Early Zone bzw. ein Inducement davor</li>
       </ul>
       <div class="strategy-sub-title">Vorteil / Nachteil</div>
-      <ul>
-        <li><strong>Vorteil:</strong> Wir müssen nicht am Chart sitzen — Order liegt, Alarm reicht</li>
-        <li><strong>Nachteil:</strong> Keine Bestätigung — bricht die Zone, sind wir sofort falsch</li>
-      </ul>
+      <div class="risk-ampel">
+        <div class="risk-row risk-full"><span class="risk-dot"></span><strong>Vorteil</strong><span>Wir müssen nicht am Chart sitzen — Order liegt, Alarm reicht</span></div>
+        <div class="risk-row risk-none"><span class="risk-dot"></span><strong>Nachteil</strong><span>Keine Bestätigung — bricht die Zone, sind wir sofort falsch</span></div>
+      </div>
       <div class="strategy-sub-title">Ablauf</div>
       <ol>
         <li>Limit an die Zone, SL über bzw. unter die komplette Zone — Docht mitnehmen</li>
@@ -8970,8 +9064,8 @@ const ENTRY_MODELS = {
         <li>Retracement in den entstandenen LTF-Orderblock / Retest-Bereich</li>
         <li>Entry nach Bestätigung des Orderblocks</li>
       </ol>
-      <p><strong>Wann Pflicht:</strong> immer dann, wenn ein Kriterium fehlt — kein Abgriff, Trendlinie über der Zone, Struktur schon vorher gebildet, Zone „nicht so nice“. Dann kein Limit, sondern Bestätigung abwarten.</p>
-      <p><strong>Nachteil:</strong> Wir verpassen Trades, wenn der neue Orderblock nicht mehr angetestet wird.</p>
+      <p class="cheat-callout"><strong>Wann Pflicht:</strong> immer dann, wenn ein Kriterium fehlt — kein Abgriff, Trendlinie über der Zone, Struktur schon vorher gebildet, Zone „nicht so nice“. Dann kein Limit, sondern Bestätigung abwarten.</p>
+      <p class="cheat-callout"><strong>Nachteil:</strong> Wir verpassen Trades, wenn der neue Orderblock nicht mehr angetestet wird.</p>
       ${entryChartBlock('ce')}
     `
   },
@@ -8994,7 +9088,7 @@ const ENTRY_MODELS = {
         <li>Der Body Close kommt zurück in die Zone bzw. zurück über das Level</li>
         <li>Danach kommt die Reaktion — im besten Fall direkt mit Momentum</li>
       </ul>
-      <p><strong>Doji-Regel:</strong> Doji-Kerzen werden so gut wie immer gesweept — genau dort lohnt es sich, den Einstieg zu suchen.</p>
+      <p class="cheat-callout"><strong>Doji-Regel:</strong> Doji-Kerzen werden so gut wie immer gesweept — genau dort lohnt es sich, den Einstieg zu suchen.</p>
       <div class="strategy-sub-title">Ablauf</div>
       <ol>
         <li>Über dem letzten Hoch bzw. unter dem letzten Tief liegen die Stops — oder eine Zone</li>
@@ -9055,7 +9149,7 @@ const ENTRY_MODELS = {
         <li>Vor der neuen Zone liegt wieder Liquidität (LQs vom letzten internen Hoch bzw. Tief)</li>
         <li>Die Imbalance ist vorhanden — fehlt sie, ist es kein Conti</li>
       </ul>
-      <p><strong>Wichtig:</strong> Ohne neue Zone kein Conti. Läuft der Markt einfach nur durch, ohne eine saubere Zone zu hinterlassen, fehlt das Kriterium — dann bleibt es bei Trade 1. Der Entry wird in die neue Zone gelegt, sobald der BOS steht. SL über die neue Zone, TP wieder 3–4R in Richtung Liquidität, Struktur-Low oder nächste Zone.</p>
+      <p class="cheat-callout"><strong>Wichtig:</strong> Ohne neue Zone kein Conti. Läuft der Markt einfach nur durch, ohne eine saubere Zone zu hinterlassen, fehlt das Kriterium — dann bleibt es bei Trade 1. Der Entry wird in die neue Zone gelegt, sobald der BOS steht. SL über die neue Zone, TP wieder 3–4R in Richtung Liquidität, Struktur-Low oder nächste Zone.</p>
       ${entryChartBlock('conti')}
     `
   },
@@ -9310,9 +9404,7 @@ function renderStrategie(){
     <div class="strategy-nav-row">
       <div class="strategy-nav">
         <a href="#strat-entries">Entry-Arten</a>
-        <a href="#strat-voraussetzungen">Voraussetzungen</a>
-        <a href="#strat-sltp">SL, TP & Risiko</a>
-        <a href="#strat-invalid">Invalidierung & Checkliste</a>
+        <a href="#strat-cheatsheet">Cheat Sheet</a>
       </div>
       <button type="button" class="entry-checklist-launch" id="btnOpenChecklists">☑ Checklisten</button>
     </div>
@@ -9339,130 +9431,135 @@ function renderStrategie(){
       </div>
     `).join("")}</div>
 
-    <div class="panel strategy-panel" id="strat-voraussetzungen">
-      <h2 class="strategy-h2">Voraussetzungen für einen Entry</h2>
-      <p>Ein Entry ist kein Bauchgefühl und keine Kerze, die uns gerade gefällt. Der Entry ist der letzte Schritt einer Kette, die vorher komplett stehen muss: Struktur, relevante Zone, Liquidität. Das Entrymodell entscheidet nicht, <em>ob</em> wir handeln — das entscheiden die Zonenkriterien. Das Entrymodell entscheidet nur, <em>wie</em> wir in die Zone hineinkommen und wo unser Stop-Loss liegt. Genau daraus ergibt sich unser Chancen/Risiko-Verhältnis.</p>
+    <div class="panel strategy-panel cheat-sheet" id="strat-cheatsheet">
+      <div class="cheat-sheet-head">
+        <h2 class="strategy-h2">Cheat Sheet — Playbook</h2>
+        <span class="cheat-sheet-tag">Cockpit-Referenz</span>
+      </div>
+      <div class="strategy-quote">Der Entry ist der letzte Schritt einer Kette. Das Entry-Modell entscheidet nicht <em>ob</em> wir handeln, sondern <em>wie</em> wir einsteigen und wo der SL liegt.</div>
 
-      <div class="strategy-sub-title">Reihenfolge vor jedem Entry</div>
-      <ol>
-        <li>M15-Struktur bestimmen und das Fib anlegen</li>
-        <li>Zonen mit Kriterien auf M15 an den Fib-Levels einzeichnen</li>
-        <li>Alarm setzen und einen Plan haben</li>
-        <li>Entry wählen</li>
-      </ol>
+      <div class="cheat-phase">
+        <div class="cheat-phase-label"><span class="cheat-phase-num">1</span>Vorbereitung — Makro</div>
+        <div class="cheat-flow-label">Reihenfolge vor jedem Entry</div>
+        <div class="cheat-flow">
+          <div class="cheat-flow-step">
+            <div class="cheat-flow-n">1</div>
+            <div class="cheat-flow-title">Struktur</div>
+            <div class="cheat-flow-text">M15-Struktur bestimmen und das Fib anlegen</div>
+          </div>
+          <div class="cheat-flow-arrow">→</div>
+          <div class="cheat-flow-step">
+            <div class="cheat-flow-n">2</div>
+            <div class="cheat-flow-title">Zonen</div>
+            <div class="cheat-flow-text">Zonen mit Kriterien auf M15 an den Fib-Levels einzeichnen</div>
+          </div>
+          <div class="cheat-flow-arrow">→</div>
+          <div class="cheat-flow-step">
+            <div class="cheat-flow-n">3</div>
+            <div class="cheat-flow-title">Alarm</div>
+            <div class="cheat-flow-text">Alarm setzen und einen Plan haben</div>
+          </div>
+          <div class="cheat-flow-arrow">→</div>
+          <div class="cheat-flow-step">
+            <div class="cheat-flow-n">4</div>
+            <div class="cheat-flow-title">Entry</div>
+            <div class="cheat-flow-text">Entry-Art wählen</div>
+          </div>
+        </div>
+      </div>
 
-      <div class="strategy-sub-title">Die 6 Kriterien — wir wollen 6/6</div>
-      <ul>
-        <li><strong>BOS / ChoCh</strong> — die Zone muss zu etwas geführt haben</li>
-        <li><strong>IMB</strong> — offene Imbalance vor der Zone</li>
-        <li><strong>EZ / IND</strong> — Early Zone bzw. Inducement davor</li>
-        <li><strong>LQs</strong> — die Zone hat Liquidität abgegriffen</li>
-        <li><strong>GB</strong> — Level-Konfluenz (Gannbox / Fibo 32, 50, 71)</li>
-        <li><strong>LQ als Ziel</strong> — oberhalb bzw. unterhalb liegt Liquidität, in die wir laufen können</li>
-      </ul>
+      <div class="cheat-phase">
+        <div class="cheat-phase-label"><span class="cheat-phase-num">2</span>Regelwerk &amp; Kriterien — Mikro</div>
 
-      <div class="strategy-quote">„Limit darfst du nur traden, wenn die Zonen-Kriterien alle gegeben sind. Ein Liquiditätsabgriff gehört halt auch dazu. Sobald Liquiditätsabgriffe fehlen oder irgendein Kriterium fehlt: einfach Finger davon lassen und mit einem CE bestätigen lassen.“</div>
+        <div class="cheat-crit-head">Die 6 Zonen-Kriterien <span class="cheat-crit-goal">Ziel 6/6</span></div>
+        <div class="cheat-crit-grid">
+          <div class="cheat-crit"><span class="cheat-crit-n">1</span><div><strong>BOS / ChoCh</strong><small>Zone hat zu Strukturbruch geführt</small></div></div>
+          <div class="cheat-crit"><span class="cheat-crit-n">2</span><div><strong>IMB</strong><small>Offene Imbalance vor der Zone</small></div></div>
+          <div class="cheat-crit"><span class="cheat-crit-n">3</span><div><strong>EZ / IND</strong><small>Early Zone / Inducement davor</small></div></div>
+          <div class="cheat-crit"><span class="cheat-crit-n">4</span><div><strong>LQs</strong><small>Zone hat Liquidität abgegriffen</small></div></div>
+          <div class="cheat-crit"><span class="cheat-crit-n">5</span><div><strong>GB</strong><small>Level-Konfluenz (Fibo 32/50/71)</small></div></div>
+          <div class="cheat-crit"><span class="cheat-crit-n">6</span><div><strong>LQ als Ziel</strong><small>Liquidität liegt als Zielzone bereit</small></div></div>
+        </div>
 
-      <table class="strategy-table">
-        <tr><th>Lage</th><th>Einstieg</th></tr>
-        <tr><td>6/6, sauberer Abgriff vorhanden</td><td>Limit direkt in die Zone</td></tr>
-        <tr><td>Ein Kriterium fehlt</td><td>Bestätigung abwarten (CE / SE)</td></tr>
-        <tr><td>Kein Level, kein Abgriff, keine Bestätigung</td><td>kein Trade</td></tr>
-      </table>
-      <p style="margin-top:-4px;">Der dritte Fall ist der wichtigste. „Kein Trade“ ist ein Ergebnis, kein verpasster Trade.</p>
+        <div class="strategy-sub-title">Matrix: Welcher Einstieg gilt wann?</div>
+        <table class="strategy-table">
+          <tr><th>Lage</th><th>Einstieg</th></tr>
+          <tr><td>6/6 + sauberer Abgriff</td><td><span class="cheat-tag cheat-tag-limit">Limit Entry</span></td></tr>
+          <tr><td>1 Kriterium fehlt / kein Abgriff</td><td><span class="cheat-tag cheat-tag-ce">Confirmation (CE/SE)</span></td></tr>
+          <tr><td>Kein Level / keine Bestätigung</td><td><span class="cheat-tag cheat-tag-none">KEIN TRADE</span></td></tr>
+        </table>
 
-      <div class="strategy-sub-title">Valide Zone → Entry suchen auf</div>
-      <table class="strategy-table">
-        <tr><th>Valide Zone</th><th>Entry suchen auf</th></tr>
-        <tr><td>H4</td><td>M15</td></tr>
-        <tr><td>M15</td><td>M5 / M1</td></tr>
-        <tr><td>M5</td><td>M1</td></tr>
-      </table>
+        <div class="strategy-sub-title">Timeframe-Kaskade</div>
+        <table class="strategy-table">
+          <tr><th>Zone</th><th>Entry-Suche auf</th></tr>
+          <tr><td>H4</td><td>M15</td></tr>
+          <tr><td>M15</td><td>M5 / M1</td></tr>
+          <tr><td>M5</td><td>M1</td></tr>
+        </table>
+      </div>
 
-      <p><strong>Passiv bleibt passiv:</strong> Auf interner Basis liegt der Fokus darauf, die passivste Zone mitzunehmen, weil der Markt sie sehr häufig einfach nur antestet. Die Early Zone davor ist meistens nur die Liquidität dafür.</p>
-      <p><strong>Wo genau liegt der Entry in der Zone?</strong> An der Zonenkante. Oder, wenn der Markt schon etwas weitergelaufen ist, am 71er-Level des Fibs — angelegt an dem Schenkel, der zum ChoCh geführt hat. Bei einer Doji-Kerze liegt der Einstieg über bzw. unter dem Doji, weil Dojis so gut wie immer gesweept werden.</p>
+      <div class="cheat-phase">
+        <div class="cheat-phase-label"><span class="cheat-phase-num">3</span>Ausführung — Entry / Risiko / Management</div>
+
+        <div class="strategy-sub-title">Risk-Ampel</div>
+        <div class="risk-ampel">
+          <div class="risk-row risk-full"><span class="risk-dot"></span><strong>1,0 %</strong><span>6/6 Kriterien, sauberer Abgriff, mit Order Flow, Zone an Fib-Level</span></div>
+          <div class="risk-row risk-half"><span class="risk-dot"></span><strong>0,5 %</strong><span>Counter-Trend, Zone vom 32er, unsauber, offene Zone darüber, CE ohne Abgriff</span></div>
+          <div class="risk-row risk-none"><span class="risk-dot"></span><strong>0,0 %</strong><span>CRV &lt; 3R, fehlende Levels, fehlende Bestätigung, News</span></div>
+        </div>
+
+        <div class="strategy-sub-title">Stop-Loss</div>
+        <table class="strategy-table">
+          <tr><th>Entry-Art</th><th>SL liegt</th></tr>
+          <tr><td>Limit Entry</td><td>über/unter die komplette Zone</td></tr>
+          <tr><td>Sweep Entry</td><td>über/unter den Docht des Abgriffs</td></tr>
+          <tr><td>Confirmation Entry</td><td>über/unter den Orderblock der kleinen Zeiteinheit</td></tr>
+        </table>
+        <p class="cheat-inline-note">Doji-Regel: Einstieg über/unter dem Doji — Dojis werden fast immer gesweept.</p>
+
+        <div class="strategy-sub-title">Take-Profit &amp; Management</div>
+        <ul class="cheat-bullets">
+          <li><strong>Ziel = Liquidität</strong> — nächstes Struktur-Hoch/-Tief, offene Imbalance oder nächste Zone</li>
+          <li><strong>CRV:</strong> mindestens 3R bis 5R. Unter 3R → Trade verwerfen. Kein Scalping auf 10R+</li>
+          <li><strong>Break-Even:</strong> SL nur nach klarem Strukturbruch nachziehen — zu früh zerstört den Edge</li>
+        </ul>
+
+        <div class="strategy-sub-title">Invalidierung — sofort ungültig, wenn …</div>
+        <ul class="cheat-bullets cheat-bullets-danger">
+          <li>Preis kommt bereits aus einer übergeordneten Zone (unsere Zone wird zur Liquidität)</li>
+          <li>Ziel-Liquidität wurde vor dem Entry bereits abgegriffen</li>
+          <li>Body Close außerhalb der Zone</li>
+          <li>TP erreicht oder Zone voll mitigiert</li>
+        </ul>
+
+        <div class="strategy-sub-title">Handelszeiten &amp; News-Sperre</div>
+        <table class="strategy-table">
+          <tr><th>Fenster</th><th>Regel</th></tr>
+          <tr><td>Handelsfenster</td><td>erst ab 08:00–09:00 Uhr</td></tr>
+          <tr><td>Asia-Session</td><td>nur Beobachtung / auf Abgriff warten</td></tr>
+          <tr><td>News-Filter</td><td>5 Min vor &amp; nach PPI, CPI, FOMC, NFP → keine neuen Positionen</td></tr>
+        </table>
+
+        <div class="strategy-sub-title">Die 50-%-Struktur-Regel</div>
+        <p class="cheat-inline-note">Struktur bleibt intakt, bis ≥ 50&nbsp;% des letzten Schenkels korrigiert wurden. ≤ 50&nbsp;% → nicht nachziehen. &gt; 50&nbsp;% → darf nachgezogen werden. In ~10&nbsp;% der Fälle holt der Markt trotzdem die passivste Zone ab — einkalkuliertes Rauschen.</p>
+      </div>
+
+      <div class="cheat-checklist-box">
+        <div class="cheat-checklist-head">☑ Pre-Entry-Checkliste — vor dem Klick</div>
+        <ul class="strategy-checklist cheat-checklist">
+          <li>M15 externe Struktur &amp; 50%-Regel geprüft</li>
+          <li>Schenkel &amp; Fibo (32/50/71) eingezeichnet</li>
+          <li>Zone unmitigiert &amp; führt zu BOS/ChoCh</li>
+          <li>Imbalance &amp; Early Zone/Inducement vorhanden</li>
+          <li>Liquiditätsabgriff vor der Zone erfolgt</li>
+          <li>Liquidität als Ziel vorhanden &amp; CRV ≥ 3R</li>
+          <li>Keine High-Impact News in den nächsten Minuten</li>
+          <li>Risiko eindeutig festgelegt (1&nbsp;%, 0,5&nbsp;% oder 0&nbsp;%)</li>
+        </ul>
+      </div>
     </div>
 
-    <div class="panel strategy-panel" id="strat-sltp">
-      <h2 class="strategy-h2">SL, TP und Risiko</h2>
 
-      <div class="strategy-sub-title">Stop-Loss</div>
-      <p>Der Stop-Loss gehört über bzw. unter die Zone — so, dass der Docht mitgenommen wird. Immer das Low bzw. High mitnehmen. Ein Stop mitten in der Zone ist kein Stop, sondern eine Einladung.</p>
-      <table class="strategy-table">
-        <tr><th>Entry-Art</th><th>Stop-Loss liegt</th></tr>
-        <tr><td>Limit Entry</td><td>über / unter die komplette Zone</td></tr>
-        <tr><td>Sweep Entry</td><td>über / unter den Docht des Abgriffs</td></tr>
-        <tr><td>Confirmation Entry</td><td>über / unter den entstandenen Orderblock auf der kleinen Zeiteinheit</td></tr>
-      </table>
-
-      <div class="strategy-sub-title">Take-Profit</div>
-      <p>Das Ziel ist immer Liquidität — nie eine Zahl. Konkret: das nächste Struktur-Hoch/-Tief, eine offene Imbalance oder die nächste Zone. Zielbereich 3R bis 5R — 3R müssen passen, sonst wird der Trade nicht genommen. Trades auf 10R oder 13R laufen zu lassen ist kein Bestandteil dieser Strategie — lieber jeden Tag saubere Gewinne mitnehmen und rational in den nächsten Trade gehen.</p>
-
-      <div class="strategy-sub-title">Break-Even</div>
-      <p>Nach dem Bruch in die richtige Richtung kann der SL nachgezogen werden. Aber Vorsicht: Sehr oft holt der Markt genau diesen BE ab und läuft danach in den TP. Wer zu früh auf BE zieht, nimmt sich die Trades selbst weg — die eigenen Zahlen sollten zeigen, ob BE überhaupt hilft.</p>
-
-      <div class="strategy-sub-title">Wie viel Risiko pro Trade?</div>
-      <table class="strategy-table">
-        <tr><th>Risiko</th><th>Wann</th></tr>
-        <tr><td>1 % — volles Risiko</td><td>Alle Kriterien erfüllt, sauberer Liquiditätsabgriff, mit dem Order Flow, Zone an einem Level</td></tr>
-        <tr><td>0,5 % — kleines Risiko</td><td>Counter Trade, Zone kommt vom 32er, Zone „nicht so nice“, weitere Zone darüber noch offen, CE ohne Abgriff</td></tr>
-        <tr><td>0 % — kein Trade</td><td>CRV passt nicht, kein Level, ein Kriterium fehlt, keine Bestätigung</td></tr>
-      </table>
-      <p>Ein Verlust ist damit immer nur −1R, also −1 % oder −0,5 %. Ein Gewinner bringt 3 bis 5 %. Genau deshalb lässt sich ein SL akzeptieren, ohne beim nächsten Trade emotional zu werden. Mehrere SLs hintereinander sind normal — wichtig ist, den SL zu akzeptieren, nicht das System zu wechseln.</p>
-
-      <div class="strategy-sub-title">Handelszeit</div>
-      <p>Handel bewusst erst ab 8–9 Uhr. In der Asia-Session lieber auf einen Abgriff warten, statt einzusteigen. Und: 5 Minuten vor PPI, CPI, FOMC und NFP wird nichts Neues eröffnet.</p>
-    </div>
-
-    <div class="panel strategy-panel" id="strat-invalid">
-      <h2 class="strategy-h2">Invalidierung & Checkliste</h2>
-
-      <div class="strategy-sub-title">Wann ein Setup ungültig wird</div>
-      <ul>
-        <li>Der Preis kommt aus einer relevanten Zone — dann ist unsere Zone nur noch Liquidität</li>
-        <li>Der TP ist erreicht — das Setup ist abgearbeitet</li>
-        <li>Die Ziel-Liquidität wurde bereits gezogen — es gibt nichts mehr zu holen</li>
-        <li>Die Zone ist mitigiert und hat ihre Aufgabe erfüllt</li>
-        <li>Body Close jenseits der Zone — die Zone ist gebrochen, nicht „fast gehalten“</li>
-        <li>Fake BOS / Fake ChoCh erkannt — die Liquidität wird genutzt, nicht gestellt</li>
-      </ul>
-
-      <p><strong>Die häufigsten Fehler:</strong> Limit ohne Liquiditätsabgriff. Entry ohne Level. Struktur in jeder Kerze neu sehen. Blindes Reinstaffeln nach einem SL. Setup-Hopping, weil das eigene Modell gerade zwei Verlierer hatte.</p>
-
-      <div class="strategy-sub-title">Die 50-%-Regel</div>
-      <p>Eine Struktur bleibt so lange gültig, bis der Markt die Hälfte des letzten Schenkels zurückgeholt hat. Erst ab diesem Punkt wird sie nachgezogen — vorher nicht. Solange weniger als 50 % zurückgelaufen sind, ist das nur eine Korrektur innerhalb der laufenden Bewegung. In ungefähr jedem zehnten Fall holt der Markt trotzdem noch die passivste Zone ab, obwohl die neue Struktur längst steht — das ist eingepreist. Wer sauber identifiziert und erst nach 50 % nachzieht, fährt über viele Trades hinweg deutlich besser als jemand, der jede Kerze neu bewertet.</p>
-
-      <div class="strategy-sub-title">Checkliste vor jedem Entry</div>
-      <ul class="strategy-checklist">
-        <li>Externe Struktur auf M15 bestimmt</li>
-        <li>Interner Schenkel und Fibo (32 / 50 / 71) eingezeichnet</li>
-        <li>Zone ist nicht mitigiert</li>
-        <li>Zone hat zu einem BOS / ChoCh geführt</li>
-        <li>Offene Imbalance vor der Zone</li>
-        <li>Early Zone / Inducement davor vorhanden</li>
-        <li>Liquiditätsabgriff vor der Zone erfolgt</li>
-        <li>Zone liegt an einem Level</li>
-        <li>Liquidität als Ziel vorhanden</li>
-        <li>CRV mindestens 3R</li>
-        <li>Handelszeit passt, keine News in den nächsten Minuten</li>
-        <li>Bei Counter: erster ChoCh wurde abgegriffen</li>
-        <li>Risiko festgelegt: 1 % oder 0,5 %</li>
-      </ul>
-
-      <div class="strategy-sub-title">Situation → Entrymodell</div>
-      <table class="strategy-table">
-        <tr><th>Situation</th><th>Entrymodell</th></tr>
-        <tr><td>6/6, Abgriff vorhanden</td><td>Limit Entry</td></tr>
-        <tr><td>Kriterium fehlt</td><td>Confirmation Entry</td></tr>
-        <tr><td>Level wird abgegriffen</td><td>Sweep Entry</td></tr>
-        <tr><td>Zone wird mit Momentum gebrochen</td><td>Flip Entry</td></tr>
-        <tr><td>Trade läuft, neue Zone entsteht</td><td>Continuation Entry</td></tr>
-        <tr><td>Gegen den Order Flow</td><td>Counter mit halbem Risiko</td></tr>
-        <tr><td>Nichts davon trifft zu</td><td>kein Trade</td></tr>
-      </table>
-
-      <div class="strategy-quote">„Sobald irgendein Kriterium fehlt: einfach Finger davon lassen und mit einem CE bestätigen lassen.“</div>
-    </div>
   `;
 }
 
