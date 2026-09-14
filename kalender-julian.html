@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   /* ============================================================
      DESIGN-TOKENS – angelehnt an "Vision UI" (tiefes Blau/Marine mit
@@ -70,6 +71,10 @@
     overflow:hidden;
     font-size:14px;
     -webkit-font-smoothing:antialiased;
+    /* Native Browser-Widgets (u.a. das Kalender-/Uhrzeit-Popup von <input type=date/time>)
+       lassen sich inhaltlich nicht per CSS umstyeln, da sie kein DOM sind — aber der
+       Browser bringt dafür eine fertige dunkle Variante mit, die man hierüber aktiviert. */
+    color-scheme: dark;
   }
   button, input, select, textarea{ font-family:inherit; font-size:inherit; color:inherit; }
   button{ cursor:pointer; }
@@ -84,7 +89,7 @@
     height:64px; flex-shrink:0; display:flex; align-items:center; gap:14px;
     padding:0 18px; border:1px solid var(--glass-border); border-radius:var(--radius-lg);
     background:var(--glass-grad); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
-    box-shadow:var(--shadow-card);
+    box-shadow:var(--shadow-card); position:relative; z-index:50;
   }
   .icon-btn{
     width:36px; height:36px; border-radius:50%; background:transparent; border:none;
@@ -148,6 +153,10 @@
   .sync-badge{
     background:var(--amber-dim); color:var(--amber); border:1px solid rgba(240,166,61,0.3);
   }
+  .sync-badge.connected{
+    background:var(--teal-dim); color:var(--teal); border:1px solid rgba(43,217,185,0.35);
+  }
+  .sync-badge.syncing{ opacity:.65; }
 
   .settings-wrap{ position:relative; }
   .settings-popover{
@@ -274,6 +283,11 @@
   .day-col:focus{ outline:none; }
   .day-col.today{ box-shadow: inset 1px 0 0 var(--primary), inset -1px 0 0 var(--primary); }
   .day-col.drop-hover{ background:rgba(59,123,255,0.08); }
+  .selection-preview{
+    position:absolute; left:2px; right:2px; z-index:6; pointer-events:none;
+    background:rgba(59,123,255,0.22); border:1.5px dashed var(--primary-light);
+    border-radius:6px;
+  }
   .hour-line{ height:var(--hour-height, 52px); border-bottom:1px solid var(--border-soft); box-sizing:border-box; }
   .hour-line:hover{ background:rgba(255,255,255,0.03); }
 
@@ -291,10 +305,7 @@
   .event-chip .t{ font-weight:700; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .event-chip .r{ opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .dragging{ opacity:.6; box-shadow:0 6px 18px rgba(0,0,0,0.5); z-index:20; }
-  .create-ghost{
-    position:absolute; left:2px; right:2px; border-radius:7px; z-index:15; pointer-events:none;
-    background:rgba(59,123,255,0.22); border:1.5px dashed var(--primary);
-  }
+  .dragging.duplicating{ outline:2px dashed var(--teal); outline-offset:1px; cursor:copy; }
   .event-chip:active{ cursor:grabbing; }
   .resize-handle{ position:absolute; left:4px; right:4px; height:8px; cursor:ns-resize; z-index:2; }
   .resize-handle.top{ top:-2px; }
@@ -373,21 +384,23 @@
   }
   .cat-opt .dot{ width:8px; height:8px; border-radius:50%; }
   .cat-opt.active{ border-color:currentColor; }
-  .repeat-options{ display:flex; gap:6px; flex-wrap:wrap; }
-  .repeat-opt{
-    border:1px solid var(--border); border-radius:var(--radius-sm); padding:7px 11px; font-size:11.5px;
-    font-weight:600; cursor:pointer; background:rgba(255,255,255,0.03); color:var(--text-muted);
-  }
-  .repeat-opt.active{ border-color:var(--primary); color:var(--primary-light); background:var(--primary-dim); }
-  .weekday-picker{ display:flex; gap:6px; flex-wrap:wrap; }
-  .weekday-btn{
-    width:38px; height:32px; border-radius:var(--radius-sm); border:1px solid var(--border);
-    background:rgba(255,255,255,0.03); color:var(--text-muted); font-size:11.5px; font-weight:600;
-    display:flex; align-items:center; justify-content:center; cursor:pointer; user-select:none;
-  }
-  .weekday-btn.active{ border-color:var(--primary); background:var(--primary-grad); color:#fff; }
   .checkbox-row{ display:flex; align-items:center; gap:8px; margin-bottom:14px; }
   .checkbox-row label{ font-size:13px; }
+  .weekday-picker{ display:flex; gap:6px; margin:-4px 0 14px; }
+  .weekday-pill{
+    flex:1; border:1px solid var(--border); border-radius:var(--radius-sm); padding:8px 4px; text-align:center;
+    font-size:12px; font-weight:600; cursor:pointer; background:rgba(255,255,255,0.03); color:var(--text-muted);
+    transition:background .12s, color .12s, border-color .12s;
+  }
+  .weekday-pill:hover{ background:rgba(255,255,255,0.07); }
+  .weekday-pill.active{ border-color:var(--primary); background:var(--primary-dim); color:var(--primary); }
+  .field-hint{ font-size:11.5px; color:var(--text-faint); margin:-8px 0 14px; line-height:1.4; }
+  .bulk-group-row{ display:flex; align-items:center; gap:10px; padding:9px 10px; border:1px solid var(--border); border-radius:8px; cursor:pointer; transition:background .15s,border-color .15s; }
+  .bulk-group-row:hover{ background:rgba(255,255,255,0.04); }
+  .bulk-group-row input[type="checkbox"]{ width:16px; height:16px; flex:none; accent-color:var(--primary); cursor:pointer; }
+  .bulk-group-row.checked{ border-color:rgba(59,123,255,0.5); background:var(--primary-dim); }
+  .bulk-group-row .bg-title{ font-weight:600; font-size:13px; }
+  .bulk-group-row .bg-meta{ font-size:11px; color:var(--text-faint); margin-top:2px; }
   .modal-actions{ display:flex; justify-content:space-between; align-items:center; margin-top:18px; }
   .modal-actions .right{ display:flex; gap:8px; }
 
@@ -456,7 +469,7 @@
       <input type="text" id="searchInput" placeholder="Suchen…">
     </div>
 
-    <button class="btn sync-badge btn-sm" id="btnSync" title="Google-Kalender-Sync ist geplant">🔗 Sync bald verfügbar</button>
+    <button class="btn sync-badge btn-sm" id="btnSync" title="Mit Google Kalender verbinden">🔗 Google Kalender verbinden</button>
 
     <div class="settings-wrap">
       <button class="icon-btn" id="btnSettings" title="Einstellungen">
@@ -465,6 +478,8 @@
       <div class="settings-popover" id="settingsPopover">
         <button id="btnExport">⬇ Daten exportieren (.json)</button>
         <button id="btnImportTrigger">⬆ Daten importieren (.json)</button>
+        <div class="divider"></div>
+        <button id="btnBulkDelete">🗂 Wiederkehrende löschen…</button>
         <div class="divider"></div>
         <button id="btnReset" style="color:var(--red)">🗑 Alle Daten löschen</button>
         <div class="version">Kalender · Julian — v<span id="versionLabel"></span></div>
@@ -531,7 +546,19 @@
     <div class="checkbox-row">
       <input type="checkbox" id="fieldAllDay">
       <label for="fieldAllDay">Ganztägig</label>
+      <input type="checkbox" id="fieldRecurring" style="margin-left:18px;">
+      <label for="fieldRecurring">Wiederholend</label>
     </div>
+    <div class="weekday-picker" id="weekdayPicker" style="display:none;">
+      <button type="button" class="weekday-pill" data-wd="0">Mo</button>
+      <button type="button" class="weekday-pill" data-wd="1">Di</button>
+      <button type="button" class="weekday-pill" data-wd="2">Mi</button>
+      <button type="button" class="weekday-pill" data-wd="3">Do</button>
+      <button type="button" class="weekday-pill" data-wd="4">Fr</button>
+      <button type="button" class="weekday-pill" data-wd="5">Sa</button>
+      <button type="button" class="weekday-pill" data-wd="6">So</button>
+    </div>
+    <div class="field-hint" id="recurringHint" style="display:none;">Legt an den ausgewählten Wochentagen jeweils einen eigenen Termin zur gleichen Uhrzeit an — für die nächsten 26 Wochen ab dem gewählten Datum.</div>
     <div class="row-2" id="timeRow">
       <div class="field">
         <label>Start</label>
@@ -541,18 +568,6 @@
         <label>Ende</label>
         <input type="time" id="fieldEnd">
       </div>
-    </div>
-    <div class="field">
-      <label>Wiederholung</label>
-      <div class="repeat-options" id="repeatOptions"></div>
-    </div>
-    <div class="field" id="weekdaysField" style="display:none;">
-      <label>Wiederholt sich an</label>
-      <div class="weekday-picker" id="weekdayPicker"></div>
-    </div>
-    <div class="field" id="repeatUntilField" style="display:none;">
-      <label>Wiederholen bis (optional)</label>
-      <input type="date" id="fieldRepeatUntil">
     </div>
     <div class="field">
       <label>Notizen</label>
@@ -593,6 +608,29 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="bulkDeleteModalOverlay">
+  <div class="modal" style="width:460px; max-height:82vh; display:flex; flex-direction:column;">
+    <h2>Wiederkehrende Einträge löschen</h2>
+    <div class="field-hint" style="margin-top:-6px;">
+      Gruppiert nach gleichem Titel — praktisch für Termine, die einzeln (ohne die „Wiederholend“-Funktion) mehrfach angelegt wurden. Wähle die Serien, die komplett entfernt werden sollen.
+    </div>
+    <div style="display:flex; justify-content:space-between; align-items:center; margin:4px 0 10px;">
+      <label style="display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-muted); cursor:pointer;">
+        <input type="checkbox" id="bulkSelectAll" style="accent-color:var(--primary); cursor:pointer;"> Alle auswählen
+      </label>
+      <span id="bulkSelectedCount" style="font-size:11.5px; color:var(--text-faint);"></span>
+    </div>
+    <div id="bulkDeleteList" style="overflow-y:auto; flex:1; min-height:60px; display:flex; flex-direction:column; gap:6px;"></div>
+    <div id="bulkEmptyHint" style="display:none; font-size:12.5px; color:var(--text-faint); text-align:center; padding:22px 0;">Keine mehrfach vorkommenden Titel gefunden.</div>
+    <div class="modal-actions">
+      <button class="btn btn-ghost btn-sm" id="btnCancelBulkDelete">Abbrechen</button>
+      <div class="right">
+        <button class="btn btn-danger btn-sm" id="btnConfirmBulkDelete">Ausgewählte löschen</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <input type="file" id="importFileInput" accept="application/json">
 <div class="toast" id="toast"></div>
 <div class="drag-tooltip" id="dragTooltip"></div>
@@ -620,13 +658,6 @@
   };
 
   const WOCHENTAGE_KURZ = ['Mo','Di','Mi','Do','Fr','Sa','So'];
-  const RECURRENCE_OPTIONS = [
-    { key:'none', label:'Keine' },
-    { key:'daily', label:'Täglich' },
-    { key:'weekly', label:'Wöchentlich' },
-    { key:'biweekly', label:'Alle 2 Wochen' },
-    { key:'monthly', label:'Monatlich' }
-  ];
   const MONATE = ['Januar','Februar','März','April','Mai','Juni','Juli','August','September','Oktober','November','Dezember'];
 
   /* ============================================================
@@ -652,6 +683,10 @@
   // Throttling der Mausbewegung während eines Drags auf einen Frame (verhindert Ruckeln).
   let dragRafId = null;
   let pendingMoveEvent = null;
+  // Auswahl-Drag im leeren Grid-Bereich zum Neuanlegen eines Termins (ziehen statt klicken).
+  let selectCtx = null;
+  let selectRafId = null;
+  let pendingSelectEvent = null;
   // Merkt sich die Scroll-Position des Zeitrasters über Re-Renders hinweg (z.B. nach einem Drop),
   // damit die Ansicht nicht bei jeder Aktualisierung auf 7 Uhr zurückspringt.
   let lastGridScrollTop = null;
@@ -763,46 +798,15 @@
   }
 
   /* ============================================================
-     EVENT-QUERIES (inkl. Wiederkehrende Termine)
+     EVENT-QUERIES
      ============================================================ */
   function matchesSearch(ev){
     if(!state.searchTerm) return true;
     return ev.title.toLowerCase().includes(state.searchTerm.toLowerCase());
   }
   function isVisible(ev){ return state.visible[ev.category] !== false; }
-
-  // Prüft, ob ein (ggf. wiederkehrender) Termin an einem bestimmten Tag vorkommt.
-  // "ev.date" ist bei wiederkehrenden Terminen der Startanker der Serie, nicht ein einzelnes Vorkommen.
-  function mondayIndex(d){ return (d.getDay()+6) % 7; } // 0=Mo..6=So, passend zu WOCHENTAGE_KURZ
-  function eventOccursOnDate(ev, dateISO){
-    if(!ev.recurrence || ev.recurrence.freq === 'none') return ev.date === dateISO;
-    const target = parseIso(dateISO), start = parseIso(ev.date);
-    if(target < start) return false;
-    if(ev.recurrence.until && dateISO > ev.recurrence.until) return false;
-    const freq = ev.recurrence.freq;
-    if(freq === 'daily') return true;
-    if(freq === 'monthly') return target.getDate() === start.getDate();
-    if(freq === 'weekly' || freq === 'biweekly'){
-      // Ohne explizite Auswahl (ältere gespeicherte Termine) gilt nur der ursprüngliche Wochentag.
-      const weekdays = (ev.recurrence.weekdays && ev.recurrence.weekdays.length) ? ev.recurrence.weekdays : [mondayIndex(start)];
-      if(!weekdays.includes(mondayIndex(target))) return false;
-      if(freq === 'biweekly'){
-        const weekDiff = Math.round((getMonday(target) - getMonday(start)) / 86400000 / 7);
-        if(weekDiff % 2 !== 0) return false;
-      }
-      return true;
-    }
-    return false;
-  }
-  function isRecurring(ev){ return !!(ev.recurrence && ev.recurrence.freq && ev.recurrence.freq !== 'none'); }
-
   function eventsForDate(dateISO){
-    return state.events
-      .filter(e => eventOccursOnDate(e, dateISO) && isVisible(e) && matchesSearch(e))
-      // Für ein konkretes Vorkommen einer Serie wird eine flache Kopie mit dem TATSÄCHLICHEN
-      // Datum dieses Tages erzeugt (ev.date bleibt im Original der Serien-Anker). Die id bleibt
-      // gleich, damit Bearbeiten/Löschen/Zeit-Resize weiterhin die eine gespeicherte Serie treffen.
-      .map(e => isRecurring(e) ? Object.assign({}, e, { date: dateISO, isRecurringOccurrence: true }) : e);
+    return state.events.filter(e => e.date === dateISO && isVisible(e) && matchesSearch(e));
   }
   function timedEventsForDate(dateISO){ return eventsForDate(dateISO).filter(e => !e.allDay); }
   function allDayEventsForDate(dateISO){ return eventsForDate(dateISO).filter(e => e.allDay); }
@@ -1018,17 +1022,11 @@
       col.dataset.date = isoDate(d);
       for(let h=0; h<24; h++){ col.appendChild(document.createElement('div')).className = 'hour-line'; }
 
-      // Auf leerer Fläche per Drag eine Zeitspanne aufziehen (z.B. 14:00 -> 15:00) und beim Loslassen
-      // öffnet sich das Eintragen-Fenster damit vorausgefüllt. Ein einfacher Klick ohne Ziehen
-      // legt wie bisher einen Standard-1h-Termin an der geklickten Stelle an (siehe onDragEnd).
       col.addEventListener('mousedown', (e) => {
-        const rect = col.getBoundingClientRect();
-        const initialMin = clamp(snap15((e.clientY - rect.top) / state.hourHeight * 60), 0, 24*60-15);
-        startDrag({
-          type: 'create-range', chip: null, colEl: col, colRect: rect, dateIso: isoDate(d),
-          startX: e.clientX, startY: e.clientY, moved: false,
-          initialMin, previewStart: initialMin, previewEnd: initialMin+60, ghostEl: null
-        });
+        // Nur linke Maustaste, und nur wenn der Klick nicht schon auf einem Termin-Chip
+        // begann (die stoppen die Weiterleitung selbst über stopPropagation).
+        if(e.button !== 0) return;
+        startSelectDrag(e, col, isoDate(d));
       });
 
       const dayEvents = assignLanes(timedEventsForDate(isoDate(d)));
@@ -1060,7 +1058,6 @@
 
   function makeTimedChip(ev){
     const cat = catInfo(ev.category);
-    const recurring = ev.isRecurringOccurrence;
     const startMin = timeToMinutes(ev.start), endMin = timeToMinutes(ev.end || ev.start) || startMin+30;
     const top = (startMin/60)*state.hourHeight;
     const height = Math.max(16, ((endMin-startMin)/60)*state.hourHeight - 2);
@@ -1073,7 +1070,7 @@
     chip.style.background = hexWithAlpha(cat.color, 0.22);
     chip.style.borderColor = cat.color;
     chip.style.color = '#fff';
-    chip.innerHTML = `<span class="t">${recurring ? '↻ ' : ''}${escapeHtml(ev.title)}</span><span class="r">${ev.start}–${ev.end||''}</span>`
+    chip.innerHTML = `<span class="t">${escapeHtml(ev.title)}</span><span class="r">${ev.start}–${ev.end||''}</span>`
       + `<div class="resize-handle top"></div><div class="resize-handle bottom"></div>`;
 
     // Klick öffnet das Bearbeiten-Modal – außer direkt nach einem Verschieben/Resizen.
@@ -1084,8 +1081,6 @@
     });
 
     // Verschieben: Mousedown auf dem Chip-Körper (nicht auf den Resize-Griffen).
-    // Bei wiederkehrenden Terminen wird nur die Uhrzeit verschoben (für die ganze Serie) –
-    // ein Tageswechsel per Drag ist bewusst deaktiviert (siehe onDragMove/commitDrag).
     chip.addEventListener('mousedown', (e) => {
       if(e.target.classList.contains('resize-handle')) return;
       e.stopPropagation();
@@ -1093,12 +1088,11 @@
         type: 'move-timed', chip, eventId: ev.id,
         startX: e.clientX, startY: e.clientY, moved: false,
         origDate: ev.date, origStart: startMin, duration: endMin - startMin,
-        previewDate: ev.date, previewStart: startMin, isRecurring: recurring
+        previewDate: ev.date, previewStart: startMin
       });
     });
 
-    // Resize oben (Startzeit) / unten (Endzeit) – wirkt bei Serien auf die Uhrzeit ALLER Vorkommen,
-    // da Start/Ende in der einen gespeicherten Serie liegen.
+    // Resize oben (Startzeit) / unten (Endzeit).
     chip.querySelector('.resize-handle.top').addEventListener('mousedown', (e) => {
       e.stopPropagation();
       startDrag({
@@ -1119,10 +1113,9 @@
   }
   function makeAllDayChip(ev){
     const cat = catInfo(ev.category);
-    const recurring = ev.isRecurringOccurrence;
     const chip = document.createElement('div'); chip.className = 'allday-chip';
     chip.style.background = hexWithAlpha(cat.color, 0.22); chip.style.borderColor = cat.color; chip.style.color = '#fff';
-    chip.textContent = (recurring ? '↻ ' : '') + ev.title;
+    chip.textContent = ev.title;
     chip.addEventListener('click', (e) => {
       e.stopPropagation();
       if(suppressNextClick){ suppressNextClick = false; return; }
@@ -1130,7 +1123,6 @@
     });
     chip.addEventListener('mousedown', (e) => {
       e.stopPropagation();
-      if(recurring){ showToast('Wiederkehrenden Termin bitte über das Bearbeiten-Fenster ändern'); return; }
       startDrag({ type:'move-allday', chip, eventId: ev.id, startX:e.clientX, startY:e.clientY, moved:false, origDate: ev.date, previewDate: ev.date });
     });
     return chip;
@@ -1166,7 +1158,7 @@
         const cat = catInfo(ev.category);
         const pill = document.createElement('div'); pill.className = 'month-pill';
         pill.style.background = hexWithAlpha(cat.color, 0.18); pill.style.borderColor = cat.color; pill.style.color = '#fff';
-        pill.textContent = (ev.isRecurringOccurrence ? '↻ ' : '') + (ev.allDay ? '' : ev.start+' ') + ev.title;
+        pill.textContent = (ev.allDay ? '' : ev.start+' ') + ev.title;
         pill.addEventListener('click', (e) => {
           e.stopPropagation();
           if(suppressNextClick){ suppressNextClick = false; return; }
@@ -1174,7 +1166,6 @@
         });
         pill.addEventListener('mousedown', (e) => {
           e.stopPropagation();
-          if(ev.isRecurringOccurrence){ showToast('Wiederkehrenden Termin bitte über das Bearbeiten-Fenster ändern'); return; }
           startDrag({ type:'move-month', chip: pill, eventId: ev.id, startX:e.clientX, startY:e.clientY, moved:false, origDate: ev.date, previewDate: ev.date });
         });
         evWrap.appendChild(pill);
@@ -1297,25 +1288,26 @@
     const dx = e.clientX - dragCtx.startX, dy = e.clientY - dragCtx.startY;
     if(!dragCtx.moved && (Math.abs(dx) > 4 || Math.abs(dy) > 4)) dragCtx.moved = true;
     if(!dragCtx.moved) return;
-    if(dragCtx.chip) dragCtx.chip.classList.add('dragging');
+    dragCtx.chip.classList.add('dragging');
+
+    // Strg (bzw. Cmd auf Mac) gedrückt halten = Termin beim Ablegen DUPLIZIEREN statt
+    // verschieben. Wird laufend aktualisiert, damit auch ein Drücken/Loslassen mitten im
+    // Ziehen erkannt wird — entscheidend ist der Zustand beim Loslassen der Maus.
+    dragCtx.isDuplicate = (e.ctrlKey || e.metaKey) && dragCtx.type !== 'resize-top' && dragCtx.type !== 'resize-bottom';
+    dragCtx.chip.classList.toggle('duplicating', dragCtx.isDuplicate);
+    const dupPrefix = dragCtx.isDuplicate ? '+ Kopie · ' : '';
 
     if(dragCtx.type === 'move-timed'){
       const deltaMin = snap15(dy / state.hourHeight * 60);
       const newStart = clamp(dragCtx.origStart + deltaMin, 0, 24*60 - dragCtx.duration);
-      let targetDate = dragCtx.origDate;
-      if(!dragCtx.isRecurring){
-        // Bei Serien ist ein Tageswechsel per Drag deaktiviert – die Spalte bleibt fix,
-        // nur die Uhrzeit ändert sich (siehe commitDrag).
-        const targetCol = findByX(dragCtx.targets, e.clientX);
-        targetDate = targetCol ? targetCol.dataset.date : dragCtx.origDate;
-        setDropHover(dragCtx, targetCol);
-      }
+      const targetCol = findByX(dragCtx.targets, e.clientX);
+      const targetDate = targetCol ? targetCol.dataset.date : dragCtx.origDate;
       dragCtx.previewStart = newStart; dragCtx.previewDate = targetDate;
       if(targetDate === dragCtx.origDate){
         dragCtx.chip.style.top = (newStart/60*state.hourHeight) + 'px';
       }
-      showDragTooltip(e.clientX, e.clientY, `${minutesToTime(newStart)}–${minutesToTime(newStart+dragCtx.duration)}`
-        + (dragCtx.isRecurring ? ' · für die ganze Serie' : (targetDate!==dragCtx.origDate ? ' · ' + formatDateShort(targetDate) : '')));
+      setDropHover(dragCtx, targetCol);
+      showDragTooltip(e.clientX, e.clientY, dupPrefix + `${minutesToTime(newStart)}–${minutesToTime(newStart+dragCtx.duration)}` + (targetDate!==dragCtx.origDate ? ' · ' + formatDateShort(targetDate) : ''));
 
     } else if(dragCtx.type === 'resize-top'){
       const deltaMin = snap15(dy / state.hourHeight * 60);
@@ -1338,27 +1330,13 @@
       const targetCell = findByX(dragCtx.targets, e.clientX);
       dragCtx.previewDate = targetCell ? targetCell.dataset.date : dragCtx.origDate;
       setDropHover(dragCtx, targetCell);
-      showDragTooltip(e.clientX, e.clientY, formatDateShort(dragCtx.previewDate));
+      showDragTooltip(e.clientX, e.clientY, dupPrefix + formatDateShort(dragCtx.previewDate));
 
     } else if(dragCtx.type === 'move-month'){
       const targetCell = findByXY(dragCtx.targets, e.clientX, e.clientY);
       dragCtx.previewDate = targetCell ? targetCell.dataset.date : dragCtx.origDate;
       setDropHover(dragCtx, targetCell);
-      showDragTooltip(e.clientX, e.clientY, formatDateShort(dragCtx.previewDate));
-
-    } else if(dragCtx.type === 'create-range'){
-      // Freie Zeitspanne im leeren Raster aufziehen: 14:00 -> 15:00 -> Eintragen-Fenster öffnet sich beim Loslassen.
-      let curMin = clamp(snap15((e.clientY - dragCtx.colRect.top) / state.hourHeight * 60), 0, 24*60);
-      const startMin = Math.min(dragCtx.initialMin, curMin);
-      const endMin = Math.max(Math.max(dragCtx.initialMin, curMin), startMin+15);
-      dragCtx.previewStart = startMin; dragCtx.previewEnd = endMin;
-      if(!dragCtx.ghostEl){
-        dragCtx.ghostEl = document.createElement('div'); dragCtx.ghostEl.className = 'create-ghost';
-        dragCtx.colEl.appendChild(dragCtx.ghostEl);
-      }
-      dragCtx.ghostEl.style.top = (startMin/60*state.hourHeight) + 'px';
-      dragCtx.ghostEl.style.height = Math.max(16, ((endMin-startMin)/60*state.hourHeight)) + 'px';
-      showDragTooltip(e.clientX, e.clientY, `${minutesToTime(startMin)}–${minutesToTime(endMin)}`);
+      showDragTooltip(e.clientX, e.clientY, dupPrefix + formatDateShort(dragCtx.previewDate));
     }
   }
 
@@ -1373,14 +1351,6 @@
     hideDragTooltip();
     const ctx = dragCtx; dragCtx = null;
     if(ctx.chip) ctx.chip.classList.remove('dragging');
-
-    if(ctx.type === 'create-range'){
-      if(ctx.ghostEl) ctx.ghostEl.remove();
-      const startMin = ctx.moved ? ctx.previewStart : ctx.initialMin;
-      const endMin = ctx.moved ? ctx.previewEnd : ctx.initialMin + 60;
-      openModal({ date: ctx.dateIso, allDay:false, start: minutesToTime(startMin), end: minutesToTime(endMin) });
-      return;
-    }
     if(ctx.moved){
       commitDrag(ctx);
       suppressNextClick = true;
@@ -1392,9 +1362,27 @@
     const idx = state.events.findIndex(ev => ev.id === ctx.eventId);
     if(idx === -1) return;
     const ev = state.events[idx];
+
+    if(ctx.isDuplicate && (ctx.type === 'move-timed' || ctx.type === 'move-allday' || ctx.type === 'move-month')){
+      // Strg war beim Ablegen gedrückt -> Original bleibt unangetastet an seinem Platz,
+      // stattdessen wird eine Kopie mit neuer ID am Zielort angelegt. gcalId wird bewusst
+      // NICHT übernommen, damit die Kopie beim nächsten Sync als eigenständiger, neuer
+      // Termin zu Google Kalender hochgeladen wird (statt den Original-Termin zu überschreiben).
+      const clone = { ...ev, id: uid(), gcalId: null, updatedAt: Date.now() };
+      if(ctx.type === 'move-timed'){
+        clone.date = ctx.previewDate; clone.start = minutesToTime(ctx.previewStart); clone.end = minutesToTime(ctx.previewStart + ctx.duration);
+      } else {
+        clone.date = ctx.previewDate;
+      }
+      state.events.push(clone);
+      saveState(); renderAll();
+      showToast('Termin dupliziert');
+      markCalDirty(clone.id); scheduleCalAutoSync();
+      return;
+    }
+
     if(ctx.type === 'move-timed'){
-      if(!ctx.isRecurring) ev.date = ctx.previewDate; // Serien behalten ihren Anker-Tag, nur die Uhrzeit ändert sich
-      ev.start = minutesToTime(ctx.previewStart); ev.end = minutesToTime(ctx.previewStart + ctx.duration);
+      ev.date = ctx.previewDate; ev.start = minutesToTime(ctx.previewStart); ev.end = minutesToTime(ctx.previewStart + ctx.duration);
     } else if(ctx.type === 'resize-top'){
       ev.start = minutesToTime(ctx.previewStart);
     } else if(ctx.type === 'resize-bottom'){
@@ -1402,11 +1390,85 @@
     } else if(ctx.type === 'move-allday' || ctx.type === 'move-month'){
       ev.date = ctx.previewDate;
     }
+    ev.updatedAt = Date.now();
     saveState(); renderAll();
     showToast('Termin aktualisiert');
+    markCalDirty(ctx.eventId); scheduleCalAutoSync();
   }
 
   function formatDateShort(iso){ const d = parseIso(iso); return `${d.getDate()}. ${MONATE[d.getMonth()].slice(0,3)}`; }
+
+  /* ============================================================
+     NEUEN TERMIN PER ZIEHEN ANLEGEN (Drag-Select im leeren Grid)
+     ------------------------------------------------------------
+     Mousedown auf einer leeren Stelle der Tages-/Wochenspalte startet eine
+     Auswahl; wird dabei die Maus bewegt, spannt sich ein Zeitraum auf
+     (z.B. 14:00 → 15:00), der beim Loslassen als Start-/Endzeit ins
+     Eintragen-Fenster übernommen wird. Ohne Bewegung (reiner Klick) bleibt
+     das bisherige Verhalten: 1 Stunde ab der Klickposition.
+     ============================================================ */
+  function startSelectDrag(e, col, dateIso){
+    const rect = col.getBoundingClientRect();
+    const startMin = clamp(snap15((e.clientY - rect.top) / state.hourHeight * 60), 0, 24*60);
+    selectCtx = { col, date: dateIso, rect, startY: e.clientY, startMin, moved: false, previewEl: null };
+    document.body.style.userSelect = 'none';
+    document.addEventListener('mousemove', onSelectMoveRaw);
+    document.addEventListener('mouseup', onSelectEnd);
+  }
+
+  function onSelectMoveRaw(e){
+    pendingSelectEvent = e;
+    if(selectRafId === null){ selectRafId = requestAnimationFrame(processSelectFrame); }
+  }
+  function processSelectFrame(){
+    selectRafId = null;
+    if(selectCtx && pendingSelectEvent) onSelectMove(pendingSelectEvent);
+  }
+
+  function onSelectMove(e){
+    if(!selectCtx) return;
+    const dy = e.clientY - selectCtx.startY;
+    if(!selectCtx.moved && Math.abs(dy) > 4) selectCtx.moved = true;
+    if(!selectCtx.moved) return;
+
+    const curMin = clamp(snap15((e.clientY - selectCtx.rect.top) / state.hourHeight * 60), 0, 24*60);
+    const from = Math.min(selectCtx.startMin, curMin);
+    const to = Math.max(Math.max(selectCtx.startMin, curMin), from + 15);
+    selectCtx.previewStart = from;
+    selectCtx.previewEnd = to;
+
+    if(!selectCtx.previewEl){
+      const el = document.createElement('div');
+      el.className = 'selection-preview';
+      selectCtx.col.appendChild(el);
+      selectCtx.previewEl = el;
+    }
+    selectCtx.previewEl.style.top = (from/60*state.hourHeight) + 'px';
+    selectCtx.previewEl.style.height = Math.max(6, (to-from)/60*state.hourHeight) + 'px';
+
+    showDragTooltip(e.clientX, e.clientY, `${minutesToTime(from)}–${minutesToTime(to)}`);
+  }
+
+  function onSelectEnd(){
+    if(!selectCtx) return;
+    document.removeEventListener('mousemove', onSelectMoveRaw);
+    document.removeEventListener('mouseup', onSelectEnd);
+    if(selectRafId !== null){ cancelAnimationFrame(selectRafId); selectRafId = null; }
+    pendingSelectEvent = null;
+    document.body.style.userSelect = '';
+    hideDragTooltip();
+
+    const ctx = selectCtx; selectCtx = null;
+    if(ctx.previewEl) ctx.previewEl.remove();
+
+    let startMin, endMin;
+    if(ctx.moved){
+      startMin = ctx.previewStart; endMin = ctx.previewEnd;
+    } else {
+      startMin = ctx.startMin; endMin = Math.min(24*60, startMin + 60);
+    }
+    openModal({ date: ctx.date, allDay:false, start: minutesToTime(startMin), end: minutesToTime(endMin) });
+  }
 
   function showDragTooltip(x, y, text){
     const t = document.getElementById('dragTooltip');
@@ -1432,69 +1494,64 @@
     });
   }
 
-  let modalWeekdaySelection = new Set(); // aktuelle Wochentage-Auswahl im offenen Termin-Modal (0=Mo..6=So)
-
-  function renderWeekdayPicker(selectedSet){
-    const wrap = document.getElementById('weekdayPicker'); wrap.innerHTML = '';
-    WOCHENTAGE_KURZ.forEach((label, idx) => {
-      const btn = document.createElement('div'); btn.className = 'weekday-btn' + (selectedSet.has(idx) ? ' active' : '');
-      btn.textContent = label; btn.dataset.idx = idx;
-      btn.addEventListener('click', () => {
-        if(selectedSet.has(idx)){
-          if(selectedSet.size > 1) selectedSet.delete(idx); // mindestens ein Wochentag muss aktiv bleiben
-        } else {
-          selectedSet.add(idx);
-        }
-        renderWeekdayPicker(selectedSet);
-      });
-      wrap.appendChild(btn);
-    });
-  }
-
-  function renderRepeatOptions(selectedFreq){
-    const wrap = document.getElementById('repeatOptions'); wrap.innerHTML = '';
-    RECURRENCE_OPTIONS.forEach(opt => {
-      const el = document.createElement('div'); el.className = 'repeat-opt' + (opt.key===selectedFreq ? ' active' : '');
-      el.dataset.freq = opt.key; el.textContent = opt.label;
-      el.addEventListener('click', () => {
-        wrap.querySelectorAll('.repeat-opt').forEach(o => o.classList.remove('active'));
-        el.classList.add('active');
-        document.getElementById('repeatUntilField').style.display = opt.key === 'none' ? 'none' : 'block';
-        document.getElementById('weekdaysField').style.display = (opt.key === 'weekly' || opt.key === 'biweekly') ? 'block' : 'none';
-      });
-      wrap.appendChild(el);
-    });
-  }
-
   function openModal(prefill, isEdit){
     state.editingId = isEdit ? prefill.id : null;
-    // Bei wiederkehrenden Terminen wird immer die gespeicherte Serie geladen (nicht die
-    // angeklickte Einzel-Vorkommen-Kopie) – so bearbeitet man immer die Serie als Ganzes.
-    const source = isEdit ? (state.events.find(e => e.id === prefill.id) || prefill) : prefill;
     document.getElementById('modalTitle').textContent = isEdit ? 'Eintrag bearbeiten' : 'Neuer Eintrag';
-    document.getElementById('fieldTitle').value = source.title || '';
-    const dateVal = source.date || isoDate(state.currentDate);
-    document.getElementById('fieldDate').value = dateVal;
-    document.getElementById('fieldAllDay').checked = !!source.allDay;
-    document.getElementById('fieldStart').value = source.start || '09:00';
-    document.getElementById('fieldEnd').value = source.end || '10:00';
-    document.getElementById('fieldNotes').value = source.notes || '';
-    document.getElementById('timeRow').style.display = source.allDay ? 'none' : 'flex';
-    renderCatOptions(source.category || categoryKeys()[0]);
-    const freq = (source.recurrence && source.recurrence.freq) || 'none';
-    renderRepeatOptions(freq);
-    document.getElementById('fieldRepeatUntil').value = (source.recurrence && source.recurrence.until) || '';
-    document.getElementById('repeatUntilField').style.display = freq === 'none' ? 'none' : 'block';
-    document.getElementById('weekdaysField').style.display = (freq === 'weekly' || freq === 'biweekly') ? 'block' : 'none';
-    const existingWeekdays = source.recurrence && source.recurrence.weekdays && source.recurrence.weekdays.length
-      ? source.recurrence.weekdays : [mondayIndex(parseIso(dateVal))];
-    modalWeekdaySelection = new Set(existingWeekdays);
-    renderWeekdayPicker(modalWeekdaySelection);
+    document.getElementById('fieldTitle').value = prefill.title || '';
+    document.getElementById('fieldDate').value = prefill.date || isoDate(state.currentDate);
+    document.getElementById('fieldAllDay').checked = !!prefill.allDay;
+    document.getElementById('fieldStart').value = prefill.start || '09:00';
+    document.getElementById('fieldEnd').value = prefill.end || '10:00';
+    document.getElementById('fieldNotes').value = prefill.notes || '';
+    document.getElementById('timeRow').style.display = prefill.allDay ? 'none' : 'flex';
+    renderCatOptions(prefill.category || categoryKeys()[0]);
     document.getElementById('btnDeleteEvent').style.display = isEdit ? 'inline-flex' : 'none';
+
+    // "Wiederholend" gibt es nur beim NEU-Anlegen: einmal erzeugte Serien-Termine sind
+    // danach ganz normale, unabhängige Einzeltermine (kein Serien-Bearbeiten/-Löschen) —
+    // beim Bearbeiten eines bestehenden Eintrags macht die Option daher keinen Sinn.
+    const recurringRow = document.getElementById('fieldRecurring');
+    recurringRow.checked = false;
+    recurringRow.closest('.checkbox-row').querySelectorAll('#fieldRecurring, label[for="fieldRecurring"]').forEach(el => el.style.display = isEdit ? 'none' : '');
+    document.getElementById('weekdayPicker').style.display = 'none';
+    document.getElementById('recurringHint').style.display = 'none';
+    document.getElementById('weekdayPicker').querySelectorAll('.weekday-pill').forEach(p => p.classList.remove('active'));
+    if(!isEdit){
+      // Wochentag des gewählten Datums vorab anhaken, damit der Tag, an dem man gerade
+      // eh schon anlegt, nicht extra nochmal angeklickt werden muss.
+      const wdOfDate = (parseIso(document.getElementById('fieldDate').value).getDay() + 6) % 7;
+      const pill = document.getElementById('weekdayPicker').querySelector(`[data-wd="${wdOfDate}"]`);
+      if(pill) pill.classList.add('active');
+    }
+
     document.getElementById('modalOverlay').classList.add('open');
     document.getElementById('fieldTitle').focus();
   }
+  document.getElementById('fieldRecurring').addEventListener('change', () => {
+    const on = document.getElementById('fieldRecurring').checked;
+    document.getElementById('weekdayPicker').style.display = on ? 'flex' : 'none';
+    document.getElementById('recurringHint').style.display = on ? 'block' : 'none';
+  });
+  document.getElementById('weekdayPicker').querySelectorAll('.weekday-pill').forEach(pill => {
+    pill.addEventListener('click', () => pill.classList.toggle('active'));
+  });
   function closeModal(){ document.getElementById('modalOverlay').classList.remove('open'); }
+
+  // Erzeugt für die kommenden `weeks` Wochen je einen Termin an jedem ausgewählten
+  // Wochentag (inkl. Startdatum selbst, falls dessen Wochentag mit ausgewählt ist).
+  // 26 Wochen ~ deckungsgleich mit dem Google-Sync-Fenster (CAL_SYNC_FUTURE_DAYS),
+  // damit keine der erzeugten Termine beim Sync "hinten rausfällt".
+  function generateRecurringDates(startDateISO, weekdaySet, weeks){
+    const dates = [];
+    const start = parseIso(startDateISO);
+    const totalDays = weeks * 7;
+    for(let i=0; i<totalDays; i++){
+      const d = addDays(start, i);
+      const wd = (d.getDay() + 6) % 7; // 0=Mo ... 6=So, wie WOCHENTAGE_KURZ
+      if(weekdaySet.has(wd)) dates.push(isoDate(d));
+    }
+    return dates;
+  }
 
   function saveEventFromModal(){
     const title = document.getElementById('fieldTitle').value.trim();
@@ -1506,31 +1563,155 @@
     const start = allDay ? null : document.getElementById('fieldStart').value;
     const end = allDay ? null : document.getElementById('fieldEnd').value;
     const notes = document.getElementById('fieldNotes').value.trim();
-    const repeatEl = document.querySelector('#repeatOptions .repeat-opt.active');
-    const freq = repeatEl ? repeatEl.dataset.freq : 'none';
-    const until = document.getElementById('fieldRepeatUntil').value || null;
-    const needsWeekdays = freq === 'weekly' || freq === 'biweekly';
-    const recurrence = freq === 'none' ? null : {
-      freq, until,
-      weekdays: needsWeekdays ? Array.from(modalWeekdaySelection).sort((a,b) => a-b) : undefined
-    };
 
+    const isRecurring = !state.editingId && document.getElementById('fieldRecurring').checked;
+    const selectedWeekdays = new Set(Array.from(document.querySelectorAll('.weekday-pill.active')).map(p => Number(p.dataset.wd)));
+
+    if(isRecurring && selectedWeekdays.size > 0){
+      const seriesId = uid();
+      const dates = generateRecurringDates(date, selectedWeekdays, 26);
+      const touchedIds = [];
+      dates.forEach(d => {
+        const ev = { id: uid(), seriesId, title, category, date: d, allDay, start, end, notes, updatedAt: Date.now() };
+        state.events.push(ev);
+        touchedIds.push(ev.id);
+      });
+      saveState(); closeModal(); renderAll();
+      showToast(`${dates.length} Termine angelegt`);
+      touchedIds.forEach(id => markCalDirty(id));
+      scheduleCalAutoSync();
+      return;
+    }
+
+    let touchedId;
     if(state.editingId){
       const idx = state.events.findIndex(e => e.id === state.editingId);
-      if(idx > -1) state.events[idx] = Object.assign({}, state.events[idx], { title, category, date, allDay, start, end, notes, recurrence });
-      showToast(recurrence ? 'Serie gespeichert – gilt für alle Termine' : 'Eintrag gespeichert');
+      if(idx > -1) state.events[idx] = Object.assign({}, state.events[idx], { title, category, date, allDay, start, end, notes, updatedAt: Date.now() });
+      touchedId = state.editingId;
+      showToast('Eintrag gespeichert');
     } else {
-      state.events.push({ id: uid(), title, category, date, allDay, start, end, notes, recurrence });
-      showToast(recurrence ? 'Serie erstellt' : 'Eintrag erstellt');
+      const newEv = { id: uid(), title, category, date, allDay, start, end, notes, updatedAt: Date.now() };
+      state.events.push(newEv);
+      touchedId = newEv.id;
+      showToast('Eintrag erstellt');
     }
     saveState(); closeModal(); renderAll();
+    markCalDirty(touchedId); scheduleCalAutoSync();
   }
   function deleteCurrentEvent(){
     if(!state.editingId) return;
-    const wasRecurring = isRecurring(state.events.find(e => e.id === state.editingId) || {});
+    const removed = state.events.find(e => e.id === state.editingId);
+    const removedGcalId = removed && removed.gcalId;
     state.events = state.events.filter(e => e.id !== state.editingId);
     saveState(); closeModal(); renderAll();
-    showToast(wasRecurring ? 'Serie gelöscht – für alle Tage' : 'Eintrag gelöscht');
+    showToast('Eintrag gelöscht');
+    if(removedGcalId) calDeleteEvent(removedGcalId);
+  }
+
+  /* ============================================================
+     BULK-LÖSCHEN (mehrfach angelegte Einträge nach Titel gruppiert)
+     ------------------------------------------------------------
+     Termine, die über die "Wiederholend"-Funktion erzeugt werden,
+     bekommen zwar eine seriesId, ältere/manuell einzeln angelegte
+     Wiederholungen aber nicht. Um trotzdem alle "Serien" auf einen
+     Schlag löschen zu können, wird hier stattdessen nach Titel
+     (getrimmt, Groß-/Kleinschreibung ignoriert) gruppiert — jede
+     Gruppe mit 2+ Einträgen gilt als "wiederkehrend".
+     ============================================================ */
+  let bulkGroupsCache = [];
+
+  function groupEventsByTitle(){
+    const groups = new Map();
+    state.events.forEach(ev => {
+      const key = (ev.title || '').trim().toLowerCase();
+      if(!key) return;
+      if(!groups.has(key)) groups.set(key, { key, title: ev.title.trim(), ids: [] });
+      groups.get(key).ids.push(ev.id);
+    });
+    return Array.from(groups.values())
+      .filter(g => g.ids.length >= 2)
+      .sort((a, b) => b.ids.length - a.ids.length || a.title.localeCompare(b.title, 'de'));
+  }
+
+  function openBulkDeleteModal(){
+    bulkGroupsCache = groupEventsByTitle();
+    const list = document.getElementById('bulkDeleteList');
+    list.innerHTML = '';
+    document.getElementById('bulkEmptyHint').style.display = bulkGroupsCache.length ? 'none' : 'block';
+    document.getElementById('bulkSelectAll').checked = false;
+
+    bulkGroupsCache.forEach(g => {
+      const dates = g.ids
+        .map(id => state.events.find(e => e.id === id))
+        .filter(Boolean)
+        .map(e => e.date)
+        .sort();
+      const range = dates.length > 1
+        ? `${formatDateShort(dates[0])} – ${formatDateShort(dates[dates.length - 1])}`
+        : formatDateShort(dates[0]);
+
+      const row = document.createElement('label');
+      row.className = 'bulk-group-row';
+      row.dataset.key = g.key;
+      row.innerHTML = `
+        <input type="checkbox" class="bulk-group-check" data-key="${escapeHtml(g.key)}">
+        <span style="flex:1; min-width:0;">
+          <div class="bg-title">${escapeHtml(g.title)}</div>
+          <div class="bg-meta">${g.ids.length}× · ${range}</div>
+        </span>
+      `;
+      list.appendChild(row);
+    });
+
+    list.querySelectorAll('.bulk-group-check').forEach(cb => {
+      cb.addEventListener('change', () => {
+        cb.closest('.bulk-group-row').classList.toggle('checked', cb.checked);
+        updateBulkSelectedCount();
+      });
+    });
+
+    updateBulkSelectedCount();
+    document.getElementById('bulkDeleteModalOverlay').classList.add('open');
+  }
+
+  function closeBulkDeleteModal(){
+    document.getElementById('bulkDeleteModalOverlay').classList.remove('open');
+  }
+
+  function updateBulkSelectedCount(){
+    const checks = Array.from(document.querySelectorAll('.bulk-group-check'));
+    const checkedKeys = new Set(checks.filter(cb => cb.checked).map(cb => cb.dataset.key));
+    const eventCount = bulkGroupsCache
+      .filter(g => checkedKeys.has(g.key))
+      .reduce((sum, g) => sum + g.ids.length, 0);
+    const label = document.getElementById('bulkSelectedCount');
+    label.textContent = checkedKeys.size
+      ? `${checkedKeys.size} Serie(n) ausgewählt · ${eventCount} Termine`
+      : '';
+  }
+
+  function confirmBulkDelete(){
+    const checkedKeys = Array.from(document.querySelectorAll('.bulk-group-check:checked')).map(cb => cb.dataset.key);
+    if(!checkedKeys.length){ showToast('Keine Serie ausgewählt'); return; }
+
+    const keySet = new Set(checkedKeys);
+    const idsToDelete = new Set(
+      bulkGroupsCache.filter(g => keySet.has(g.key)).flatMap(g => g.ids)
+    );
+    if(!idsToDelete.size) return;
+
+    if(!confirm(`${idsToDelete.size} Termine aus ${keySet.size} Serie(n) unwiderruflich löschen?`)) return;
+
+    const removedGcalIds = state.events
+      .filter(e => idsToDelete.has(e.id) && e.gcalId)
+      .map(e => e.gcalId);
+
+    state.events = state.events.filter(e => !idsToDelete.has(e.id));
+    saveState();
+    closeBulkDeleteModal();
+    renderAll();
+    showToast(`${idsToDelete.size} Termine gelöscht`);
+    removedGcalIds.forEach(gcalId => calDeleteEvent(gcalId));
   }
 
   /* ============================================================
@@ -1550,6 +1731,276 @@
     return `rgba(${r},${g},${b},${alpha})`;
   }
   function escapeHtml(s){ const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+  /* ============================================================
+     GOOGLE-KALENDER-SYNC — BEIDSEITIG: neue/geänderte Termine aus
+     diesem Kalender gehen zu Google, und neue/geänderte Termine aus
+     Google (z.B. am Handy angelegt) kommen hierher zurück. Genutzt
+     wird der Scope "calendar.events" (Lesen + Schreiben von Terminen,
+     kein Zugriff auf Kalendereinstellungen). Abgeglichen wird per
+     "wer hat zuletzt geändert" (Google-Feld "updated" vs. lokalem
+     updatedAt) — die neuere Version gewinnt. Die Kategorie wird über
+     die Google-Kalender-Farbe abgebildet (nächstliegende Farbe in
+     beide Richtungen), da Google keine eigenen Kategorien kennt.
+     Nutzt dieselbe Google-Cloud-Anwendung (Client-ID) wie der
+     Trading-Journal-Drive-Sync — dort muss zusätzlich die "Google
+     Calendar API" aktiviert und diese Seite als "Authorized
+     JavaScript origin" hinterlegt sein.
+     ============================================================ */
+  const GOOGLE_CLIENT_ID = "273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com";
+  const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.events";
+  const LS_CAL_CONNECTED = 'kalenderJulian_calconnected_v1';
+  const LS_CAL_LASTSYNC = 'kalenderJulian_callastsync_v1';
+  const CAL_SYNC_PAST_DAYS = 30;    // wie weit rückwirkend mit Google abgeglichen wird
+  const CAL_SYNC_FUTURE_DAYS = 180; // wie weit im Voraus mit Google abgeglichen wird
+  // Grobe Zuordnung Google-Kalender-Vorschaufarben <-> eigene Kategoriefarben.
+  const GOOGLE_CAL_COLORS = {
+    '1':'#7986cb','2':'#33b679','3':'#8e24aa','4':'#e67c73','5':'#f6bf26',
+    '6':'#f4511e','7':'#039be5','8':'#616161','9':'#3f51b5','10':'#0b8043','11':'#d50000'
+  };
+
+  let calTokenClient = null;
+  let calAccessToken = null;
+  let calTokenExpiresAt = 0;
+  let calConnected = false;
+  let calSyncing = false;
+  let calSyncTimer = null;
+  let calPollTimer = null;
+  const calDirtyIds = new Set(); // lokal geänderte Termine, die noch zu Google hochgeladen werden müssen
+
+  function markCalDirty(id){ if(id) calDirtyIds.add(id); }
+
+  // Wartet, bis das nachgeladene Google-Skript bereit ist (async defer im <head>).
+  function initGoogleCalendar(tries){
+    tries = tries || 0;
+    if(window.google && google.accounts && google.accounts.oauth2){
+      calTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID, scope: CAL_SCOPE, callback: onCalTokenResponse
+      });
+      if(localStorage.getItem(LS_CAL_CONNECTED) === '1'){
+        calTokenClient.requestAccessToken({ prompt: '' }); // stiller Reconnect, falls Google-Session noch aktiv
+      }
+      return;
+    }
+    if(tries < 50) setTimeout(() => initGoogleCalendar(tries+1), 200);
+  }
+
+  function onCalTokenResponse(resp){
+    if(!resp || resp.error){ calConnected = false; updateCalSyncPanel(); return; }
+    calAccessToken = resp.access_token;
+    calTokenExpiresAt = Date.now() + (parseInt(resp.expires_in,10) || 3500) * 1000 - 60000;
+    calConnected = true;
+    localStorage.setItem(LS_CAL_CONNECTED, '1');
+    updateCalSyncPanel();
+    setTimeout(() => { if(calConnected) calTokenClient.requestAccessToken({ prompt: '' }); }, Math.max(calTokenExpiresAt - Date.now() - 300000, 60000));
+    if(!calPollTimer) calPollTimer = setInterval(() => { if(calConnected) calSyncNow(); }, 120000); // alle 2 Min. nach Änderungen am Handy schauen
+    calSyncNow();
+  }
+
+  function ensureFreshCalToken(){
+    return new Promise((resolve, reject) => {
+      if(calAccessToken && Date.now() < calTokenExpiresAt){ resolve(calAccessToken); return; }
+      if(!calTokenClient){ reject(new Error('Google-Anmeldung noch nicht bereit')); return; }
+      const prevCallback = calTokenClient.callback;
+      calTokenClient.callback = (resp) => {
+        calTokenClient.callback = prevCallback;
+        onCalTokenResponse(resp);
+        if(resp && !resp.error) resolve(resp.access_token); else reject(new Error('Google-Anmeldung abgelaufen'));
+      };
+      calTokenClient.requestAccessToken({ prompt: '' });
+    });
+  }
+
+  function calConnect(){ if(calTokenClient) calTokenClient.requestAccessToken({ prompt: 'consent' }); }
+  function calDisconnect(){
+    if(calAccessToken) google.accounts.oauth2.revoke(calAccessToken, () => {});
+    calAccessToken = null; calTokenExpiresAt = 0; calConnected = false;
+    clearInterval(calPollTimer); calPollTimer = null;
+    localStorage.removeItem(LS_CAL_CONNECTED);
+    updateCalSyncPanel();
+    showToast('Google-Kalender-Verbindung getrennt');
+  }
+
+  // ---------- Farb-/Kategorie-Zuordnung (Google kennt keine eigenen Kategorien) ----------
+  function hexToRgb(hex){ hex = (hex||'#808080').replace('#',''); return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)]; }
+  function colorDistance(a,b){ return Math.sqrt((a[0]-b[0])**2 + (a[1]-b[1])**2 + (a[2]-b[2])**2); }
+  function categoryColorToGoogleColorId(hex){
+    const target = hexToRgb(hex);
+    let best = '1', bestDist = Infinity;
+    Object.entries(GOOGLE_CAL_COLORS).forEach(([id, c]) => {
+      const d = colorDistance(target, hexToRgb(c));
+      if(d < bestDist){ bestDist = d; best = id; }
+    });
+    return best;
+  }
+  function googleColorIdToCategory(colorId){
+    const fallback = categoryKeys()[0];
+    const gHex = GOOGLE_CAL_COLORS[colorId];
+    if(!gHex) return fallback;
+    const target = hexToRgb(gHex);
+    let best = fallback, bestDist = Infinity;
+    categoryKeys().forEach(key => {
+      const d = colorDistance(target, hexToRgb(catColor(key)));
+      if(d < bestDist){ bestDist = d; best = key; }
+    });
+    return best;
+  }
+
+  // ---------- Umwandlung lokaler Termin <-> Google-Calendar-Event ----------
+  function localEventToGoogleResource(ev){
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const resource = { summary: ev.title, description: ev.notes || undefined, colorId: categoryColorToGoogleColorId(catColor(ev.category)) };
+    if(ev.allDay){
+      const endExclusive = isoDate(addDays(parseIso(ev.date), 1)); // Google: Enddatum bei Ganztags-Events ist exklusiv
+      resource.start = { date: ev.date }; resource.end = { date: endExclusive };
+    } else {
+      resource.start = { dateTime: `${ev.date}T${ev.start}:00`, timeZone: tz };
+      resource.end = { dateTime: `${ev.date}T${ev.end}:00`, timeZone: tz };
+    }
+    return resource;
+  }
+  function applyGoogleEventToLocal(ev, g){
+    ev.title = g.summary || '(ohne Titel)';
+    ev.notes = g.description || '';
+    ev.category = googleColorIdToCategory(g.colorId);
+    if(g.start && g.start.date){ ev.allDay = true; ev.date = g.start.date; ev.start = null; ev.end = null; }
+    else if(g.start && g.start.dateTime){
+      ev.allDay = false;
+      ev.date = g.start.dateTime.slice(0,10);
+      ev.start = g.start.dateTime.slice(11,16);
+      ev.end = (g.end && g.end.dateTime) ? g.end.dateTime.slice(11,16) : ev.start;
+    }
+    ev.updatedAt = g.updated ? new Date(g.updated).getTime() : Date.now();
+  }
+  function googleEventToLocal(g){
+    const ev = { id: uid(), gcalId: g.id, title: g.summary || '(ohne Titel)', notes: g.description || '', category: googleColorIdToCategory(g.colorId) };
+    if(g.start && g.start.date){ ev.allDay = true; ev.date = g.start.date; ev.start = null; ev.end = null; }
+    else if(g.start && g.start.dateTime){
+      ev.allDay = false;
+      ev.date = g.start.dateTime.slice(0,10);
+      ev.start = g.start.dateTime.slice(11,16);
+      ev.end = (g.end && g.end.dateTime) ? g.end.dateTime.slice(11,16) : ev.start;
+    } else { ev.allDay = true; ev.date = isoDate(new Date()); }
+    ev.updatedAt = g.updated ? new Date(g.updated).getTime() : Date.now();
+    return ev;
+  }
+
+  // Legt einen Termin in Google Kalender an oder aktualisiert ihn; merkt sich die
+  // Google-Event-ID direkt am lokalen Termin (ev.gcalId) für spätere Updates/Löschung.
+  async function calPushEvent(ev){
+    const base = 'https://www.googleapis.com/calendar/v3/calendars/primary/events';
+    const url = ev.gcalId ? `${base}/${ev.gcalId}` : base;
+    const res = await fetch(url, {
+      method: ev.gcalId ? 'PATCH' : 'POST',
+      headers: { Authorization: `Bearer ${calAccessToken}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(localEventToGoogleResource(ev))
+    });
+    if(!res.ok){
+      if(res.status === 404 && ev.gcalId){ ev.gcalId = null; return calPushEvent(ev); } // wurde direkt in Google gelöscht -> neu anlegen
+      throw new Error('Google-Kalender-API-Fehler: ' + res.status);
+    }
+    const data = await res.json();
+    ev.gcalId = data.id;
+    ev.updatedAt = data.updated ? new Date(data.updated).getTime() : Date.now();
+  }
+
+  async function calDeleteEvent(gcalId){
+    if(!gcalId) return;
+    try{
+      await ensureFreshCalToken();
+      await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events/${gcalId}`, {
+        method: 'DELETE', headers:{ Authorization: `Bearer ${calAccessToken}` }
+      });
+    }catch(err){ console.error('Löschen in Google Kalender fehlgeschlagen:', err); }
+  }
+
+  // Holt alle Google-Termine im Sync-Zeitraum und gleicht sie mit dem lokalen Stand ab:
+  // neuere Google-Version übernehmen, in Google gelöschte (innerhalb des Zeitraums)
+  // lokal entfernen, komplett neue Google-Termine lokal anlegen.
+  async function calPullAndMerge(){
+    const now = Date.now();
+    const timeMin = new Date(now - CAL_SYNC_PAST_DAYS*86400000).toISOString();
+    const timeMax = new Date(now + CAL_SYNC_FUTURE_DAYS*86400000).toISOString();
+    const url = `https://www.googleapis.com/calendar/v3/calendars/primary/events`
+      + `?singleEvents=true&orderBy=startTime&maxResults=250`
+      + `&timeMin=${encodeURIComponent(timeMin)}&timeMax=${encodeURIComponent(timeMax)}`;
+    const res = await fetch(url, { headers:{ Authorization:`Bearer ${calAccessToken}` } });
+    if(!res.ok) throw new Error('Google-Kalender-Abfrage fehlgeschlagen: ' + res.status);
+    const data = await res.json();
+    const gEvents = (data.items || []).filter(e => e.status !== 'cancelled');
+    const gById = new Map(gEvents.map(e => [e.id, e]));
+    const windowStart = now - CAL_SYNC_PAST_DAYS*86400000, windowEnd = now + CAL_SYNC_FUTURE_DAYS*86400000;
+
+    const toRemove = [];
+    state.events.forEach(ev => {
+      if(!ev.gcalId) return; // noch nie mit Google abgeglichen -> unberührt lassen (wird per Push angelegt)
+      const g = gById.get(ev.gcalId);
+      if(g){
+        const gUpdated = new Date(g.updated).getTime();
+        if(!ev.updatedAt || gUpdated > ev.updatedAt) applyGoogleEventToLocal(ev, g);
+        gById.delete(ev.gcalId); // erledigt
+      } else {
+        const evTime = parseIso(ev.date).getTime();
+        if(evTime >= windowStart && evTime <= windowEnd) toRemove.push(ev.id); // in Google gelöscht -> lokal auch entfernen
+      }
+    });
+    if(toRemove.length) state.events = state.events.filter(ev => !toRemove.includes(ev.id));
+    gById.forEach(g => state.events.push(googleEventToLocal(g))); // Rest = neu in Google angelegt -> lokal übernehmen
+  }
+
+  // Überträgt alle lokal geänderten (oder noch nie übertragenen) Termine nach Google.
+  async function calPushDirty(){
+    const idsToSync = new Set(calDirtyIds);
+    state.events.forEach(ev => { if(!ev.gcalId) idsToSync.add(ev.id); });
+    for(const id of idsToSync){
+      const ev = state.events.find(e => e.id === id);
+      if(!ev) continue;
+      try{ await calPushEvent(ev); calDirtyIds.delete(id); }
+      catch(err){ console.error('Sync fehlgeschlagen für Termin', id, err); }
+    }
+  }
+
+  // Ein voller Sync-Durchlauf: erst von Google übernehmen, dann lokale Änderungen hochladen.
+  async function calSyncNow(){
+    if(!calConnected || calSyncing) return;
+    calSyncing = true; updateCalSyncPanel();
+    try{
+      await ensureFreshCalToken();
+      await calPullAndMerge();
+      await calPushDirty();
+      saveState(); renderAll();
+      localStorage.setItem(LS_CAL_LASTSYNC, String(Date.now()));
+    }catch(err){
+      console.error('Google-Kalender-Sync fehlgeschlagen:', err);
+    }finally{
+      calSyncing = false; updateCalSyncPanel();
+    }
+  }
+
+  // Debounce: läuft erst 4s nach der letzten lokalen Änderung an, damit nicht bei jedem
+  // einzelnen Tastendruck synchronisiert wird.
+  function scheduleCalAutoSync(){
+    if(!calConnected) return;
+    clearTimeout(calSyncTimer);
+    calSyncTimer = setTimeout(calSyncNow, 4000);
+  }
+
+  function updateCalSyncPanel(){
+    const btn = document.getElementById('btnSync');
+    btn.classList.toggle('connected', calConnected);
+    btn.classList.toggle('syncing', calSyncing);
+    if(calSyncing){
+      btn.textContent = '🔄 Synchronisiere …'; btn.title = 'Gleiche Termine mit Google Kalender ab (beide Richtungen)';
+    } else if(calConnected){
+      const last = parseInt(localStorage.getItem(LS_CAL_LASTSYNC), 10);
+      const label = last ? new Date(last).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' }) : '';
+      btn.textContent = '✓ Google Kalender' + (label ? ` · ${label}` : '');
+      btn.title = 'Verbunden mit Google Kalender (beidseitig) — Klick zum Trennen';
+    } else {
+      btn.textContent = '🔗 Google Kalender verbinden';
+      btn.title = 'Termine beidseitig mit Google Kalender synchronisieren (auch am Handy sichtbar)';
+    }
+  }
 
   /* ============================================================
      EVENT-LISTENER: NAVIGATION & CONTROLS
@@ -1612,7 +2063,11 @@
     }
   });
   document.getElementById('btnSync').addEventListener('click', () => {
-    showToast('Google-Kalender-/Claude-Sync ist als nächster Ausbauschritt geplant');
+    if(calConnected){
+      if(confirm('Verbindung zu Google Kalender trennen? Bereits übertragene Termine bleiben in Google Kalender erhalten.')) calDisconnect();
+    } else {
+      calConnect();
+    }
   });
   document.getElementById('btnExport').addEventListener('click', exportData);
   document.getElementById('btnImportTrigger').addEventListener('click', () => document.getElementById('importFileInput').click());
@@ -1625,6 +2080,21 @@
       state.events = []; saveState(); renderAll(); showToast('Alle Daten gelöscht');
     }
   });
+  document.getElementById('btnBulkDelete').addEventListener('click', () => {
+    document.getElementById('settingsPopover').classList.remove('open');
+    openBulkDeleteModal();
+  });
+  document.getElementById('btnCancelBulkDelete').addEventListener('click', closeBulkDeleteModal);
+  document.getElementById('btnConfirmBulkDelete').addEventListener('click', confirmBulkDelete);
+  document.getElementById('bulkDeleteModalOverlay').addEventListener('click', (e) => { if(e.target.id === 'bulkDeleteModalOverlay') closeBulkDeleteModal(); });
+  document.getElementById('bulkSelectAll').addEventListener('change', (e) => {
+    const on = e.target.checked;
+    document.querySelectorAll('.bulk-group-check').forEach(cb => {
+      cb.checked = on;
+      cb.closest('.bulk-group-row').classList.toggle('checked', on);
+    });
+    updateBulkSelectedCount();
+  });
 
   /* ============================================================
      INIT
@@ -1633,6 +2103,8 @@
   const hadData = loadState();
   if(!hadData) seedDemoData();
   renderAll();
+  initGoogleCalendar();
+  updateCalSyncPanel();
   setInterval(() => { if(state.currentView !== 'month') renderAll(); }, 60000);
 })();
 </script>
