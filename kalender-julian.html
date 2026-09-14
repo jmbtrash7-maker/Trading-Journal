@@ -89,7 +89,7 @@
     height:64px; flex-shrink:0; display:flex; align-items:center; gap:14px;
     padding:0 18px; border:1px solid var(--glass-border); border-radius:var(--radius-lg);
     background:var(--glass-grad); backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
-    box-shadow:var(--shadow-card); position:relative; z-index:50;
+    box-shadow:var(--shadow-card); position:relative; z-index:50; isolation:isolate;
   }
   .icon-btn{
     width:36px; height:36px; border-radius:50%; background:transparent; border:none;
@@ -158,12 +158,12 @@
   }
   .sync-badge.syncing{ opacity:.65; }
 
-  .settings-wrap{ position:relative; }
+  .settings-wrap{ position:relative; z-index:5; }
   .settings-popover{
     position:absolute; top:46px; right:0; width:220px; background:var(--glass-grad-strong);
     backdrop-filter:var(--glass-blur); -webkit-backdrop-filter:var(--glass-blur);
     border:1px solid var(--glass-border); border-radius:var(--radius); padding:8px;
-    box-shadow:var(--shadow-modal); display:none; flex-direction:column; gap:2px; z-index:40;
+    box-shadow:var(--shadow-modal); display:none; flex-direction:column; gap:2px; z-index:200;
   }
   .settings-popover.open{ display:flex; }
   .settings-popover button{
