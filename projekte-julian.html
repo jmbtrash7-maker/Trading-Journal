@@ -58,7 +58,10 @@ import {
   CheckCircle2, Circle, AlertTriangle, Loader, ChevronRight,
   LineChart, Dumbbell, CalendarDays, FileWarning, LayoutDashboard,
   Rocket, Trash2, ListChecks, ImagePlus, Cloud, Sparkles,
-  Tag, Pencil, StickyNote, Check, Filter
+  Tag, Pencil, StickyNote, Check, Filter,
+  BookOpen, NotebookPen, Bold, Italic, Underline, Highlighter,
+  List, ListOrdered, Heading2, Paperclip, Eraser, Undo2, Redo2,
+  CalendarCheck
 } from "https://esm.sh/lucide-react@0.383.0?deps=react@18.3.1";
 
 /* ============================================================
@@ -164,7 +167,30 @@ const initialCategories = [
   { id: "cat3", name: "Recherche", color: "#f0a63d" },
 ];
 
+// Lektionen = eigene Notiz-/Wissensseiten je Projekt (z.B. Projekt "Künstliche
+// Intelligenz" -> Lektion "Prompts erklärt"). content ist HTML aus dem
+// contentEditable-Editor in LessonEditor. Bewusst leer gestartet, keine Demo-Lektionen.
+const initialLessons = [];
+
 function uid() { return "id" + Date.now().toString(36) + Math.random().toString(36).slice(2, 7); }
+
+// Für Lektions-Kartenvorschau: HTML-Tags entfernen und auf eine Länge kürzen.
+function stripHtmlPreview(html, max = 110) {
+  if (!html) return "";
+  const text = html.replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+  return text.length > max ? text.slice(0, max) + "…" : text;
+}
+function formatUpdatedAt(ts) {
+  if (!ts) return "Neu";
+  const d = new Date(ts);
+  const today = startOfDay(new Date());
+  const day = startOfDay(d);
+  const diffDays = Math.round((day - today) / 86400000);
+  const time = d.toLocaleTimeString("de-DE", { hour: "2-digit", minute: "2-digit" });
+  if (diffDays === 0) return `Heute · ${time}`;
+  if (diffDays === -1) return `Gestern · ${time}`;
+  return `${isoDate(d).split("-").reverse().join(".")} · ${time}`;
+}
 
 // Berechnet den Status automatisch aus überfälligen/nahenden offenen Terminen + Fortschritt.
 // Eine manuelle Überschreibung (project.statusOverride) hat immer Vorrang, damit man den
@@ -318,6 +344,11 @@ function EventRow({ ev, project, category, onToggleDone, onEdit, showProject }) 
           <div className="flex items-center gap-2 mt-0.5 text-xs flex-wrap" style={{ color: "#8b93a7" }}>
             <span>{relativeDateLabel(ev.date)}</span>
             {ev.time && <><span>·</span><span>{ev.time}</span></>}
+            {ev.googleEventId && (
+              <span title="In Google Kalender synchronisiert" className="inline-flex">
+                <CalendarCheck size={12} style={{ color: "#6b7284" }} />
+              </span>
+            )}
             {showProject && project && (
               <>
                 <span>·</span>
@@ -487,8 +518,9 @@ function StatusPicker({ project, autoStatus, onChange }) {
   );
 }
 
-function ProjectDetail({ project, events, categories, categoriesById, onToggleDone, onEditEvent, onBack, onAddEvent, onDeleteProject, onUpdateProject, onManageCategories }) {
+function ProjectDetail({ project, events, categories, categoriesById, lessons, onToggleDone, onEditEvent, onBack, onAddEvent, onDeleteProject, onUpdateProject, onManageCategories, onOpenLesson, onCreateLesson }) {
   const tokens = COLOR_TOKENS[project.color] || COLOR_TOKENS.violet;
+  const [detailTab, setDetailTab] = useState("tasks"); // 'tasks' | 'lessons'
   const [categoryFilter, setCategoryFilter] = useState(null);
   const filteredEvents = categoryFilter ? events.filter((e) => e.categoryId === categoryFilter) : events;
   const sorted = [...filteredEvents].sort((a, b) => a.date.localeCompare(b.date));
@@ -571,41 +603,64 @@ function ProjectDetail({ project, events, categories, categoriesById, onToggleDo
         </div>
       </div>
 
-      <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
-        <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "#8b93a7" }}>Termine &amp; Tasks</h2>
+      <div className="inline-flex rounded-xl p-1 mb-4" style={{ background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}>
         <button
-          onClick={() => onAddEvent(project.id)}
-          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-transform hover:scale-105"
-          style={{ background: tokens.grad, color: "#0a0e1a" }}
+          onClick={() => setDetailTab("tasks")}
+          className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors"
+          style={detailTab === "tasks" ? { background: "rgba(124,92,255,0.2)", color: "#a996ff" } : { color: "#8b93a7" }}
         >
-          <Plus size={14} strokeWidth={2.5} /> Hinzufügen
+          <ListChecks size={14} /> Termine &amp; Tasks
+        </button>
+        <button
+          onClick={() => setDetailTab("lessons")}
+          className="inline-flex items-center gap-1.5 rounded-lg px-3.5 py-1.5 text-xs font-semibold transition-colors"
+          style={detailTab === "lessons" ? { background: "rgba(124,92,255,0.2)", color: "#a996ff" } : { color: "#8b93a7" }}
+        >
+          <BookOpen size={14} /> Lektionen
         </button>
       </div>
 
-      <div className="mb-3">
-        <CategoryFilterBar categories={categories} activeId={categoryFilter} onChange={setCategoryFilter} onManage={onManageCategories} />
-      </div>
-
-      <div className="space-y-2">
-        {open.length === 0 && done.length === 0 && (
-          <div className="rounded-xl py-8 text-center text-sm" style={{ color: "#8b93a7", border: "1px dashed rgba(255,255,255,0.1)" }}>
-            {events.length === 0
-              ? 'Noch keine Termine oder Tasks — leg den ersten mit "Hinzufügen" an.'
-              : "Keine Einträge in dieser Kategorie."}
+      {detailTab === "tasks" ? (
+        <>
+          <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+            <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "#8b93a7" }}>Termine &amp; Tasks</h2>
+            <button
+              onClick={() => onAddEvent(project.id)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-transform hover:scale-105"
+              style={{ background: tokens.grad, color: "#0a0e1a" }}
+            >
+              <Plus size={14} strokeWidth={2.5} /> Hinzufügen
+            </button>
           </div>
-        )}
-        {open.map((ev) => (
-          <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} onEdit={onEditEvent} showProject={false} />
-        ))}
-        {done.length > 0 && (
-          <>
-            <div className="text-xs font-semibold uppercase tracking-wide pt-3 pb-1" style={{ color: "#8b93a7" }}>Erledigt</div>
-            {done.map((ev) => (
+
+          <div className="mb-3">
+            <CategoryFilterBar categories={categories} activeId={categoryFilter} onChange={setCategoryFilter} onManage={onManageCategories} />
+          </div>
+
+          <div className="space-y-2">
+            {open.length === 0 && done.length === 0 && (
+              <div className="rounded-xl py-8 text-center text-sm" style={{ color: "#8b93a7", border: "1px dashed rgba(255,255,255,0.1)" }}>
+                {events.length === 0
+                  ? 'Noch keine Termine oder Tasks — leg den ersten mit "Hinzufügen" an.'
+                  : "Keine Einträge in dieser Kategorie."}
+              </div>
+            )}
+            {open.map((ev) => (
               <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} onEdit={onEditEvent} showProject={false} />
             ))}
-          </>
-        )}
-      </div>
+            {done.length > 0 && (
+              <>
+                <div className="text-xs font-semibold uppercase tracking-wide pt-3 pb-1" style={{ color: "#8b93a7" }}>Erledigt</div>
+                {done.map((ev) => (
+                  <EventRow key={ev.id} ev={ev} project={project} category={categoriesById[ev.categoryId]} onToggleDone={onToggleDone} onEdit={onEditEvent} showProject={false} />
+                ))}
+              </>
+            )}
+          </div>
+        </>
+      ) : (
+        <LessonList project={project} lessons={lessons} onOpenLesson={onOpenLesson} onCreateLesson={(title) => onCreateLesson(project.id, title)} />
+      )}
     </div>
   );
 }
@@ -665,6 +720,336 @@ function TimelineView({ events, projectsById, categories, categoriesById, onTogg
           </div>
         ))}
       </div>
+    </div>
+  );
+}
+
+/* ============================================================
+   LEKTIONEN — eigene Wissens-/Notizseiten je Projekt (z.B. Projekt
+   "Künstliche Intelligenz" -> Lektion "Prompts erklärt"). LessonList
+   zeigt die Themen-Kacheln, LessonEditor ist der eigentliche Editor.
+   ============================================================ */
+function LessonList({ project, lessons, onOpenLesson, onCreateLesson }) {
+  const [showNewModal, setShowNewModal] = useState(false);
+  const tokens = COLOR_TOKENS[project.color] || COLOR_TOKENS.violet;
+  const sorted = [...lessons].sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-3 gap-3 flex-wrap">
+        <h2 className="text-sm font-semibold uppercase tracking-wide" style={{ color: "#8b93a7" }}>Lektionen</h2>
+        <button
+          onClick={() => setShowNewModal(true)}
+          className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-semibold transition-transform hover:scale-105"
+          style={{ background: tokens.grad, color: "#0a0e1a" }}
+        >
+          <Plus size={14} strokeWidth={2.5} /> Neues Thema
+        </button>
+      </div>
+
+      {sorted.length === 0 ? (
+        <div className="rounded-xl py-10 text-center text-sm" style={{ color: "#8b93a7", border: "1px dashed rgba(255,255,255,0.1)" }}>
+          Noch keine Lektionen — leg mit "Neues Thema" deine erste Notizseite an, z.B. "Prompts erklärt".
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+          {sorted.map((l) => (
+            <button
+              key={l.id}
+              onClick={() => onOpenLesson(l.id)}
+              className="text-left rounded-xl p-4 transition-transform hover:scale-[1.02]"
+              style={{ background: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.08)" }}
+            >
+              <div className="flex items-start justify-between gap-2 mb-2">
+                <div className="rounded-lg p-1.5 flex-shrink-0" style={{ background: tokens.dim }}>
+                  <NotebookPen size={15} style={{ color: tokens.accent }} />
+                </div>
+              </div>
+              <div className="text-sm font-semibold mb-1 truncate" style={{ color: "#eef1f8" }}>{l.title || "Ohne Titel"}</div>
+              <div className="text-xs mb-3 leading-relaxed" style={{ color: "#8b93a7", minHeight: "2.5em" }}>
+                {stripHtmlPreview(l.content) || "Noch leer."}
+              </div>
+              <div className="text-[11px]" style={{ color: "#6b7284" }}>{formatUpdatedAt(l.updatedAt)}</div>
+            </button>
+          ))}
+        </div>
+      )}
+
+      {showNewModal && (
+        <NewLessonModal
+          tokens={tokens}
+          onCreate={(title) => { const id = onCreateLesson(title); setShowNewModal(false); onOpenLesson(id); }}
+          onClose={() => setShowNewModal(false)}
+        />
+      )}
+    </div>
+  );
+}
+
+function NewLessonModal({ tokens, onCreate, onClose }) {
+  const [title, setTitle] = useState("");
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: "rgba(5,7,14,0.7)", backdropFilter: "blur(4px)" }}>
+      <div
+        className="w-full max-w-sm rounded-2xl p-5"
+        style={{ background: "rgba(16,20,34,0.95)", border: "1px solid rgba(255,255,255,0.1)", boxShadow: "0 20px 60px rgba(0,0,0,0.5)" }}
+      >
+        <div className="flex items-center justify-between mb-4">
+          <h3 className="text-base font-semibold inline-flex items-center gap-2" style={{ fontFamily: "'Rajdhani',sans-serif", color: "#fff" }}>
+            <NotebookPen size={16} style={{ color: tokens.accent }} /> Neues Thema
+          </h3>
+          <button onClick={onClose} className="opacity-60 hover:opacity-100 transition-opacity"><X size={18} /></button>
+        </div>
+        <label className="block text-xs font-semibold mb-1.5" style={{ color: "#8b93a7" }}>Titel</label>
+        <input
+          autoFocus
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          onKeyDown={(e) => { if (e.key === "Enter" && title.trim()) onCreate(title.trim()); }}
+          placeholder="z.B. Prompts erklärt"
+          className="w-full rounded-lg px-3 py-2 text-sm mb-5 outline-none"
+          style={{ background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.1)", color: "#eef1f8" }}
+        />
+        <div className="flex justify-end gap-2">
+          <button onClick={onClose} className="rounded-lg px-4 py-2 text-sm font-semibold transition-colors hover:bg-white/5" style={{ color: "#8b93a7" }}>
+            Abbrechen
+          </button>
+          <button
+            disabled={!title.trim()}
+            onClick={() => onCreate(title.trim())}
+            className="rounded-lg px-4 py-2 text-sm font-semibold disabled:opacity-40"
+            style={{ background: tokens.grad, color: "#0a0e1a" }}
+          >
+            Anlegen
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Farben für den Highlighter — bewusst helle, "Textmarker"-artige Töne statt der Neon-
+// Akzentfarben der App, weil sie als Hintergrund hinter Text stehen und lesbar bleiben müssen.
+const HIGHLIGHT_COLORS = ["#fde68a", "#bbf7d0", "#fbcfe8", "#bfdbfe", "#ddd6fe"];
+
+function LessonEditor({ project, lesson, onUpdate, onDelete, onBack }) {
+  const tokens = COLOR_TOKENS[project.color] || COLOR_TOKENS.violet;
+  const editorRef = useRef(null);
+  const imageInputRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const saveTimerRef = useRef(null);
+  const [title, setTitle] = useState(lesson.title);
+  const [showHighlightMenu, setShowHighlightMenu] = useState(false);
+  const [active, setActive] = useState({ bold: false, italic: false, underline: false });
+
+  // Inhalt nur beim Wechsel der Lektion neu ins DOM schreiben — der contentEditable-Bereich
+  // bleibt danach unkontrolliert (kein Re-Render bei jedem Tastendruck), sonst springt der
+  // Cursor beim Tippen ständig an den Anfang zurück.
+  useEffect(() => {
+    setTitle(lesson.title);
+    if (editorRef.current) editorRef.current.innerHTML = lesson.content || "";
+  }, [lesson.id]);
+
+  function scheduleContentSave() {
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => {
+      onUpdate(lesson.id, { content: editorRef.current ? editorRef.current.innerHTML : "" });
+    }, 500);
+  }
+
+  function handleTitleChange(e) {
+    const v = e.target.value;
+    setTitle(v);
+    clearTimeout(saveTimerRef.current);
+    saveTimerRef.current = setTimeout(() => onUpdate(lesson.id, { title: v }), 400);
+  }
+
+  function updateActive() {
+    try {
+      setActive({
+        bold: document.queryCommandState("bold"),
+        italic: document.queryCommandState("italic"),
+        underline: document.queryCommandState("underline"),
+      });
+    } catch (e) { /* ignoriert — queryCommandState kann in seltenen Fällen werfen */ }
+  }
+
+  function exec(cmd, val) {
+    if (editorRef.current) editorRef.current.focus();
+    document.execCommand(cmd, false, val);
+    scheduleContentSave();
+    updateActive();
+  }
+
+  function applyHighlight(color) {
+    exec("hiliteColor", color);
+    setShowHighlightMenu(false);
+  }
+
+  function handlePickImage(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      exec("insertHTML", `<img src="${reader.result}" style="max-width:100%;border-radius:10px;margin:10px 0;display:block;" />`);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  function handlePickFile(e) {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const sizeKb = Math.max(1, Math.round(file.size / 1024));
+      const safeName = file.name.replace(/"/g, "'");
+      const chip =
+        `<a href="${reader.result}" download="${safeName}" contenteditable="false" ` +
+        `style="display:inline-flex;align-items:center;gap:6px;background:rgba(124,92,255,0.14);` +
+        `border:1px solid rgba(124,92,255,0.4);color:#c9beff;border-radius:8px;padding:6px 10px;` +
+        `font-size:12px;text-decoration:none;margin:4px 6px 4px 0;">📎 ${safeName} (${sizeKb} KB)</a>&nbsp;`;
+      exec("insertHTML", chip);
+    };
+    reader.readAsDataURL(file);
+    e.target.value = "";
+  }
+
+  const toolBtn = (active_) => ({
+    background: active_ ? "rgba(124,92,255,0.2)" : "transparent",
+    color: active_ ? "#a996ff" : "#c3c8d6",
+  });
+
+  return (
+    <div>
+      <button onClick={onBack} className="inline-flex items-center gap-1.5 text-sm mb-5 transition-opacity hover:opacity-70" style={{ color: "#8b93a7" }}>
+        <ArrowLeft size={16} /> Zurück zu {project.name}
+      </button>
+
+      <div className="flex items-start justify-between gap-3 mb-4">
+        <input
+          value={title}
+          onChange={handleTitleChange}
+          placeholder="Titel der Lektion"
+          className="flex-1 bg-transparent outline-none text-2xl font-bold"
+          style={{ fontFamily: "'Rajdhani',sans-serif", color: "#fff", letterSpacing: "0.3px" }}
+        />
+        <button
+          onClick={() => { if (window.confirm(`"${lesson.title}" wirklich löschen?`)) onDelete(lesson.id); }}
+          className="flex-shrink-0 rounded-lg p-2 transition-colors hover:bg-white/10"
+          style={{ color: "#8b93a7" }}
+          title="Lektion löschen"
+        >
+          <Trash2 size={16} />
+        </button>
+      </div>
+
+      {/* Toolbar */}
+      <div
+        className="flex items-center gap-1 flex-wrap rounded-xl mb-3 px-2 py-2"
+        style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)" }}
+      >
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("bold")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={toolBtn(active.bold)} title="Fett">
+          <Bold size={15} />
+        </button>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("italic")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={toolBtn(active.italic)} title="Kursiv">
+          <Italic size={15} />
+        </button>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("underline")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={toolBtn(active.underline)} title="Unterstrichen">
+          <Underline size={15} />
+        </button>
+
+        <span className="w-px h-5 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+
+        <div className="relative">
+          <button
+            onMouseDown={(e) => e.preventDefault()}
+            onClick={() => setShowHighlightMenu((v) => !v)}
+            className="rounded-md p-2 transition-colors hover:bg-white/10"
+            style={{ color: "#c3c8d6" }}
+            title="Highlighter"
+          >
+            <Highlighter size={15} />
+          </button>
+          {showHighlightMenu && (
+            <div
+              className="absolute top-full left-0 mt-1 flex items-center gap-1.5 rounded-lg p-2 z-10"
+              style={{ background: "rgba(16,20,34,0.98)", border: "1px solid rgba(255,255,255,0.12)", boxShadow: "0 10px 30px rgba(0,0,0,0.4)" }}
+            >
+              {HIGHLIGHT_COLORS.map((c) => (
+                <button key={c} onMouseDown={(e) => e.preventDefault()} onClick={() => applyHighlight(c)} className="h-6 w-6 rounded-full transition-transform hover:scale-110" style={{ background: c }} />
+              ))}
+              <button
+                onMouseDown={(e) => e.preventDefault()}
+                onClick={() => applyHighlight("transparent")}
+                className="h-6 w-6 rounded-full flex items-center justify-center transition-transform hover:scale-110"
+                style={{ border: "1px solid rgba(255,255,255,0.3)" }}
+                title="Entfernen"
+              >
+                <X size={12} style={{ color: "#8b93a7" }} />
+              </button>
+            </div>
+          )}
+        </div>
+
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("formatBlock", "H2")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Überschrift">
+          <Heading2 size={15} />
+        </button>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertUnorderedList")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Aufzählung">
+          <List size={15} />
+        </button>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("insertOrderedList")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Nummerierte Liste">
+          <ListOrdered size={15} />
+        </button>
+
+        <span className="w-px h-5 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => imageInputRef.current && imageInputRef.current.click()} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Bild einfügen">
+          <ImagePlus size={15} />
+        </button>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => fileInputRef.current && fileInputRef.current.click()} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Datei anhängen">
+          <Paperclip size={15} />
+        </button>
+
+        <span className="w-px h-5 mx-1" style={{ background: "rgba(255,255,255,0.1)" }} />
+
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("undo")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Rückgängig">
+          <Undo2 size={15} />
+        </button>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("redo")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Wiederholen">
+          <Redo2 size={15} />
+        </button>
+        <button onMouseDown={(e) => e.preventDefault()} onClick={() => exec("removeFormat")} className="rounded-md p-2 transition-colors hover:bg-white/10" style={{ color: "#c3c8d6" }} title="Formatierung entfernen">
+          <Eraser size={15} />
+        </button>
+
+        <input ref={imageInputRef} type="file" accept="image/*" className="hidden" onChange={handlePickImage} />
+        <input ref={fileInputRef} type="file" className="hidden" onChange={handlePickFile} />
+      </div>
+
+      <style>{`
+        .lesson-content{outline:none;min-height:50vh;font-size:14.5px;line-height:1.7;color:#e5e8f2;}
+        .lesson-content h2{font-family:'Rajdhani',sans-serif;font-size:20px;font-weight:700;color:#fff;margin:18px 0 8px;letter-spacing:.2px;}
+        .lesson-content h3{font-family:'Rajdhani',sans-serif;font-size:17px;font-weight:600;color:#fff;margin:14px 0 6px;}
+        .lesson-content p{margin:0 0 10px;}
+        .lesson-content ul,.lesson-content ol{margin:0 0 10px;padding-left:22px;}
+        .lesson-content li{margin:3px 0;}
+        .lesson-content a{color:#7fc8ff;}
+        .lesson-content img{max-width:100%;border-radius:10px;}
+        .lesson-content:empty:before{content:attr(data-placeholder);color:#5b6274;}
+      `}</style>
+      <div
+        ref={editorRef}
+        className="lesson-content rounded-xl px-5 py-4"
+        contentEditable
+        suppressContentEditableWarning
+        data-placeholder="Hier deine Notizen, Erklärungen, Bilder und Dateien einfügen …"
+        onInput={scheduleContentSave}
+        onKeyUp={updateActive}
+        onMouseUp={updateActive}
+        onFocus={updateActive}
+        style={{ background: "rgba(255,255,255,0.025)", border: "1px solid rgba(255,255,255,0.08)" }}
+      />
     </div>
   );
 }
@@ -1391,14 +1776,93 @@ function useDriveSync(getPayload, applyPayload) {
     saveTimerRef.current = setTimeout(saveNow, 4000);
   }
 
-  return { status, connect, disconnect, scheduleSave, loadNow: () => loadNow(true) };
+  /* --------------------------------------------------------
+     GOOGLE-KALENDER-SYNC — Termine & Tasks mit Datum legen bei
+     Verbindung automatisch einen echten Google-Kalender-Eintrag an
+     (primärer Kalender). Nutzt denselben Access-Token wie der
+     Drive-Sync oben (gleicher OAuth-Client, Scope enthält bereits
+     calendar.events). Läuft "best effort" im Hintergrund: schlägt
+     ein Aufruf fehl, bleibt der lokale Stand trotzdem gültig, es
+     wird nur in die Konsole geloggt statt die UI zu blockieren.
+     -------------------------------------------------------- */
+  function toLocalIso(d) {
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}:00`;
+  }
+
+  function buildCalendarEventBody(ev) {
+    const body = { summary: ev.title };
+    if (ev.notes) body.description = ev.notes;
+    if (ev.time) {
+      const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+      const start = new Date(`${ev.date}T${ev.time}:00`);
+      const end = new Date(start.getTime() + 30 * 60000); // 30-Minuten-Standardslot
+      body.start = { dateTime: toLocalIso(start), timeZone: tz };
+      body.end = { dateTime: toLocalIso(end), timeZone: tz };
+    } else {
+      // Ganztägiger Eintrag — Google Calendar erwartet beim Enddatum den
+      // Folgetag (exklusive Grenze), sonst wird der Eintrag 0 Tage lang.
+      body.start = { date: ev.date };
+      body.end = { date: isoDate(addDays(parseIso(ev.date), 1)) };
+    }
+    return body;
+  }
+
+  async function calendarRequest(method, path, body) {
+    await ensureFreshToken();
+    const res = await fetch(`https://www.googleapis.com/calendar/v3/calendars/primary/events${path}`, {
+      method,
+      headers: { Authorization: `Bearer ${accessTokenRef.current}`, "Content-Type": "application/json" },
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    if (!res.ok) throw new Error(`Kalender-API-Fehler ${res.status}`);
+    if (method === "DELETE") return null;
+    return res.json();
+  }
+
+  // Legt einen neuen Kalender-Eintrag an und gibt dessen Google-Event-ID zurück
+  // (null bei Fehler oder wenn nicht verbunden — der Aufrufer lässt den Termin dann
+  // einfach unverknüpft lokal stehen, statt einen Fehler zu zeigen).
+  async function createCalendarEvent(ev) {
+    if (!connectedRef.current) return null;
+    try {
+      const data = await calendarRequest("POST", "", buildCalendarEventBody(ev));
+      return (data && data.id) || null;
+    } catch (err) {
+      console.error("Google-Kalender-Termin anlegen fehlgeschlagen:", err);
+      return null;
+    }
+  }
+  async function updateCalendarEvent(ev) {
+    if (!connectedRef.current || !ev.googleEventId) return;
+    try {
+      await calendarRequest("PATCH", `/${ev.googleEventId}`, buildCalendarEventBody(ev));
+    } catch (err) {
+      console.error("Google-Kalender-Termin aktualisieren fehlgeschlagen:", err);
+    }
+  }
+  async function deleteCalendarEvent(googleEventId) {
+    if (!connectedRef.current || !googleEventId) return;
+    try {
+      await calendarRequest("DELETE", `/${googleEventId}`);
+    } catch (err) {
+      console.error("Google-Kalender-Termin löschen fehlgeschlagen:", err);
+    }
+  }
+
+  return {
+    status, connect, disconnect, scheduleSave, loadNow: () => loadNow(true),
+    createCalendarEvent, updateCalendarEvent, deleteCalendarEvent,
+  };
 }
 
 function ProjekteDashboard() {
   const [projects, setProjects] = useState(initialProjects);
   const [events, setEvents] = useState(initialEvents);
   const [categories, setCategories] = useState(initialCategories);
+  const [lessons, setLessons] = useState(initialLessons);
   const [selectedProjectId, setSelectedProjectId] = useState(null);
+  const [openLessonId, setOpenLessonId] = useState(null);
   const [tab, setTab] = useState("projects"); // 'projects' | 'timeline'
   const [search, setSearch] = useState("");
   const [eventModalProjectId, setEventModalProjectId] = useState(undefined); // undefined = geschlossen, null/id = offen
@@ -1412,17 +1876,26 @@ function ProjekteDashboard() {
   const projectsRef = useRef(projects);
   const eventsRef = useRef(events);
   const categoriesRef = useRef(categories);
+  const lessonsRef = useRef(lessons);
   useEffect(() => { projectsRef.current = projects; }, [projects]);
   useEffect(() => { eventsRef.current = events; }, [events]);
   useEffect(() => { categoriesRef.current = categories; }, [categories]);
+  useEffect(() => { lessonsRef.current = lessons; }, [lessons]);
 
   const drive = useDriveSync(
-    () => ({ projects: projectsRef.current, events: eventsRef.current, categories: categoriesRef.current }),
-    (data) => { setProjects(data.projects); setEvents(data.events); setCategories(Array.isArray(data.categories) ? data.categories : []); }
+    () => ({ projects: projectsRef.current, events: eventsRef.current, categories: categoriesRef.current, lessons: lessonsRef.current }),
+    (data) => {
+      setProjects(data.projects);
+      setEvents(data.events);
+      setCategories(Array.isArray(data.categories) ? data.categories : []);
+      setLessons(Array.isArray(data.lessons) ? data.lessons : []);
+    }
   );
-  // Bei jeder Änderung an Projekten/Terminen/Kategorien (debounced 4s) automatisch nach
-  // Drive sichern — genauso wie im Kalender und Trading Journal.
-  useEffect(() => { drive.scheduleSave(); }, [projects, events, categories]);
+  // Bei jeder Änderung an Projekten/Terminen/Kategorien/Lektionen (debounced 4s)
+  // automatisch nach Drive sichern — genauso wie im Kalender und Trading Journal.
+  // Achtung Julian: Bilder/Dateien in Lektionen werden als Base64 im selben JSON
+  // mitgesichert — bei vielen/großen Anhängen wächst die Backup-Datei entsprechend.
+  useEffect(() => { drive.scheduleSave(); }, [projects, events, categories, lessons]);
 
   const projectsById = useMemo(() => Object.fromEntries(projects.map((p) => [p.id, p])), [projects]);
   const categoriesById = useMemo(() => Object.fromEntries(categories.map((c) => [c.id, c])), [categories]);
@@ -1434,6 +1907,14 @@ function ProjekteDashboard() {
     return map;
   }, [projects, events]);
 
+  const lessonsByProject = useMemo(() => {
+    const map = {};
+    projects.forEach((p) => (map[p.id] = []));
+    lessons.forEach((l) => { if (l.projectId && map[l.projectId]) map[l.projectId].push(l); });
+    return map;
+  }, [projects, lessons]);
+  const lessonsById = useMemo(() => Object.fromEntries(lessons.map((l) => [l.id, l])), [lessons]);
+
   const filteredProjects = projects.filter((p) => p.name.toLowerCase().includes(search.toLowerCase()));
 
   function toggleDone(id) {
@@ -1441,16 +1922,39 @@ function ProjekteDashboard() {
   }
 
   function addEvent(newEv) {
-    setEvents((prev) => [...prev, { id: uid(), done: false, ...newEv }]);
+    const id = uid();
+    setEvents((prev) => [...prev, { id, done: false, googleEventId: null, ...newEv }]);
     setEventModalProjectId(undefined);
+    // Kalender-Eintrag im Hintergrund anlegen; die zurückgegebene Google-Event-ID wird
+    // nachträglich am lokalen Eintrag ergänzt, damit spätere Änderungen/Löschung den
+    // richtigen Kalender-Eintrag treffen. Läuft "fire and forget" — die App blockiert
+    // dabei nicht und funktioniert auch ohne Kalender-Verbindung ganz normal weiter.
+    drive.createCalendarEvent(newEv).then((googleEventId) => {
+      if (googleEventId) setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, googleEventId } : e)));
+    });
   }
 
   function updateEvent(id, patch) {
-    setEvents((prev) => prev.map((e) => (e.id === id ? { ...e, ...patch } : e)));
+    setEvents((prev) => {
+      const next = prev.map((e) => (e.id === id ? { ...e, ...patch } : e));
+      const updated = next.find((e) => e.id === id);
+      if (updated) {
+        if (updated.googleEventId) {
+          drive.updateCalendarEvent(updated);
+        } else {
+          drive.createCalendarEvent(updated).then((googleEventId) => {
+            if (googleEventId) setEvents((p) => p.map((e) => (e.id === id ? { ...e, googleEventId } : e)));
+          });
+        }
+      }
+      return next;
+    });
     setEditingEvent(null);
   }
 
   function deleteEvent(id) {
+    const ev = events.find((e) => e.id === id);
+    if (ev && ev.googleEventId) drive.deleteCalendarEvent(ev.googleEventId);
     setEvents((prev) => prev.filter((e) => e.id !== id));
     setEditingEvent(null);
   }
@@ -1467,7 +1971,8 @@ function ProjekteDashboard() {
   function deleteProject(id) {
     setProjects((prev) => prev.filter((p) => p.id !== id));
     setEvents((prev) => prev.map((e) => (e.projectId === id ? { ...e, projectId: null } : e)));
-    setSelectedProjectId(null);
+    setLessons((prev) => prev.filter((l) => l.projectId !== id));
+    selectProject(null);
   }
 
   // Kategorien: frei anlegbar/umbenennbar/löschbar. Löschen entfernt die Zuordnung von
@@ -1485,7 +1990,31 @@ function ProjekteDashboard() {
     setEvents((prev) => prev.map((e) => (e.categoryId === id ? { ...e, categoryId: null } : e)));
   }
 
+  // Lektionen: eigene Notizseiten je Projekt. addLesson gibt die neue ID zurück, damit
+  // der Aufrufer (LessonList) direkt in den Editor springen kann.
+  function addLesson(projectId, title) {
+    const id = uid();
+    const now = Date.now();
+    setLessons((prev) => [...prev, { id, projectId, title, content: "", createdAt: now, updatedAt: now }]);
+    return id;
+  }
+  function updateLesson(id, patch) {
+    setLessons((prev) => prev.map((l) => (l.id === id ? { ...l, ...patch, updatedAt: Date.now() } : l)));
+  }
+  function deleteLesson(id) {
+    setLessons((prev) => prev.filter((l) => l.id !== id));
+    setOpenLessonId(null);
+  }
+
   const selectedProject = selectedProjectId ? projectsById[selectedProjectId] : null;
+  const openLesson = openLessonId ? lessonsById[openLessonId] : null;
+
+  // Zentrale Navigation zwischen Projekten — löscht dabei immer eine evtl. offene
+  // Lektion, damit nicht versehentlich die Lektion eines anderen Projekts angezeigt wird.
+  function selectProject(id) {
+    setOpenLessonId(null);
+    setSelectedProjectId(id);
+  }
 
   return (
     <div
@@ -1601,7 +2130,7 @@ function ProjekteDashboard() {
                       status={getEffectiveStatus(p, projEvents)}
                       nextDue={nextDue}
                       openCount={openEvents.length}
-                      onOpen={setSelectedProjectId}
+                      onOpen={selectProject}
                     />
                   );
                 })}
@@ -1624,19 +2153,30 @@ function ProjekteDashboard() {
               />
             )}
           </>
+        ) : openLesson ? (
+          <LessonEditor
+            project={selectedProject}
+            lesson={openLesson}
+            onUpdate={updateLesson}
+            onDelete={deleteLesson}
+            onBack={() => setOpenLessonId(null)}
+          />
         ) : (
           <ProjectDetail
             project={selectedProject}
             events={eventsByProject[selectedProject.id] || []}
             categories={categories}
             categoriesById={categoriesById}
-            onBack={() => setSelectedProjectId(null)}
+            lessons={lessonsByProject[selectedProject.id] || []}
+            onBack={() => selectProject(null)}
             onToggleDone={toggleDone}
             onEditEvent={setEditingEvent}
             onAddEvent={setEventModalProjectId}
             onDeleteProject={deleteProject}
             onUpdateProject={updateProject}
             onManageCategories={() => setShowCategoryModal(true)}
+            onOpenLesson={setOpenLessonId}
+            onCreateLesson={addLesson}
           />
         )}
       </div>
