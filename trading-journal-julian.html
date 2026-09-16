@@ -1110,6 +1110,66 @@
   .book-card-title{font-size:14.5px; font-weight:700; color:var(--text);}
   .book-card-tags{display:flex; gap:6px; flex-wrap:wrap;}
 
+  /* ---------- Live Ideen (Reiter unter "Live"): 4 gleich große Markt-Kacheln ---------- */
+  .live-ideen-grid{display:grid; grid-template-columns:repeat(4,1fr); gap:14px;}
+  @media (max-width:900px){ .live-ideen-grid{grid-template-columns:repeat(2,1fr);} }
+  .live-idee-card{
+    background:var(--bg-card); border:1px solid var(--border); border-radius:12px;
+    padding:16px; cursor:pointer; transition:.12s; min-height:160px;
+    display:flex; flex-direction:column; gap:8px;
+  }
+  .live-idee-card:hover{border-color:var(--border-light);}
+  .live-idee-card-title{font-size:16px; font-weight:800; color:var(--text);}
+  .live-idee-card-empty{color:var(--text-faint); font-size:13px;}
+  .live-idee-card-preview{color:var(--text-dim); font-size:13px; white-space:pre-wrap; overflow:hidden; text-overflow:ellipsis; display:-webkit-box; -webkit-line-clamp:4; -webkit-box-orient:vertical;}
+  .live-idee-card-timer{margin-top:auto; color:var(--amber); font-size:12px; font-weight:700;}
+
+  /* Haupt-Idee-Feld im Detail-Modal bewusst optisch hervorgehoben (Amber-Rahmen/Tönung),
+     damit es sich klar von Daily Bias / HTF Idee absetzt. */
+  .li-haupt-group .fg-label{color:var(--amber);}
+  .li-haupt-textarea{
+    background:linear-gradient(160deg, rgba(245,181,68,.07) 0%, var(--bg-card) 55%) !important;
+    border:1px solid rgba(245,181,68,.4) !important; min-height:100px !important;
+  }
+  /* Daily Bias / HTF Idee nebeneinander unterhalb der Haupt-Idee */
+  .li-two-col{display:grid; grid-template-columns:1fr 1fr; gap:20px;}
+  @media (max-width:720px){ .li-two-col{grid-template-columns:1fr;} }
+  /* TradingView-Link je Bildfeld — eigenes input[type=url], da außerhalb der generischen
+     .field-group-Selektorliste (die kennt nur text/date/time/number/textarea/select). */
+  .li-link-row{display:flex; align-items:center; gap:8px; margin-top:8px;}
+  .li-link-row input[type=url]{
+    flex:1; background:var(--bg-card); border:1px solid var(--border-light); color:var(--text);
+    padding:8px 10px; border-radius:9px; font-size:13px;
+  }
+  .li-link-open{
+    flex-shrink:0; width:32px; height:32px; display:flex; align-items:center; justify-content:center;
+    border-radius:8px; background:var(--bg-card); border:1px solid var(--border-light); color:var(--violet);
+    text-decoration:none; font-size:15px; transition:.12s;
+  }
+  .li-link-open:hover{border-color:var(--violet);}
+  /* Automatisch eingebettetes Vorschaubild bei TradingView-Snapshot-Links (tradingview.com/x/…) */
+  .li-link-preview{margin-top:8px; max-width:280px;}
+  .li-link-preview img{width:100%; border-radius:10px; border:1px solid var(--border-light); cursor:pointer; display:block;}
+  /* Löschen-Icon oben rechts im Header (Mülleimer) + Timer zentriert unten im Footer */
+  .li-header-row{gap:20px;}
+  .li-header-right{display:flex; align-items:flex-start; gap:8px;}
+  .li-reset-btn{font-size:17px; color:var(--red);}
+  .li-reset-btn:hover{background:var(--red-dim);}
+  .li-timer-footer{justify-content:center;}
+  .li-timer-compact{display:flex; flex-direction:column; align-items:flex-end; gap:6px;}
+  .li-timer-centered{align-items:center;}
+  .li-timer-compact .li-timer-row{display:flex; gap:6px;}
+  .li-timer-compact .li-timer-row input{
+    background:var(--bg-card); border:1px solid var(--border-light); color:var(--text);
+    padding:8px 10px; border-radius:9px; font-size:13px;
+  }
+  .li-timer-compact .li-timer-row input[type=text]{width:150px;}
+  .li-timer-compact .li-timer-row input[type=number]{width:64px;}
+  .li-timer-display{
+    font-size:20px; font-weight:800; letter-spacing:1px;
+    color:var(--text); font-variant-numeric:tabular-nums;
+  }
+
   /* ---------- Lesevoransicht eines Buch-Eintrags (openBuchViewModal) ----------
      Titelbild + Titel/Autor/Genre bewusst nebeneinander, vertikal zentriert ("Hero"-Zeile) —
      der Fokus liegt weiter unten auf der Zusammenfassung, die großzügig Platz bekommt. */
@@ -1957,7 +2017,14 @@
   </div>
   <nav class="tabs" id="mainNav">
     <button data-view="start">Start</button>
-    <button data-view="live">Live</button>
+    <div class="nav-dropdown">
+      <button data-view="live">Live</button>
+      <div class="nav-dropdown-menu">
+        <div class="nav-dropdown-menu-inner">
+          <button data-view="live-ideen" class="nav-dropdown-item">Live Ideen</button>
+        </div>
+      </div>
+    </div>
     <button data-view="eod">EOD</button>
     <button data-view="diary">Mental</button>
     <button data-view="bericht">Bericht</button>
@@ -2011,7 +2078,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.12g";
+const APP_VERSION = "2026.09.16h";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -2094,6 +2161,7 @@ const LS_ENTRYCHECK = "tj_entrychecklist_v1"; // Entry-Checklisten pro Entry-Mod
 const LS_NEWS = "tj_news_v1"; // Wirtschafts-News, manuell gepflegt: [{id,date,time,country,impact,title}]
 const LS_MENTALEVAL = "tj_mentaleval_v1"; // Freitext-Auswertung pro Mental-Wochen-Zusammenfassung: { "JAHR-MONAT-WOCHENINDEX": "Text" }
 const LS_BUECHER = "tj_buecher_v1"; // Einträge auf der "Mindset of a Trader"-Seite: [{id,titel,autor,genre,image,text,createdAt,updatedAt}]
+const LS_LIVEIDEEN = "tj_liveideen_v1"; // Live-Ideen pro Markt (Gold/GBP/EUR/DAX): Daily Bias, HTF-Idee, Haupt-Idee, Timer
 
 // Merkt sich, dass sich Daten geändert haben (wird von allen save*()-Funktionen aufgerufen).
 function markDataChanged(){
@@ -2124,6 +2192,7 @@ function buildBackupPayload(){
     entryChecklists: STATE.entryChecklists,
     mentalWeekEvaluations: STATE.mentalWeekEvaluations,
     buecher: STATE.buecher,
+    liveIdeen: STATE.liveIdeen,
     savedAt: Date.now(),
     exportedAt: new Date().toISOString()
   };
@@ -2145,8 +2214,9 @@ function applyImportedPayload(data){
   if(data.entryChecklists && typeof data.entryChecklists === "object") STATE.entryChecklists = data.entryChecklists;
   if(data.mentalWeekEvaluations && typeof data.mentalWeekEvaluations === "object") STATE.mentalWeekEvaluations = data.mentalWeekEvaluations;
   if(Array.isArray(data.buecher)) STATE.buecher = data.buecher;
+  if(data.liveIdeen && typeof data.liveIdeen==="object") STATE.liveIdeen = Object.assign(loadLiveIdeen(), data.liveIdeen);
   saveTrades(); saveConfig(); saveInsights(); saveDayConfirmations(); saveNews();
-  saveDiaryEntries(); saveDailyCheckHistory(); saveEntryChecklists(); saveMentalWeekEvaluations(); saveBuecher();
+  saveDiaryEntries(); saveDailyCheckHistory(); saveEntryChecklists(); saveMentalWeekEvaluations(); saveBuecher(); saveLiveIdeen();
 }
 
 // Bringt Trades aus älteren Speicherständen (localStorage oder importiertes JSON-Backup)
@@ -2323,6 +2393,35 @@ function loadBuecher(){
   catch(e){ return []; }
 }
 function saveBuecher(){ localStorage.setItem(LS_BUECHER, JSON.stringify(STATE.buecher)); markDataChanged(); }
+
+// Die vier festen Märkte auf der "Live Ideen"-Seite (Unterreiter von "Live") — je Markt
+// Daily Bias, HTF-Idee, Haupt-Idee (hervorgehoben) und ein optionaler Countdown-Timer.
+const LIVE_IDEEN_MARKETS = [
+  { key:"gold", label:"Gold" },
+  { key:"gbp", label:"GBP" },
+  { key:"eur", label:"EUR" },
+  { key:"dax", label:"DAX" }
+];
+function emptyLiveIdeeEintrag(){
+  return {
+    biasText:"", biasLink:"",
+    htfText:"", htfLink:"",
+    hauptIdee:"", hauptLink:"",
+    timer:{ desc:"", durationMin:null, endAt:null, running:false }
+  };
+}
+function loadLiveIdeen(){
+  let data = {};
+  try{ const v = JSON.parse(localStorage.getItem(LS_LIVEIDEEN)); if(v && typeof v==="object") data = v; }catch(e){}
+  const result = {};
+  LIVE_IDEEN_MARKETS.forEach(m=>{
+    const base = emptyLiveIdeeEintrag();
+    const stored = data[m.key] || {};
+    result[m.key] = Object.assign(base, stored, { timer: Object.assign(base.timer, stored.timer||{}) });
+  });
+  return result;
+}
+function saveLiveIdeen(){ localStorage.setItem(LS_LIVEIDEEN, JSON.stringify(STATE.liveIdeen)); markDataChanged(); }
 
 
 // Berechnet den Disziplin-Score (0–100) aus der kompletten Tages-Check-Historie: Anteil
@@ -2522,6 +2621,8 @@ const STATE = {
   buchViewingId: null,
   buchNoteId: null,
   buchNoteMode: null,
+  liveIdeen: loadLiveIdeen(),
+  liveIdeenOpenKey: null, // welcher Markt gerade im Detail-Modal offen ist
   berichtAreas: { live:true, backtest:true, eod:true },
   berichtFilters: {}, // { markets:[], directions:[], ... }
   berichtDateFrom: "",
@@ -3829,9 +3930,12 @@ function escAttr(s){ return escHtml(s); }
 function render(){
   updateNavActive();
   updateBackupBadge();
+  // Wird bei jedem Seitenwechsel zunächst gestoppt — wireLiveIdeen() startet ihn neu,
+  // falls die neue Ansicht tatsächlich "live-ideen" ist (gleiches Muster wie stopSessionClock()).
+  if(STATE.view !== "live-ideen") stopLiveIdeenOverviewTick();
   const app = document.getElementById("app");
   document.body.classList.toggle("ziele-bg", STATE.view === "ziele");
-  document.body.classList.toggle("no-smoky-bg", ["live","eod","strategie","become-a-trader","buecher"].includes(STATE.view));
+  document.body.classList.toggle("no-smoky-bg", ["live","eod","strategie","become-a-trader","buecher","live-ideen"].includes(STATE.view));
   const isStart = STATE.view === "start" && !STATE.viewingEntryModel;
   app.classList.toggle("main-narrow", isStart);
   // Basis-Breite reicht für die 9 eingebauten Kategorien; jede frei erstellte Kategorie
@@ -3865,6 +3969,7 @@ function render(){
     else if(STATE.view === "strategie"){ app.innerHTML = `<div class="view-fade">${renderStrategie()}</div>`; wireStrategie(); stopSessionClock(); }
     else if(STATE.view === "become-a-trader"){ app.innerHTML = `<div class="view-fade">${renderBecomeATrader()}</div>`; stopSessionClock(); }
     else if(STATE.view === "buecher"){ app.innerHTML = `<div class="view-fade">${renderBuecher()}</div>`; wireBuecher(); stopSessionClock(); }
+    else if(STATE.view === "live-ideen"){ app.innerHTML = `<div class="view-fade">${renderLiveIdeen()}</div>`; wireLiveIdeen(); stopSessionClock(); }
     else if(STATE.view === "ziele"){ app.innerHTML = `<div class="view-fade ziele-glow-wrap">${renderZiele()}</div>`; stopSessionClock(); }
     else if(STATE.view === "diary"){ app.innerHTML = `<div class="view-fade">${renderDiaryView()}</div>`; wireDiaryView(); stopSessionClock(); }
     else{
@@ -10343,6 +10448,292 @@ function saveBuchDraft(){
   // Nach dem Speichern direkt die Lesevoransicht öffnen (Fokus auf der Zusammenfassung),
   // statt nur zur Karten-Liste zurückzuspringen.
   openBuchViewModal(d);
+}
+
+function renderLiveIdeen(){
+  return `
+    <div class="page-head">
+      <h1>Live Ideen</h1>
+      <p>Daily Bias, HTF-Idee und Hauptidee je Markt — inklusive Timer.</p>
+    </div>
+
+    <div class="live-ideen-grid">
+      ${LIVE_IDEEN_MARKETS.map(m=>liveIdeeCardHtml(m)).join("")}
+    </div>
+  `;
+}
+
+function liveIdeeCardHtml(m){
+  const d = STATE.liveIdeen[m.key];
+  const previewText = d.hauptIdee || d.biasText || d.htfText || "";
+  const t = d.timer;
+  const timerLabel = (t.running && t.endAt) ? formatLiveIdeeRemain(t.endAt - Date.now()) : "";
+  return `
+    <div class="live-idee-card" data-liveideeopen="${m.key}">
+      <div class="live-idee-card-title">${m.label}</div>
+      ${previewText ? `<div class="live-idee-card-preview">${escHtml(previewText)}</div>` : `<div class="live-idee-card-empty">Keine Idee eingetragen</div>`}
+      ${t.running ? `<div class="live-idee-card-timer" id="liveIdeeCardTimer_${m.key}">⏱ ${timerLabel}</div>` : ""}
+    </div>
+  `;
+}
+
+function wireLiveIdeen(){
+  document.querySelectorAll("[data-liveideeopen]").forEach(el=>{
+    el.addEventListener("click", ()=> openLiveIdeeModal(el.dataset.liveideeopen));
+  });
+  startLiveIdeenOverviewTick();
+}
+
+// Aktualisiert die Countdown-Anzeige in den kleinen Karten (Kartenraster), solange die
+// "Live Ideen"-Übersicht sichtbar ist — unabhängig vom Detail-Modal-Timer (tickLiveIdeeTimer),
+// damit ein laufender Timer auch ohne geöffnetes Modal sichtbar mitzählt.
+let liveIdeenOverviewInterval = null;
+function startLiveIdeenOverviewTick(){
+  stopLiveIdeenOverviewTick();
+  liveIdeenOverviewInterval = setInterval(tickLiveIdeenOverview, 1000);
+}
+function stopLiveIdeenOverviewTick(){
+  if(liveIdeenOverviewInterval){ clearInterval(liveIdeenOverviewInterval); liveIdeenOverviewInterval = null; }
+}
+function tickLiveIdeenOverview(){
+  LIVE_IDEEN_MARKETS.forEach(m=>{
+    const t = STATE.liveIdeen[m.key].timer;
+    const el = document.getElementById(`liveIdeeCardTimer_${m.key}`);
+    if(!el || !t.running || !t.endAt) return;
+    const remain = t.endAt - Date.now();
+    el.textContent = `⏱ ${formatLiveIdeeRemain(remain)}`;
+  });
+}
+
+/* ---------- Live-Ideen-Detail-Modal (Daily Bias, HTF-Idee, Haupt-Idee, Timer) ---------- */
+let liveIdeeTimerInterval = null;
+
+function openLiveIdeeModal(key){
+  STATE.liveIdeenOpenKey = key;
+  renderLiveIdeeModal();
+  stopLiveIdeeTimerTick();
+  liveIdeeTimerInterval = setInterval(tickLiveIdeeTimer, 1000);
+}
+
+function closeLiveIdeeModal(){
+  document.getElementById("modalRoot").innerHTML = "";
+  stopLiveIdeeTimerTick();
+  STATE.liveIdeenOpenKey = null;
+  // Kartenraster im Hintergrund aktualisieren (z.B. falls ein Timer währenddessen gestartet wurde)
+  if(STATE.view === "live-ideen") render();
+}
+
+function stopLiveIdeeTimerTick(){
+  if(liveIdeeTimerInterval){ clearInterval(liveIdeeTimerInterval); liveIdeeTimerInterval = null; }
+}
+
+// Läuft jede Sekunde, solange das Modal offen ist: aktualisiert die Countdown-Anzeige und
+// löst beim Erreichen von 0 den Alarm (Ton + Toast) aus — bewusst NUR die Anzeige per
+// direktem DOM-Zugriff aktualisiert (kein render()), damit die Texteingaben währenddessen
+// nicht den Fokus verlieren.
+function tickLiveIdeeTimer(){
+  const key = STATE.liveIdeenOpenKey;
+  if(!key) return;
+  const t = STATE.liveIdeen[key].timer;
+  const el = document.getElementById("liveIdeeTimerDisplay");
+  if(!t.running || !t.endAt) return;
+  const remainMs = t.endAt - Date.now();
+  if(remainMs <= 0){
+    t.running = false;
+    t.endAt = null;
+    saveLiveIdeen();
+    playLiveIdeeAlarm();
+    toast(`Timer abgelaufen${t.desc ? `: ${t.desc}` : ""}`);
+    renderLiveIdeeModal();
+    return;
+  }
+  if(el) el.textContent = formatLiveIdeeRemain(remainMs);
+}
+
+function formatLiveIdeeRemain(ms){
+  const totalSec = Math.max(0, Math.ceil(ms/1000));
+  const mm = String(Math.floor(totalSec/60)).padStart(2,"0");
+  const ss = String(totalSec%60).padStart(2,"0");
+  return `${mm}:${ss}`;
+}
+
+// Klingelton per Web Audio API (drei kurze Beeps) — bewusst ohne externe Audiodatei, damit
+// die App weiterhin ein einziges self-contained HTML-File bleibt.
+function playLiveIdeeAlarm(){
+  try{
+    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    const beepAt = (startTime)=>{
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      osc.frequency.value = 880;
+      gain.gain.setValueAtTime(0.0001, startTime);
+      gain.gain.exponentialRampToValueAtTime(0.3, startTime+0.02);
+      gain.gain.exponentialRampToValueAtTime(0.0001, startTime+0.35);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start(startTime);
+      osc.stop(startTime+0.4);
+    };
+    const now = ctx.currentTime;
+    beepAt(now); beepAt(now+0.45); beepAt(now+0.9);
+  }catch(e){ /* Web Audio evtl. nicht verfügbar — Toast bleibt trotzdem sichtbar */ }
+}
+
+function renderLiveIdeeModal(){
+  const key = STATE.liveIdeenOpenKey;
+  if(!key) return;
+  const market = LIVE_IDEEN_MARKETS.find(m=>m.key===key);
+  const d = STATE.liveIdeen[key];
+  const t = d.timer;
+  const root = document.getElementById("modalRoot");
+  const prevBackdrop = document.getElementById("liveIdeeBackdrop");
+  const animClass = prevBackdrop ? "" : " modal-anim-in"; // s. Kommentar in renderModal()
+  const remainLabel = (t.running && t.endAt) ? formatLiveIdeeRemain(t.endAt - Date.now()) : "00:00";
+  root.innerHTML = `
+  <div class="modal-backdrop${animClass}" id="liveIdeeBackdrop">
+    <div class="modal modal-lg">
+      <div class="modal-header-row li-header-row">
+        <div>
+          <h2>${market.label}</h2>
+          <div class="modal-sub">Live-Idee für diesen Markt</div>
+        </div>
+        <div class="li-header-right">
+          <button class="icon-btn li-reset-btn" id="liveIdeeResetBtn" title="Alle Daten dieses Fensters löschen">🗑</button>
+          <button class="icon-btn" id="liveIdeeCloseBtn">✕</button>
+        </div>
+      </div>
+
+      <div class="field-group li-haupt-group">
+        <label class="fg-label">★ Haupt Idee</label>
+        <textarea id="li_haupt" class="li-haupt-textarea" placeholder="Die zentrale Idee für diesen Markt…">${escHtml(d.hauptIdee||"")}</textarea>
+        ${liveIdeeLinkFieldHtml("haupt", d.hauptLink)}
+      </div>
+
+      <div class="li-two-col">
+        <div class="field-group">
+          <label class="fg-label">Daily Bias</label>
+          <textarea id="li_bias_text" placeholder="Tagesbias notieren…">${escHtml(d.biasText||"")}</textarea>
+          ${liveIdeeLinkFieldHtml("bias", d.biasLink)}
+        </div>
+
+        <div class="field-group">
+          <label class="fg-label">HTF Idee</label>
+          <textarea id="li_htf_text" placeholder="HTF-Idee notieren…">${escHtml(d.htfText||"")}</textarea>
+          ${liveIdeeLinkFieldHtml("htf", d.htfLink)}
+        </div>
+      </div>
+
+      <div class="modal-footer li-timer-footer">
+        <div class="li-timer-compact li-timer-centered">
+          <div class="li-timer-row">
+            <input type="text" id="li_timer_desc" placeholder="Beschreibung" value="${escAttr(t.desc||"")}" ${t.running?"disabled":""}>
+            <input type="number" id="li_timer_min" placeholder="Min." min="1" step="1" value="${t.durationMin||""}" ${t.running?"disabled":""}>
+            ${t.running
+              ? `<button class="btn btn-ghost btn-sm" id="liveIdeeTimerStopBtn">Stopp</button>`
+              : `<button class="btn btn-primary btn-sm" id="liveIdeeTimerStartBtn">Start</button>`}
+          </div>
+          <div class="li-timer-display" id="liveIdeeTimerDisplay">${remainLabel}</div>
+        </div>
+      </div>
+    </div>
+  </div>`;
+  wireLiveIdeeModal();
+}
+
+// Wandelt einen TradingView-"Snapshot"-Link (geteilt über das Kamera-Symbol, Format
+// tradingview.com/x/<ID>/) in die direkt einbettbare Bild-URL um. Reguläre Chart-/Ideen-Links
+// (z.B. tradingview.com/chart/...) bietet TradingView nicht als Bild an — dafür bleibt es
+// beim reinen Link mit Öffnen-Button.
+function tradingViewSnapshotImageUrl(link){
+  if(!link) return null;
+  const m = String(link).trim().match(/^https?:\/\/(?:www\.)?tradingview\.com\/x\/([A-Za-z0-9]+)\/?/i);
+  if(!m) return null;
+  const id = m[1];
+  return `https://s3.tradingview.com/snapshots/${id.charAt(0).toLowerCase()}/${id}.png`;
+}
+
+function liveIdeeLinkFieldHtml(zone, link){
+  const inputId = `li_${zone}_link`;
+  const imgUrl = tradingViewSnapshotImageUrl(link);
+  return `
+    <div class="li-link-row">
+      <input type="url" id="${inputId}" placeholder="TradingView-Link einfügen…" value="${escAttr(link||"")}">
+      ${link ? `<a href="${escAttr(link)}" target="_blank" rel="noopener" class="li-link-open" title="In TradingView öffnen">↗</a>` : ""}
+    </div>
+    ${imgUrl ? `<div class="li-link-preview"><img src="${imgUrl}" data-liveideelinkpreview="${zone}" alt="TradingView-Snapshot" title="Zum Vergrößern klicken" loading="lazy" referrerpolicy="no-referrer" onerror="this.closest('.li-link-preview').style.display='none';"></div>` : ""}`;
+}
+
+function wireLiveIdeeModal(){
+  const key = STATE.liveIdeenOpenKey;
+  const d = STATE.liveIdeen[key];
+  const t = d.timer;
+  const backdrop = document.getElementById("liveIdeeBackdrop");
+  backdrop.addEventListener("click",(e)=>{ if(e.target===backdrop) closeLiveIdeeModal(); });
+  document.getElementById("liveIdeeCloseBtn").addEventListener("click", closeLiveIdeeModal);
+
+  document.getElementById("li_bias_text").addEventListener("input",(e)=>{ d.biasText = e.target.value; saveLiveIdeen(); });
+  document.getElementById("li_htf_text").addEventListener("input",(e)=>{ d.htfText = e.target.value; saveLiveIdeen(); });
+  document.getElementById("li_haupt").addEventListener("input",(e)=>{ d.hauptIdee = e.target.value; saveLiveIdeen(); });
+
+  ["bias","htf","haupt"].forEach(zone=>{
+    // TradingView-Link — auf "input" nur den Wert übernehmen (kein Re-Render, damit der
+    // Cursor beim Tippen nicht springt), auf "blur" neu rendern, damit der Öffnen-Button
+    // (↗) und ggf. die Snapshot-Vorschau erscheinen, sobald ein Link eingetragen wurde.
+    const linkInput = document.getElementById(`li_${zone}_link`);
+    if(linkInput){
+      linkInput.addEventListener("input",(e)=>{ setLiveIdeeLink(d, zone, e.target.value); saveLiveIdeen(); });
+      linkInput.addEventListener("blur", ()=> renderLiveIdeeModal());
+    }
+    const previewImg = document.querySelector(`[data-liveideelinkpreview="${zone}"]`);
+    if(previewImg){
+      previewImg.addEventListener("click", ()=> openLightbox(previewImg.src));
+    }
+  });
+
+  const timerDescInput = document.getElementById("li_timer_desc");
+  if(timerDescInput){
+    timerDescInput.addEventListener("input",(e)=>{ t.desc = e.target.value; saveLiveIdeen(); });
+  }
+  const timerMinInput = document.getElementById("li_timer_min");
+  if(timerMinInput){
+    timerMinInput.addEventListener("input",(e)=>{ t.durationMin = e.target.value ? parseFloat(e.target.value) : null; saveLiveIdeen(); });
+  }
+  const startBtn = document.getElementById("liveIdeeTimerStartBtn");
+  if(startBtn){
+    startBtn.addEventListener("click", ()=>{
+      if(!t.durationMin || t.durationMin<=0){ toast("Bitte zuerst eine Dauer in Minuten eingeben."); return; }
+      t.endAt = Date.now() + t.durationMin*60000;
+      t.running = true;
+      saveLiveIdeen();
+      renderLiveIdeeModal();
+    });
+  }
+  const stopBtn = document.getElementById("liveIdeeTimerStopBtn");
+  if(stopBtn){
+    stopBtn.addEventListener("click", ()=>{
+      t.running = false;
+      t.endAt = null;
+      saveLiveIdeen();
+      renderLiveIdeeModal();
+    });
+  }
+
+  document.getElementById("liveIdeeResetBtn").addEventListener("click", ()=>{
+    const market = LIVE_IDEEN_MARKETS.find(m=>m.key===key);
+    if(!confirm(`Alle Daten für "${market.label}" wirklich löschen? Das kann nicht rückgängig gemacht werden.`)) return;
+    STATE.liveIdeen[key] = emptyLiveIdeeEintrag();
+    saveLiveIdeen();
+    renderLiveIdeeModal();
+  });
+}
+
+// Ordnet zone ("bias"/"htf"/"haupt") das jeweilige TradingView-Link-Feld im Draft zu —
+// vermeidet eine if/else-Kette an der Aufrufstelle (Link-Input-Wiring).
+function setLiveIdeeLink(d, zone, value){
+  if(zone==="bias") d.biasLink = value;
+  else if(zone==="htf") d.htfLink = value;
+  else d.hauptLink = value;
 }
 
 function renderBecomeATrader(){
