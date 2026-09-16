@@ -661,9 +661,18 @@
    * GOOGLE DRIVE SYNC — sichert den kompletten state (Projekte, Notizen,
    * Ressourcen) automatisch in einer JSON-Datei im eigenen Google Drive
    * des Nutzers (Scope "drive.file": die App sieht NUR Dateien, die sie
-   * selbst angelegt hat). Nutzt bewusst dieselbe OAuth-Client-ID und
-   * denselben Sync-Ansatz (Google Identity Services + Multipart-Upload)
-   * wie Kalender, Trading Journal und die vorherige Projekte-App.
+   * selbst angelegt hat).
+   *
+   * Einfache Variante OHNE eigenen Server: Das Access-Token wird zusätzlich
+   * zum Arbeitsspeicher auch in localStorage zwischengespeichert (inkl.
+   * Ablaufzeit). Effekt: Solange die Seite innerhalb der Token-Gültigkeit
+   * (~55 Minuten) neu geladen wird, passiert GAR KEINE Google-Anfrage mehr
+   * — vorher ging der Token beim Neuladen verloren und es wurde bei jedem
+   * Seitenaufruf neu angefragt. Nach Ablauf der 55 Minuten versucht Google
+   * weiterhin eine "stille" Anmeldung (prompt:''); ob die ohne sichtbares
+   * Fenster klappt, hängt vom Browser ab (Chrome blockiert die dafür
+   * nötigen Cookies zunehmend) — das ist eine echte Grenze von reinem
+   * Frontend-Code ohne eigenen Server, siehe Absprache mit Julian.
    * ------------------------------------------------------------------ */
   const DRIVE_CLIENT_ID = '273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com';
   const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
@@ -671,6 +680,8 @@
   const LS_DRIVE_FILEID = 'wb_drivefileid_v1';
   const LS_DRIVE_CONNECTED = 'wb_driveconnected_v1';
   const LS_DRIVE_LASTSYNC = 'wb_drivelastsync_v1';
+  const LS_DRIVE_TOKEN = 'wb_drivetoken_v1';
+  const LS_DRIVE_TOKEN_EXPIRY = 'wb_drivetokenexpiry_v1';
 
   let driveTokenClient = null;
   let driveAccessToken = null;
@@ -678,6 +689,18 @@
   let driveConnected = false;
   let driveSyncing = false;
   let driveSaveTimer = null;
+
+  // Beim Skriptstart direkt prüfen, ob noch ein gültiges, zwischengespeichertes
+  // Access-Token vorliegt — falls ja, sofort übernehmen, keine Google-Anfrage nötig.
+  (function restoreCachedDriveToken() {
+    const cachedToken = localStorage.getItem(LS_DRIVE_TOKEN);
+    const cachedExpiry = parseInt(localStorage.getItem(LS_DRIVE_TOKEN_EXPIRY) || '0', 10);
+    if (cachedToken && Date.now() < cachedExpiry) {
+      driveAccessToken = cachedToken;
+      driveTokenExpiresAt = cachedExpiry;
+      driveConnected = true;
+    }
+  })();
 
   function updateDriveButton() {
     const icon = document.getElementById('drive-sync-icon');
@@ -796,6 +819,10 @@
     driveTokenExpiresAt = Date.now() + (parseInt(resp.expires_in, 10) || 3500) * 1000 - 60000;
     driveConnected = true;
     localStorage.setItem(LS_DRIVE_CONNECTED, '1');
+    // Token + Ablaufzeit zwischenspeichern, damit ein Neuladen der Seite innerhalb
+    // der Gültigkeit KEINE neue Google-Anfrage mehr braucht.
+    localStorage.setItem(LS_DRIVE_TOKEN, driveAccessToken);
+    localStorage.setItem(LS_DRIVE_TOKEN_EXPIRY, String(driveTokenExpiresAt));
     updateDriveButton();
     setTimeout(() => {
       if (driveConnected && driveTokenClient) driveTokenClient.requestAccessToken({ prompt: '' });
@@ -822,7 +849,15 @@
           scope: DRIVE_SCOPE,
           callback: onDriveTokenResponse,
         });
-        if (localStorage.getItem(LS_DRIVE_CONNECTED) === '1') {
+        if (driveConnected && driveAccessToken) {
+          // Zwischengespeichertes, noch gültiges Token wiederhergestellt (siehe oben)
+          // -> direkt laden, ganz ohne Google-Anfrage.
+          updateDriveButton();
+          driveLoadNow();
+        } else if (localStorage.getItem(LS_DRIVE_CONNECTED) === '1') {
+          // Kein gültiges Token mehr im Cache, aber schonmal verbunden gewesen ->
+          // stillen Anmeldeversuch starten (kann je nach Browser trotzdem ein
+          // sichtbares Google-Fenster zeigen, siehe Erklärung oben).
           driveTokenClient.requestAccessToken({ prompt: '' });
         }
         return;
@@ -836,6 +871,8 @@
         if (driveConnected) {
           driveConnected = false;
           localStorage.removeItem(LS_DRIVE_CONNECTED);
+          localStorage.removeItem(LS_DRIVE_TOKEN);
+          localStorage.removeItem(LS_DRIVE_TOKEN_EXPIRY);
           driveAccessToken = null;
           updateDriveButton();
         } else if (driveTokenClient) {
