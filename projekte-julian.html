@@ -371,7 +371,7 @@
 
         <div id="note-type-filters" class="flex gap-2 flex-wrap mb-6"></div>
 
-        <div id="notes-grid" class="grid sm:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+        <div id="notes-grid" class="grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4"></div>
         <div id="notes-empty" class="hidden text-center py-16 text-inksoft">
           <i class="fa-solid fa-note-sticky text-3xl mb-3 opacity-40"></i>
           <p>Noch keine Notizen vorhanden.</p>
@@ -491,7 +491,7 @@
 
 <!-- ============ NOTE FORM MODAL ============ -->
 <div id="modal-note-form" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-  <form id="form-note" class="bg-[#0F0E1A] border border-line rounded-2xl w-full max-w-lg p-6">
+  <form id="form-note" class="bg-[#0F0E1A] border border-line rounded-2xl w-[95vw] max-w-[1400px] p-6 max-h-[95vh] overflow-y-auto">
     <h2 id="nf-heading" class="font-display text-xl font-semibold mb-4">Neue Notiz</h2>
     <input type="hidden" id="nf-id">
     <div class="grid sm:grid-cols-2 gap-3">
@@ -541,7 +541,7 @@
       </div>
       <div class="sm:col-span-2">
         <label class="text-xs font-medium text-inksoft">Inhalt — Zusammenfassung, Kernaussagen, Zitate, eigene Gedanken</label>
-        <textarea id="nf-content" rows="8" class="w-full px-3 py-2 text-sm mt-1"></textarea>
+        <textarea id="nf-content" rows="30" class="w-full px-3 py-2 text-sm mt-1"></textarea>
       </div>
     </div>
     <div class="flex justify-between items-center mt-6">
@@ -1293,14 +1293,14 @@
       const tm = noteTypeMeta(n.type || 'Sonstiges');
       const metaLine = [n.author, formatDate(n.date)].filter(Boolean).join(' · ');
       return `
-        <div class="card hoverable p-5 flex flex-col cursor-pointer" data-open-note="${n.id}">
-          <div class="flex items-start justify-between gap-2 mb-2.5">
+        <div class="card hoverable p-4 flex flex-col cursor-pointer" data-open-note="${n.id}">
+          <div class="flex items-start justify-between gap-2 mb-2">
             <span class="tag ${tm.bg} ${tm.text}"><i class="${tm.icon} text-[10px]"></i>${escapeHtml(n.type || 'Sonstiges')}</span>
             ${n.rating ? `<span class="flex gap-0.5 mt-0.5">${renderStars(n.rating)}</span>` : ''}
           </div>
-          <h3 class="font-display text-lg font-semibold leading-snug mb-0.5">${escapeHtml(n.title)}</h3>
-          <p class="text-xs text-inksoft mb-3">${escapeHtml(metaLine)}</p>
-          <p class="text-sm text-inksoft line-clamp-4 mb-4 flex-1">${escapeHtml(n.content || '')}</p>
+          <h3 class="font-display text-base font-semibold leading-snug mb-0.5">${escapeHtml(n.title)}</h3>
+          <p class="text-xs text-inksoft mb-2.5">${escapeHtml(metaLine)}</p>
+          <p class="text-sm text-inksoft line-clamp-3 mb-3 flex-1">${escapeHtml(n.content || '')}</p>
           <div class="flex flex-wrap items-center gap-1.5 pt-2 border-t border-line">
             ${project ? `<span class="tag bg-cyan-soft text-cyan"><i class="fa-solid fa-diagram-project text-[10px]"></i>${escapeHtml(project.name)}</span>` : ''}
             ${tagList.map(t => `<span class="tag bg-surface2 text-inksoft">${escapeHtml(t)}</span>`).join('')}
