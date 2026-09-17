@@ -763,7 +763,15 @@
   .trade-challenge-counter-slash{font-size:12px; color:var(--text-dim);}
   .trade-challenge-counter-complete{border-color:var(--green);}
   .trade-challenge-counter-complete .trade-challenge-counter-num{color:var(--green);}
-  .trade-market{font-weight:700; font-size:14.5px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+  .trade-market{font-weight:700; font-size:14.5px; display:flex; align-items:center; gap:6px; min-width:0;}
+  .trade-market-text{overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0;}
+  .trade-market-icon{font-size:14px; line-height:1; flex-shrink:0; display:inline-flex; align-items:center; justify-content:center;}
+  .trade-market-icon-flag{width:17px; height:12px; border-radius:2px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.12); flex-shrink:0;}
+  .trade-market-icon-flag svg{display:block; width:100%; height:100%;}
+  .trade-market-icon-dax{
+    width:17px; height:17px; font-size:8.5px; font-weight:800; font-family:var(--mono); color:#fff; border-radius:5px;
+    background:linear-gradient(145deg, #2f6bff, #0d3fc4); flex-shrink:0;
+  }
   .eod-inline-btn{font-size:11px; padding:5px 9px; white-space:nowrap;}
   .trade-tags{display:block;}
   .cat-table-header-bar{border:1px solid transparent;}
@@ -2076,7 +2084,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.17e";
+const APP_VERSION = "2026.09.17g";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -2565,7 +2573,6 @@ const STATE = {
   diaryCalendarMonth: currentYM(),
   diarySelectedDay: null,
   diaryFormOpen: false,
-  diaryTodayCollapsed: false,
   dailyCheckHistory: loadDailyCheckHistory(),
   entryChecklists: loadEntryChecklists(),
   news: loadNews(),
@@ -4203,6 +4210,18 @@ function newsFlagSvg(code){
   };
   return flags[code] || `<svg viewBox="0 0 24 16"><rect width="24" height="16" rx="2" fill="var(--bg-card)" stroke="var(--border-light)"/></svg>`;
 }
+// Kleines Icon links neben dem Markt-Namen in der Trade-Liste (Gold-Münze, GBP-/EUR-Flagge,
+// blaue DAX-"40") — dieselben Inline-SVG-Flaggen wie im News-Formular und im Analyse-Board
+// (Live-Reiter), damit es überall einheitlich aussieht. Für alle anderen Märkte (USDJPY,
+// USDCHF, BTCUSD, Minor, …) bewusst kein Icon, da nicht angefragt.
+function marketIconHtml(markt){
+  const m = (markt||"").toUpperCase();
+  if(m.includes("XAU")) return `<span class="trade-market-icon">🪙</span>`;
+  if(m.includes("GBP")) return `<span class="trade-market-icon-flag">${newsFlagSvg("GBP")}</span>`;
+  if(m.includes("EUR")) return `<span class="trade-market-icon-flag">${newsFlagSvg("EUR")}</span>`;
+  if(m.includes("DAX")) return `<span class="trade-market-icon-dax">40</span>`;
+  return "";
+}
 function newsSorted(){
   return [...(STATE.news||[])].sort((a,b)=> (a.date+"T"+(a.time||"00:00")).localeCompare(b.date+"T"+(b.time||"00:00")));
 }
@@ -5596,7 +5615,7 @@ function dayDetailItemHtml(t){
       : t.genommen===false ? `<span class="tag">nicht genommen</span>`
       : `<span class="tag">—</span>`;
     return `<div class="day-detail-item" data-viewtrade="${t.id}">
-      <span class="trade-market" style="min-width:76px;">${escHtml(t.markt||"—")}</span>
+      <span class="trade-market" style="min-width:76px;">${marketIconHtml(t.markt)}<span class="trade-market-text">${escHtml(t.markt||"—")}</span></span>
       <div class="trade-tags" style="flex:1;">${genommenTag}</div>
       <span class="badge ${t.ergebnis?"badge-closed":"badge-open"}">${t.ergebnis?t.ergebnis:"offen"}</span>
       <span class="trade-r ${rClass}">${rDisplay}</span>
@@ -5605,7 +5624,7 @@ function dayDetailItemHtml(t){
 
   const subtags = [t.richtung, t.session, t.art].filter(Boolean);
   return `<div class="day-detail-item" data-viewtrade="${t.id}">
-    <span class="trade-market" style="min-width:76px;">${escHtml(t.markt||"—")}</span>
+    <span class="trade-market" style="min-width:76px;">${marketIconHtml(t.markt)}<span class="trade-market-text">${escHtml(t.markt||"—")}</span></span>
     <div class="trade-tags" style="flex:1;">${subtags.map(x=>`<span class="tag">${escHtml(x)}</span>`).join("")}</div>
     <span class="badge ${t.ergebnis?"badge-closed":"badge-open"}">${t.ergebnis?t.ergebnis:"offen"}</span>
     <span class="trade-r ${rClass}">${rDisplay}</span>
@@ -6240,8 +6259,14 @@ function renderDiaryView(){
   const todayLabel = new Date(today+"T12:00:00").toLocaleDateString("de-DE", {weekday:"long", day:"2-digit", month:"long", year:"numeric"});
   const todayEntry = normalizeDiaryEntry(STATE.diaryEntries[today]);
   const hasTodayEntry = diaryEntryHasContent(todayEntry);
-  const showForm = (STATE.diaryFormOpen || hasTodayEntry) && !STATE.diaryTodayCollapsed;
-  const showDonePanel = hasTodayEntry && STATE.diaryTodayCollapsed;
+  // Ist der heutige Eintrag bereits gespeichert, bleibt das Formular hier oben IMMER zu —
+  // Ändern/Ansehen geht ab dann nur noch über den Kalender weiter unten (Klick auf den
+  // heutigen Tag öffnet denselben Tages-Eintrag im Modal, siehe openDiaryDayModal). So
+  // taucht das ausgefüllte Formular nach dem Speichern nicht erneut auf, egal ob man
+  // zwischendurch den Reiter wechselt oder die Seite neu lädt (diaryFormOpen ist ohnehin
+  // nicht persistiert, hasTodayEntry aber schon).
+  const showForm = STATE.diaryFormOpen && !hasTodayEntry;
+  const showDonePanel = hasTodayEntry;
 
   // Animation nur beim tatsächlichen Aufklappen abspielen (Button -> Formular), nicht bei
   // jedem sonstigen Re-Render der Seite — gleiches Prinzip wie bei den Modal-Fenstern
@@ -6255,7 +6280,7 @@ function renderDiaryView(){
         <svg viewBox="0 0 24 24" fill="none"><path d="M4 12.5l5 5L20 6.5" stroke="var(--green)" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </div>
       <div class="diary-done-title">Heute erledigt</div>
-      <p class="diary-done-text">Dein Mental-Eintrag für ${todayLabel} ist gespeichert.</p>
+      <p class="diary-done-text">Dein Mental-Eintrag für ${todayLabel} ist gespeichert. Zum Ansehen oder Bearbeiten unten im Kalender auf heute klicken.</p>
       <button type="button" class="btn btn-ghost btn-sm" id="diaryReopenTodayBtn">Bearbeiten</button>
     </div>
   ` : showForm ? `
@@ -6870,19 +6895,18 @@ function wireDiaryView(){
     saveBtn.addEventListener("click", ()=>{
       persistToday();
       STATE.diaryFormOpen = false;
-      STATE.diaryTodayCollapsed = true;
       render(); // Kalenderzelle, Zusammenfassung & Rückblick müssen aktualisiert werden
       showDayDoneOverlay("Sehr gut. Du hast deinen Tag erfolgreich beendet.");
     });
   }
 
+  // "Bearbeiten" im "Heute erledigt"-Panel öffnet ab jetzt bewusst denselben Tages-Modal
+  // wie ein Klick auf den heutigen Tag im Kalender darunter — der heutige Eintrag ist nach
+  // dem Speichern also nur noch über diesen einen Weg erreichbar, nicht mehr über ein
+  // erneut aufklappendes Formular ganz oben.
   const reopenBtn = document.getElementById("diaryReopenTodayBtn");
   if(reopenBtn){
-    reopenBtn.addEventListener("click", ()=>{
-      STATE.diaryTodayCollapsed = false;
-      STATE.diaryFormOpen = true;
-      render();
-    });
+    reopenBtn.addEventListener("click", ()=> openDiaryDayModal(todayISO()));
   }
 
   document.querySelectorAll("[data-diarycalnav]").forEach(b=>{
@@ -7172,7 +7196,7 @@ function tradeListRowHtml(t, cyclePositions){
   const cycleTitle = isCycleEnd ? ` title="20. Trade dieser Runde"` : "";
 
   return `<div class="trade-card${cycleCls}" data-id="${t.id}" data-viewtrade="${t.id}" style="grid-template-columns:${tradeListGrid(t.area)}"${cycleTitle}>
-    <div class="trade-market" title="${escAttr(t.markt||"")}">${escHtml(t.markt||"—")}</div>
+    <div class="trade-market" title="${escAttr(t.markt||"")}">${marketIconHtml(t.markt)}<span class="trade-market-text">${escHtml(t.markt||"—")}</span></div>
     <div class="trade-date-badge">${formatDateShort(t.date)}</div>
     ${eodExtraSlot}
     ${catCells}
