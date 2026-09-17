@@ -563,7 +563,7 @@
     font-size:14px; font-weight:800; font-family:var(--mono); color:#fff; border-radius:9px;
     background:linear-gradient(145deg, #2f6bff, #0d3fc4); box-shadow:0 2px 8px -2px rgba(47,107,255,.6);
   }
-  .analyse-icon-flag{width:34px; height:24px; flex-shrink:0; border-radius:4px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.12);}
+  .analyse-icon-flag{display:inline-flex; width:34px; height:24px; flex-shrink:0; border-radius:4px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.12); vertical-align:middle;}
   .analyse-icon-flag svg{display:block; width:100%; height:100%;}
   .analyse-card-title{font-size:16.5px; font-weight:800; color:var(--cyan); letter-spacing:.2px;}
   .analyse-card-tags{display:flex; gap:6px; flex-wrap:wrap;}
@@ -2084,7 +2084,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.17g";
+const APP_VERSION = "2026.09.17i";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -7067,6 +7067,15 @@ function tradeCategoryColumns(area){
   });
   return cols;
 }
+// Die Listen-Übersicht (Live/EOD-Trade-Tabelle) zeigt bewusst NICHT alle Kategorien und
+// auch nicht den Ergebnis-Status-Badge (offen/SL/TP/BE) — Level, Trend, Zeiteinheit und
+// der Status-Badge bleiben beim Bearbeiten/im Kalender-Tagesdetail weiterhin vollständig
+// einsehbar, in der kompakten Übersicht wirkten sie aber überladen bzw. redundant (der
+// R-Wert zeigt Gewinn/Verlust ja schon farblich an).
+const TRADE_LIST_OVERVIEW_EXCLUDE_KEYS = ["level", "trend", "zeiteinheit"];
+function tradeCategoryColumnsOverview(area){
+  return tradeCategoryColumns(area).filter(c => !TRADE_LIST_OVERVIEW_EXCLUDE_KEYS.includes(c.key));
+}
 // "Genommen" braucht mehr Platz als die übrigen (kurzen) Kategorie-Spalten — "nicht
 // genommen" ist mit 14 Zeichen deutlich länger als z.B. "Long"/"Short" und würde bei der
 // einheitlichen Spaltenbreite mitten im Wort umbrechen. Deshalb bekommt genau diese eine
@@ -7075,7 +7084,7 @@ function tradeCategoryColumns(area){
 // exakt gleich breit (siehe Kommentar bei TRADE_CATEGORY_COLUMNS).
 const GENOMMEN_COL_WIDTH = 122; // px, Listen-Ansicht — reicht für "nicht genommen" ohne Umbruch
 function tradeCategoryGrid(area){
-  return tradeCategoryColumns(area)
+  return tradeCategoryColumnsOverview(area)
     .map(c => (c.key === "genommen" ? GENOMMEN_COL_WIDTH : TRADE_CATEGORY_COL_WIDTH) + "px")
     .join(" ");
 }
@@ -7156,18 +7165,17 @@ function tradeListGrid(area){
   // Die "Gewinn / Risiko"-Spalte gibt es nur im Live-Reiter (dort gibt es Risiko-% und
   // Euro-Beträge) — bei EOD (nur manuelles R-Ergebnis, kein Risiko/Euro) komplett weglassen.
   const extraColWidth = area === "live" ? "100px " : "";
-  return `78px 76px ${eodExtraCol}${tradeCategoryGrid(area)} 54px ${extraColWidth}64px minmax(145px,1fr)`;
+  return `78px 76px ${eodExtraCol}${tradeCategoryGrid(area)} ${extraColWidth}64px minmax(145px,1fr)`;
 }
 function tradeListHeaderHtml(area){
-  const catLabels = tradeCategoryColumns(area).map(c=>`<div class="cat-col-label">${c.label}</div>`).join("");
+  const catLabels = tradeCategoryColumnsOverview(area).map(c=>`<div class="cat-col-label">${c.label}</div>`).join("");
   const eodExtraSlot = area === "eod" ? "" : "<div></div>";
   const extraLabelSlot = area === "live" ? `<div class="cat-col-label" style="text-align:right;">Gewinn / Risiko</div>` : "";
   return `<div class="cat-table-header-bar"><div class="cat-table-header" style="grid-template-columns:${tradeListGrid(area)}">
-    <div></div><div></div>${eodExtraSlot}${catLabels}<div></div>${extraLabelSlot}<div class="cat-col-label" style="text-align:right;">RR</div><div></div>
+    <div></div><div></div>${eodExtraSlot}${catLabels}${extraLabelSlot}<div class="cat-col-label" style="text-align:right;">RR</div><div></div>
   </div></div>`;
 }
 function tradeListRowHtml(t, cyclePositions){
-  const isOpen = !t.ergebnis;
   const rrDisplay = (t.r===null || t.r===undefined || t.r==="") ? "—" : formatR(t.r);
   const rClass = (t.r>0) ? "pos" : (t.r<0 ? "neg" : "");
   let extraDisplay = "";
@@ -7181,7 +7189,7 @@ function tradeListRowHtml(t, cyclePositions){
   const eodExtra = (t.area==="live" && !t.copiedToEod) ? `<button class="btn btn-sm eod-inline-btn" data-copy-eod="${t.id}">→ EOD</button>`
     : t.copiedToEod ? `<span class="badge badge-eod-copied">✓ EOD</span>` : "";
   const eodExtraSlot = t.area === "eod" ? "" : `<div>${eodExtra}</div>`;
-  const cols = tradeCategoryColumns(t.area);
+  const cols = tradeCategoryColumnsOverview(t.area);
   const catCells = cols.map(col=>{
     const values = tradeCategoryCellValues(t, col);
     const chips = values.map(v=>`<span class="tag ${v.cls||""}">${escHtml(v.text)}</span>`).join("");
@@ -7200,7 +7208,6 @@ function tradeListRowHtml(t, cyclePositions){
     <div class="trade-date-badge">${formatDateShort(t.date)}</div>
     ${eodExtraSlot}
     ${catCells}
-    <div class="badge ${isOpen?"badge-open":"badge-closed"}">${isOpen?"offen":(t.ergebnis)}</div>
     ${extraDisplay}
     <div class="trade-r ${rClass}">${rrDisplay}</div>
     <div class="trade-actions">
