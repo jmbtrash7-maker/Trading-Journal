@@ -191,6 +191,30 @@
     background: linear-gradient(135deg, rgba(124,92,252,.9), rgba(91,63,224,.9));
     border-color: transparent; color: #fff;
   }
+
+  /* Risikomatrix */
+  .risk-cell {
+    aspect-ratio: 1; border-radius: .5rem; display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: .8rem; border: 1px solid rgba(255,255,255,.08);
+  }
+
+  /* RAG-Status-Ampel */
+  .rag-dot { width: .7rem; height: .7rem; border-radius: 999px; display: inline-block; }
+
+  /* Mini-Fortschrittsbalken für Budget/Aufwand */
+  .pbar-lg { height: 8px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+  .pbar-lg-fill { height: 100%; border-radius: 999px; width: 0%; transition: width .5s cubic-bezier(.4,0,.2,1); }
+
+  /* Druckansicht: nur den Statusbericht ausgeben */
+  @media print {
+    body * { visibility: hidden; }
+    #status-report-print, #status-report-print * { visibility: visible; }
+    #status-report-print {
+      position: absolute; top: 0; left: 0; width: 100%; padding: 24px; color: #000; background: #fff;
+    }
+    #status-report-print .print-hide { display: none !important; }
+    #status-report-print * { color: #000 !important; background: transparent !important; border-color: #999 !important; }
+  }
 </style>
 </head>
 <body class="min-h-screen text-ink antialiased">
@@ -222,6 +246,9 @@
       </a>
       <a href="#" data-view="notes" class="nav-item" title="Notizen">
         <i class="fa-solid fa-note-sticky w-4 text-center"></i> <span class="nav-label">Notizen</span>
+      </a>
+      <a href="#" data-view="risks" class="nav-item" title="Risiken">
+        <i class="fa-solid fa-triangle-exclamation w-4 text-center"></i> <span class="nav-label">Risiken</span>
       </a>
       <a href="#" data-view="learning" class="nav-item" title="Lernmaterial">
         <i class="fa-solid fa-book-open w-4 text-center"></i> <span class="nav-label">Lernmaterial</span>
@@ -261,6 +288,9 @@
       <a href="#" data-view="notes" class="nav-item px-4">
         <i class="fa-solid fa-note-sticky w-4 text-center"></i> <span class="nav-label">Notizen</span>
       </a>
+      <a href="#" data-view="risks" class="nav-item px-4">
+        <i class="fa-solid fa-triangle-exclamation w-4 text-center"></i> <span class="nav-label">Risiken</span>
+      </a>
       <a href="#" data-view="learning" class="nav-item px-4">
         <i class="fa-solid fa-book-open w-4 text-center"></i> <span class="nav-label">Lernmaterial</span>
       </a>
@@ -294,6 +324,34 @@
           <div class="card p-4 sm:p-5">
             <p class="text-xs text-inksoft font-medium">Ressourcen</p>
             <p id="kpi-resources" class="kpi-figure font-display text-3xl mt-1">0</p>
+          </div>
+        </div>
+
+        <h2 class="font-display text-xl font-semibold mb-4">Budget, Aufwand &amp; Risiken</h2>
+        <div class="grid sm:grid-cols-3 gap-3 sm:gap-4 mb-10">
+          <div class="card p-4 sm:p-5">
+            <p class="text-xs text-inksoft font-medium">Budget: Ist vs. Soll</p>
+            <div class="flex items-end justify-between mt-1 mb-2">
+              <p class="kpi-figure font-display text-xl"><span id="kpi-cost-actual">0 €</span> <span class="text-inksoft text-sm font-normal">/ <span id="kpi-budget-total">0 €</span></span></p>
+              <span id="kpi-budget-pct" class="text-xs font-semibold text-inksoft">0%</span>
+            </div>
+            <div class="pbar-lg"><div id="kpi-budget-fill" class="pbar-lg-fill"></div></div>
+          </div>
+          <div class="card p-4 sm:p-5">
+            <p class="text-xs text-inksoft font-medium">Arbeitsstunden: Ist vs. Soll</p>
+            <div class="flex items-end justify-between mt-1 mb-2">
+              <p class="kpi-figure font-display text-xl"><span id="kpi-hours-actual">0</span> <span class="text-inksoft text-sm font-normal">/ <span id="kpi-hours-planned">0</span> Std.</span></p>
+              <span id="kpi-hours-pct" class="text-xs font-semibold text-inksoft">0%</span>
+            </div>
+            <div class="pbar-lg"><div id="kpi-hours-fill" class="pbar-lg-fill"></div></div>
+          </div>
+          <div class="card p-4 sm:p-5">
+            <p class="text-xs text-inksoft font-medium">Kritische Risiken</p>
+            <div class="flex items-center gap-2 mt-1">
+              <p id="kpi-critical-risks" class="kpi-figure font-display text-3xl">0</p>
+              <span class="tag bg-red-soft text-red"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i>Hoch</span>
+            </div>
+            <p id="kpi-risks-total" class="text-xs text-inksoft mt-1">0 Risiken insgesamt</p>
           </div>
         </div>
 
@@ -378,6 +436,44 @@
         </div>
       </section>
 
+      <!-- ---------- RISKS ---------- -->
+      <section id="view-risks" class="view fade-in">
+        <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
+          <div>
+            <h1 class="font-display text-3xl sm:text-4xl font-semibold">Risiken</h1>
+            <p id="risks-subline" class="text-inksoft mt-1">Risikoregister über alle Projekte hinweg.</p>
+          </div>
+          <button id="btn-new-risk" class="btn-primary px-4 py-2.5 text-sm">
+            <i class="fa-solid fa-plus mr-1.5"></i>Neues Risiko
+          </button>
+        </header>
+
+        <div class="flex flex-wrap items-center gap-2 mb-6">
+          <div class="relative flex-1 min-w-[180px]">
+            <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-inkfaint text-xs"></i>
+            <input id="risk-search" type="text" placeholder="Risikobeschreibung durchsuchen…" class="pl-8 pr-3 py-2 text-sm w-full">
+          </div>
+          <select id="risk-project-filter" class="px-3 py-2 text-sm">
+            <option value="all">Alle Projekte</option>
+          </select>
+        </div>
+
+        <div class="card p-5 mb-8">
+          <h2 class="font-display text-base font-semibold mb-1">Risikomatrix</h2>
+          <p class="text-xs text-inksoft mb-4">Eintrittswahrscheinlichkeit (waagerecht) × Auswirkung (senkrecht). Zahl = Anzahl Risiken in dieser Zelle.</p>
+          <div id="risk-matrix" class="grid gap-1" style="grid-template-columns: repeat(5, 1fr);"></div>
+          <div class="flex items-center justify-between text-[10px] text-inksoft mt-2 px-1">
+            <span>Wahrscheinlichkeit 1 →</span><span>→ 5</span>
+          </div>
+        </div>
+
+        <div id="risks-list" class="flex flex-col gap-3"></div>
+        <div id="risks-empty" class="hidden text-center py-16 text-inksoft">
+          <i class="fa-solid fa-triangle-exclamation text-3xl mb-3 opacity-40"></i>
+          <p>Noch keine Risiken erfasst.</p>
+        </div>
+      </section>
+
       <!-- ---------- LEARNING ---------- -->
       <section id="view-learning" class="view fade-in">
         <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
@@ -434,27 +530,73 @@
       </div>
       <p class="text-xs text-inksoft mb-6">Fortschritt basierend auf erledigten Aufgaben</p>
 
+      <div class="grid sm:grid-cols-2 gap-3 mb-6">
+        <div class="card p-3.5">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-inksoft font-medium">Budget</span>
+            <span id="pd-budget-label" class="text-xs font-semibold">0 € / 0 €</span>
+          </div>
+          <div class="pbar-lg"><div id="pd-budget-fill" class="pbar-lg-fill"></div></div>
+        </div>
+        <div class="card p-3.5">
+          <div class="flex items-center justify-between mb-1.5">
+            <span class="text-xs text-inksoft font-medium">Arbeitsstunden</span>
+            <span id="pd-hours-label" class="text-xs font-semibold">0 / 0 Std.</span>
+          </div>
+          <div class="pbar-lg"><div id="pd-hours-fill" class="pbar-lg-fill"></div></div>
+        </div>
+      </div>
+
       <div class="flex items-center justify-between mb-3">
         <h3 class="font-display text-lg font-semibold">Aufgaben</h3>
-        <button id="btn-project-edit" class="text-xs text-inksoft hover:text-cyan"><i class="fa-solid fa-pen mr-1"></i>Projekt bearbeiten</button>
+        <div class="flex items-center gap-3">
+          <button id="btn-project-report" class="text-xs text-inksoft hover:text-cyan"><i class="fa-solid fa-file-lines mr-1"></i>Statusbericht</button>
+          <button id="btn-project-edit" class="text-xs text-inksoft hover:text-cyan"><i class="fa-solid fa-pen mr-1"></i>Projekt bearbeiten</button>
+        </div>
       </div>
 
       <div id="pd-task-list" class="flex flex-col gap-1 mb-4"></div>
 
       <form id="form-add-task" class="flex flex-wrap gap-2 items-center border-t border-line pt-4">
         <input id="task-text" type="text" placeholder="Neue Aufgabe…" required class="px-3 py-2 text-sm flex-1 min-w-[140px]">
+        <input id="task-assignee" type="text" placeholder="Person/Rolle" class="px-2 py-2 text-sm w-28">
         <select id="task-priority" class="px-2 py-2 text-sm">
           <option value="Hoch">Hoch</option>
           <option value="Mittel" selected>Mittel</option>
           <option value="Niedrig">Niedrig</option>
         </select>
+        <input id="task-est-hours" type="number" min="0" step="0.5" placeholder="Std. geplant" class="px-2 py-2 text-sm w-24">
         <input id="task-deadline" type="date" class="px-2 py-2 text-sm">
         <button type="submit" class="btn-primary px-3 py-2 text-sm"><i class="fa-solid fa-plus"></i></button>
       </form>
 
       <div class="border-t border-line mt-6 pt-4 flex justify-between">
+        <button id="btn-project-export" class="text-xs text-inksoft hover:text-cyan"><i class="fa-solid fa-file-export mr-1"></i>Als JSON exportieren</button>
         <button id="btn-project-delete" class="text-xs text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Projekt löschen</button>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ STATUS REPORT MODAL ============ -->
+<div id="modal-status-report" class="hidden fixed inset-0 z-50 modal-backdrop flex items-start sm:items-center justify-center p-0 sm:p-6 overflow-y-auto">
+  <div class="bg-[#0F0E1A] border border-line w-full sm:max-w-xl sm:my-10 min-h-full sm:min-h-0 sm:rounded-2xl">
+    <div class="flex items-start justify-between border-b border-line px-6 py-5">
+      <h2 class="font-display text-xl font-semibold">Projekt-Statusbericht</h2>
+      <button class="modal-close text-inksoft hover:text-ink px-2 py-1 text-lg print-hide"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+    <div id="status-report-print" class="px-6 py-5">
+      <div class="flex items-center gap-2 mb-1">
+        <span id="sr-rag-dot" class="rag-dot"></span>
+        <h3 id="sr-project-name" class="font-display text-lg font-semibold"></h3>
+      </div>
+      <p id="sr-rag-label" class="text-sm font-semibold mb-4"></p>
+      <div id="sr-summary" class="text-sm text-inksoft flex flex-col gap-1.5 mb-4"></div>
+      <div id="sr-risks" class="text-sm mb-2"></div>
+    </div>
+    <div class="px-6 pb-6 flex justify-end gap-2 print-hide">
+      <button type="button" id="btn-report-print" class="btn-ghost px-4 py-2 text-sm"><i class="fa-solid fa-print mr-1.5"></i>Drucken / PDF</button>
+      <button type="button" class="modal-close btn-primary px-4 py-2 text-sm">Schließen</button>
     </div>
   </div>
 </div>
@@ -481,10 +623,75 @@
           <option>Abgeschlossen</option>
         </select>
       </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-medium text-inksoft">Budget (€) <span class="text-inkfaint">optional</span></label>
+          <input id="pf-budget" type="number" min="0" step="0.01" placeholder="0" class="w-full px-3 py-2 text-sm mt-1">
+        </div>
+        <div>
+          <label class="text-xs font-medium text-inksoft">Stundensatz (€/h) <span class="text-inkfaint">optional</span></label>
+          <input id="pf-rate" type="number" min="0" step="0.01" placeholder="0" class="w-full px-3 py-2 text-sm mt-1">
+        </div>
+      </div>
     </div>
     <div class="flex justify-end gap-2 mt-6">
       <button type="button" class="modal-close btn-ghost px-4 py-2 text-sm">Abbrechen</button>
       <button type="submit" class="btn-primary px-4 py-2 text-sm">Speichern</button>
+    </div>
+  </form>
+</div>
+
+<!-- ============ RISK FORM MODAL ============ -->
+<div id="modal-risk-form" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+  <form id="form-risk" class="bg-[#0F0E1A] border border-line rounded-2xl w-full max-w-lg p-6">
+    <h2 id="rk-heading" class="font-display text-xl font-semibold mb-4">Neues Risiko</h2>
+    <input type="hidden" id="rk-id">
+    <div class="flex flex-col gap-3">
+      <div>
+        <label class="text-xs font-medium text-inksoft">Zugehöriges Projekt</label>
+        <select id="rk-project" required class="w-full px-3 py-2 text-sm mt-1"></select>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-inksoft">Risikobeschreibung</label>
+        <textarea id="rk-desc" rows="3" required class="w-full px-3 py-2 text-sm mt-1"></textarea>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-xs font-medium text-inksoft">Eintrittswahrscheinlichkeit</label>
+          <select id="rk-probability" class="w-full px-3 py-2 text-sm mt-1">
+            <option value="1">1 — sehr gering</option>
+            <option value="2">2 — gering</option>
+            <option value="3" selected>3 — mittel</option>
+            <option value="4">4 — hoch</option>
+            <option value="5">5 — sehr hoch</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-xs font-medium text-inksoft">Auswirkung</label>
+          <select id="rk-impact" class="w-full px-3 py-2 text-sm mt-1">
+            <option value="1">1 — sehr gering</option>
+            <option value="2">2 — gering</option>
+            <option value="3" selected>3 — mittel</option>
+            <option value="4">4 — hoch</option>
+            <option value="5">5 — sehr hoch</option>
+          </select>
+        </div>
+      </div>
+      <div class="flex items-center justify-between card px-3 py-2.5">
+        <span class="text-xs font-medium text-inksoft">Risikowert (automatisch)</span>
+        <span id="rk-score-preview" class="tag">9</span>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-inksoft">Gegenmaßnahme (Mitigation Strategy)</label>
+        <textarea id="rk-mitigation" rows="3" class="w-full px-3 py-2 text-sm mt-1" placeholder="Wie wird das Risiko reduziert oder abgefangen?"></textarea>
+      </div>
+    </div>
+    <div class="flex justify-between items-center mt-6">
+      <button type="button" id="rk-delete" class="hidden text-xs text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Löschen</button>
+      <div class="flex gap-2 ml-auto">
+        <button type="button" class="modal-close btn-ghost px-4 py-2 text-sm">Abbrechen</button>
+        <button type="submit" class="btn-primary px-4 py-2 text-sm">Speichern</button>
+      </div>
     </div>
   </form>
 </div>
@@ -599,11 +806,16 @@
 /* ==========================================================================
    WERKBANK — Projektmanagement-App
    Modul-Übersicht:
-   1. State & Persistenz (localStorage)
-   2. Utility-Funktionen
+   1. State & Persistenz (localStorage; state.risks + Budget/Stunden-Felder
+      auf Projekten/Aufgaben — normalizeState() sichert Abwärtskompatibilität
+      zu älteren gespeicherten Daten ohne diese Felder ab)
+   2. Utility-Funktionen (u. a. Risikobewertung/-klassifizierung, Budget-
+      und Stundenberechnung je Projekt)
    3. Seed-/Beispieldaten
-   4. Render-Funktionen (Dashboard, Projekte, Notizen, Lernmaterial)
-   5. CRUD-Logik (Projekte, Aufgaben, Notizen, Ressourcen)
+   4. Render-Funktionen (Dashboard inkl. Enterprise-KPIs, Projekte, Notizen,
+      Risiken inkl. Risikomatrix, Lernmaterial)
+   5. CRUD-Logik (Projekte, Aufgaben, Notizen, Ressourcen, Risiken,
+      Statusbericht/RAG-Bewertung, JSON-Export)
    6. Event-Bindings & Navigation
    ========================================================================== */
 
@@ -615,8 +827,8 @@
    * ------------------------------------------------------------------ */
   const STORAGE_KEY = 'werkbank_data_v1';
 
-  /** @type {{projects: Array, notes: Array, resources: Array}} */
-  let state = { projects: [], notes: [], resources: [] };
+  /** @type {{projects: Array, notes: Array, resources: Array, risks: Array}} */
+  let state = { projects: [], notes: [], resources: [], risks: [] };
 
   let filters = {
     projectStatus: 'all',
@@ -627,6 +839,8 @@
     noteSort: 'date-desc',
     resourceType: 'all',
     resourceQuery: '',
+    riskProject: 'all',
+    riskQuery: '',
   };
 
   const NOTE_TYPES = ['Buch', 'Artikel', 'Zusammenfassung', 'Erkenntnis', 'Thema', 'Sonstiges'];
@@ -638,6 +852,7 @@
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         state = JSON.parse(raw);
+        normalizeState();
         return;
       }
     } catch (e) {
@@ -645,6 +860,21 @@
     }
     state = buildSeedData();
     saveState();
+  }
+
+  // Stellt sicher, dass auch älterer (vor dieser Erweiterung gespeicherter) State alle neuen
+  // Felder besitzt, damit Rendering/Berechnungen nie auf "undefined" laufen.
+  function normalizeState() {
+    if (!Array.isArray(state.risks)) state.risks = [];
+    state.projects.forEach(p => {
+      if (typeof p.budget !== 'number') p.budget = Number(p.budget) || 0;
+      if (typeof p.hourlyRate !== 'number') p.hourlyRate = Number(p.hourlyRate) || 0;
+      (p.tasks || []).forEach(t => {
+        if (typeof t.assignee !== 'string') t.assignee = t.assignee || '';
+        if (typeof t.estimatedHours !== 'number') t.estimatedHours = Number(t.estimatedHours) || 0;
+        if (typeof t.actualHours !== 'number') t.actualHours = Number(t.actualHours) || 0;
+      });
+    });
   }
 
   function saveState() {
@@ -802,6 +1032,7 @@
       const data = await res.json();
       if (!data || !Array.isArray(data.projects)) return false;
       state = data;
+      normalizeState();
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
       renderAll();
       applyChipDefaults();
@@ -971,6 +1202,44 @@
     return Math.round((done / project.tasks.length) * 100);
   }
 
+  function riskScore(risk) {
+    return Number(risk.probability) * Number(risk.impact);
+  }
+
+  // Klassifizierung gemäß einfacher 5x5-Risikomatrix (Score 1–25):
+  // Niedrig (Grün) 1–6, Mittel (Gelb) 7–14, Hoch (Rot) ab 15.
+  function riskLevelMeta(score) {
+    if (score >= 15) return { label: 'Hoch', bg: 'bg-red-soft', text: 'text-red', bar: '#F76E6E' };
+    if (score >= 7)  return { label: 'Mittel', bg: 'bg-amber-soft', text: 'text-amber', bar: '#F5A623' };
+    return { label: 'Niedrig', bg: 'bg-green-soft', text: 'text-green', bar: '#34D399' };
+  }
+
+  function formatEUR(value) {
+    return Number(value || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR', maximumFractionDigits: 0 });
+  }
+
+  function formatHours(value) {
+    const n = Number(value || 0);
+    return (Number.isInteger(n) ? n : n.toFixed(1)) + '';
+  }
+
+  // Gesamt geplante/tatsächliche Stunden eines Projekts, summiert über alle Aufgaben.
+  function projectHours(project) {
+    const planned = (project.tasks || []).reduce((sum, t) => sum + (Number(t.estimatedHours) || 0), 0);
+    const actual = (project.tasks || []).reduce((sum, t) => sum + (Number(t.actualHours) || 0), 0);
+    return { planned, actual };
+  }
+
+  // Ist-Kosten eines Projekts = tatsächliche Stunden × Stundensatz des Projekts.
+  function projectCost(project) {
+    const { actual } = projectHours(project);
+    return actual * (Number(project.hourlyRate) || 0);
+  }
+
+  function projectRisks(project) {
+    return state.risks.filter(r => r.projectId === project.id);
+  }
+
   // Deterministische Verlaufs-Farbpalette für Projekt-Thumbnails (kein Bild-Upload nötig)
   const THUMB_PALETTES = [
     ['#4C1D95', '#0EA5E9'],
@@ -1014,11 +1283,13 @@
         description: 'Neues Design und neue Struktur für die Unternehmens-Website.',
         status: 'In Bearbeitung',
         createdAt: plus(-2),
+        budget: 12000,
+        hourlyRate: 75,
         tasks: [
-          { id: uid(), text: 'Wireframes abstimmen', priority: 'Hoch', deadline: plus(-2), done: true },
-          { id: uid(), text: 'Startseite umsetzen', priority: 'Hoch', deadline: plus(3), done: false },
-          { id: uid(), text: 'Inhalte der Unterseiten einpflegen', priority: 'Mittel', deadline: plus(7), done: false },
-          { id: uid(), text: 'Cross-Browser-Test', priority: 'Niedrig', deadline: plus(12), done: false },
+          { id: uid(), text: 'Wireframes abstimmen', priority: 'Hoch', deadline: plus(-2), done: true, assignee: 'Julian', estimatedHours: 8, actualHours: 9 },
+          { id: uid(), text: 'Startseite umsetzen', priority: 'Hoch', deadline: plus(3), done: false, assignee: 'Julian', estimatedHours: 16, actualHours: 6 },
+          { id: uid(), text: 'Inhalte der Unterseiten einpflegen', priority: 'Mittel', deadline: plus(7), done: false, assignee: 'Redaktion', estimatedHours: 10, actualHours: 0 },
+          { id: uid(), text: 'Cross-Browser-Test', priority: 'Niedrig', deadline: plus(12), done: false, assignee: 'QA', estimatedHours: 4, actualHours: 0 },
         ],
       },
       {
@@ -1027,9 +1298,11 @@
         description: 'Kleines Tool zur Erfassung laufender Ausgaben.',
         status: 'Geplant',
         createdAt: plus(0),
+        budget: 4000,
+        hourlyRate: 70,
         tasks: [
-          { id: uid(), text: 'Anforderungen sammeln', priority: 'Mittel', deadline: plus(4), done: false },
-          { id: uid(), text: 'Datenmodell entwerfen', priority: 'Mittel', deadline: plus(9), done: false },
+          { id: uid(), text: 'Anforderungen sammeln', priority: 'Mittel', deadline: plus(4), done: false, assignee: 'Julian', estimatedHours: 5, actualHours: 0 },
+          { id: uid(), text: 'Datenmodell entwerfen', priority: 'Mittel', deadline: plus(9), done: false, assignee: 'Julian', estimatedHours: 6, actualHours: 0 },
         ],
       },
       {
@@ -1038,11 +1311,43 @@
         description: 'Umzug der Infrastruktur auf neuen Hosting-Anbieter.',
         status: 'Abgeschlossen',
         createdAt: plus(-4),
+        budget: 3000,
+        hourlyRate: 80,
         tasks: [
-          { id: uid(), text: 'Backup erstellen', priority: 'Hoch', deadline: plus(-35), done: true },
-          { id: uid(), text: 'DNS umstellen', priority: 'Hoch', deadline: plus(-30), done: true },
-          { id: uid(), text: 'Altserver abschalten', priority: 'Niedrig', deadline: plus(-25), done: true },
+          { id: uid(), text: 'Backup erstellen', priority: 'Hoch', deadline: plus(-35), done: true, assignee: 'Julian', estimatedHours: 3, actualHours: 3 },
+          { id: uid(), text: 'DNS umstellen', priority: 'Hoch', deadline: plus(-30), done: true, assignee: 'Julian', estimatedHours: 2, actualHours: 2 },
+          { id: uid(), text: 'Altserver abschalten', priority: 'Niedrig', deadline: plus(-25), done: true, assignee: 'Julian', estimatedHours: 1, actualHours: 1 },
         ],
+      },
+    ];
+
+    const risks = [
+      {
+        id: uid(),
+        projectId: projects[0].id,
+        description: 'Content der Redaktion trifft nicht rechtzeitig ein und verzögert den Launch.',
+        probability: 3,
+        impact: 4,
+        mitigation: 'Wöchentlicher Redaktionsstatus, feste Deadline mit Puffer von 5 Tagen vor Launch.',
+        createdAt: plus(-1),
+      },
+      {
+        id: uid(),
+        projectId: projects[0].id,
+        description: 'Browser-Kompatibilitätsprobleme bei älteren Safari-Versionen.',
+        probability: 2,
+        impact: 2,
+        mitigation: 'Frühzeitiger Cross-Browser-Test statt erst kurz vor Launch.',
+        createdAt: plus(0),
+      },
+      {
+        id: uid(),
+        projectId: projects[1].id,
+        description: 'Unklare Anforderungen führen zu Nacharbeit am Datenmodell.',
+        probability: 4,
+        impact: 4,
+        mitigation: 'Anforderungsworkshop mit Stakeholdern vor Umsetzungsstart.',
+        createdAt: plus(0),
       },
     ];
 
@@ -1128,7 +1433,7 @@
       },
     ];
 
-    return { projects, notes, resources };
+    return { projects, notes, resources, risks };
   }
 
   /* ------------------------------------------------------------------ *
@@ -1140,6 +1445,7 @@
     renderProjectSelects();
     renderNotes();
     renderResources();
+    renderRisks();
   }
 
   function renderDashboard() {
@@ -1150,6 +1456,34 @@
     document.getElementById('kpi-open-tasks').textContent = openTasks;
     document.getElementById('kpi-notes').textContent = state.notes.length;
     document.getElementById('kpi-resources').textContent = state.resources.length;
+
+    // Budget: Ist vs. Soll über alle Projekte
+    const totalBudget = state.projects.reduce((sum, p) => sum + (Number(p.budget) || 0), 0);
+    const totalCost = state.projects.reduce((sum, p) => sum + projectCost(p), 0);
+    const budgetPct = totalBudget > 0 ? Math.round((totalCost / totalBudget) * 100) : 0;
+    document.getElementById('kpi-cost-actual').textContent = formatEUR(totalCost);
+    document.getElementById('kpi-budget-total').textContent = formatEUR(totalBudget);
+    document.getElementById('kpi-budget-pct').textContent = budgetPct + '%';
+    const budgetFill = document.getElementById('kpi-budget-fill');
+    budgetFill.style.width = Math.min(budgetPct, 100) + '%';
+    budgetFill.style.background = budgetPct > 100 ? '#F76E6E' : budgetPct >= 85 ? '#F5A623' : '#34D399';
+
+    // Arbeitsstunden: Ist vs. Soll über alle Aufgaben
+    const totalPlannedHours = state.projects.reduce((sum, p) => sum + projectHours(p).planned, 0);
+    const totalActualHours = state.projects.reduce((sum, p) => sum + projectHours(p).actual, 0);
+    const hoursPct = totalPlannedHours > 0 ? Math.round((totalActualHours / totalPlannedHours) * 100) : 0;
+    document.getElementById('kpi-hours-actual').textContent = formatHours(totalActualHours);
+    document.getElementById('kpi-hours-planned').textContent = formatHours(totalPlannedHours);
+    document.getElementById('kpi-hours-pct').textContent = hoursPct + '%';
+    const hoursFill = document.getElementById('kpi-hours-fill');
+    hoursFill.style.width = Math.min(hoursPct, 100) + '%';
+    hoursFill.style.background = hoursPct > 100 ? '#F76E6E' : hoursPct >= 85 ? '#F5A623' : '#22D3EE';
+
+    // Kritische Risiken (Risikowert >= 15, entspricht "Hoch")
+    const criticalRisks = state.risks.filter(r => riskScore(r) >= 15).length;
+    document.getElementById('kpi-critical-risks').textContent = criticalRisks;
+    document.getElementById('kpi-risks-total').textContent =
+      `${state.risks.length} Risiko${state.risks.length === 1 ? '' : 'en'} insgesamt`;
 
     // Fortschrittsliste
     const progressWrap = document.getElementById('dashboard-progress-list');
@@ -1272,6 +1606,19 @@
 
     if ([...noteSelect.options].some(o => o.value === currentNfValue)) noteSelect.value = currentNfValue;
     if ([...filterSelect.options].some(o => o.value === currentFilterValue)) filterSelect.value = currentFilterValue;
+
+    // Risiko-Projekt-Selects (Formular + Filter)
+    const rkSelect = document.getElementById('rk-project');
+    const riskFilterSelect = document.getElementById('risk-project-filter');
+    const currentRkValue = rkSelect.value;
+    const currentRiskFilterValue = riskFilterSelect.value;
+
+    rkSelect.innerHTML = state.projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+    riskFilterSelect.innerHTML = '<option value="all">Alle Projekte</option>' +
+      state.projects.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+
+    if ([...rkSelect.options].some(o => o.value === currentRkValue)) rkSelect.value = currentRkValue;
+    if ([...riskFilterSelect.options].some(o => o.value === currentRiskFilterValue)) riskFilterSelect.value = currentRiskFilterValue;
   }
 
   function getFilteredNotes() {
@@ -1384,6 +1731,69 @@
       </div>`).join('');
   }
 
+  function getFilteredRisks() {
+    return state.risks.filter(r => {
+      if (filters.riskProject !== 'all' && r.projectId !== filters.riskProject) return false;
+      if (filters.riskQuery && !r.description.toLowerCase().includes(filters.riskQuery.toLowerCase())) return false;
+      return true;
+    }).sort((a, b) => riskScore(b) - riskScore(a));
+  }
+
+  function renderRiskMatrix(risks) {
+    // 5x5-Zellen: Zeilen = Auswirkung 5 (oben) bis 1 (unten), Spalten = Wahrscheinlichkeit 1 bis 5
+    const counts = {};
+    risks.forEach(r => {
+      const key = `${r.probability}-${r.impact}`;
+      counts[key] = (counts[key] || 0) + 1;
+    });
+    let html = '';
+    for (let impact = 5; impact >= 1; impact--) {
+      for (let prob = 1; prob <= 5; prob++) {
+        const score = prob * impact;
+        const meta = riskLevelMeta(score);
+        const count = counts[`${prob}-${impact}`] || 0;
+        html += `<div class="risk-cell ${meta.bg} ${count > 0 ? meta.text : 'text-inkfaint'}" title="Wahrsch. ${prob} × Auswirkung ${impact} = ${score}">${count > 0 ? count : ''}</div>`;
+      }
+    }
+    document.getElementById('risk-matrix').innerHTML = html;
+  }
+
+  function renderRisks() {
+    const list = getFilteredRisks();
+    renderRiskMatrix(list);
+
+    const wrap = document.getElementById('risks-list');
+    const empty = document.getElementById('risks-empty');
+    document.getElementById('risks-subline').textContent =
+      `${state.risks.length} Risiko${state.risks.length === 1 ? '' : 'en'} · ${state.risks.filter(r => riskScore(r) >= 15).length} kritisch`;
+
+    if (list.length === 0) {
+      wrap.innerHTML = '';
+      empty.classList.remove('hidden');
+      return;
+    }
+    empty.classList.add('hidden');
+
+    wrap.innerHTML = list.map(r => {
+      const project = state.projects.find(p => p.id === r.projectId);
+      const score = riskScore(r);
+      const meta = riskLevelMeta(score);
+      return `
+        <div class="card hoverable p-4" data-risk-id="${r.id}">
+          <div class="flex items-start justify-between gap-3 mb-2">
+            <div class="flex items-center gap-2 flex-wrap">
+              <span class="tag ${meta.bg} ${meta.text}"><i class="fa-solid fa-triangle-exclamation text-[10px]"></i>${meta.label} · Wert ${score}</span>
+              ${project ? `<span class="tag bg-cyan-soft text-cyan"><i class="fa-solid fa-diagram-project text-[10px]"></i>${escapeHtml(project.name)}</span>` : ''}
+            </div>
+            <button class="edit-risk text-inksoft hover:text-cyan text-xs" data-id="${r.id}"><i class="fa-solid fa-pen"></i></button>
+          </div>
+          <p class="text-sm mb-2">${escapeHtml(r.description)}</p>
+          <p class="text-xs text-inksoft mb-2">Wahrscheinlichkeit ${r.probability}/5 · Auswirkung ${r.impact}/5</p>
+          ${r.mitigation ? `<p class="text-xs text-inksoft border-t border-line pt-2"><i class="fa-solid fa-shield-halved mr-1"></i>${escapeHtml(r.mitigation)}</p>` : ''}
+        </div>`;
+    }).join('');
+  }
+
   /* ------------------------------------------------------------------ *
    * 5. CRUD-LOGIK
    * ------------------------------------------------------------------ */
@@ -1397,6 +1807,8 @@
     document.getElementById('pf-name').value = project ? project.name : '';
     document.getElementById('pf-desc').value = project ? project.description : '';
     document.getElementById('pf-status').value = project ? project.status : 'Geplant';
+    document.getElementById('pf-budget').value = project && project.budget ? project.budget : '';
+    document.getElementById('pf-rate').value = project && project.hourlyRate ? project.hourlyRate : '';
     openModal('modal-project-form');
   }
 
@@ -1406,14 +1818,16 @@
     const name = document.getElementById('pf-name').value.trim();
     const description = document.getElementById('pf-desc').value.trim();
     const status = document.getElementById('pf-status').value;
+    const budget = Number(document.getElementById('pf-budget').value) || 0;
+    const hourlyRate = Number(document.getElementById('pf-rate').value) || 0;
     if (!name) return;
 
     if (id) {
       const project = state.projects.find(p => p.id === id);
-      if (project) { project.name = name; project.description = description; project.status = status; }
+      if (project) Object.assign(project, { name, description, status, budget, hourlyRate });
       showToast('Projekt aktualisiert.');
     } else {
-      state.projects.push({ id: uid(), name, description, status, createdAt: todayISO(), tasks: [] });
+      state.projects.push({ id: uid(), name, description, status, budget, hourlyRate, createdAt: todayISO(), tasks: [] });
       showToast('Projekt angelegt.');
     }
     saveState();
@@ -1426,6 +1840,8 @@
     state.projects = state.projects.filter(p => p.id !== id);
     // Notizen, die auf dieses Projekt verweisen, entkoppeln statt löschen
     state.notes.forEach(n => { if (n.projectId === id) n.projectId = ''; });
+    // Risiken des Projekts gehören ohne Projekt nicht mehr zum Register und werden mit gelöscht
+    state.risks = state.risks.filter(r => r.projectId !== id);
     saveState();
     closeModal('modal-project-detail');
     renderAll();
@@ -1456,6 +1872,21 @@
     document.getElementById('pd-progress-fill').style.background = meta.bar;
     document.getElementById('pd-progress-label').textContent = progress + '%';
 
+    // Budget- und Stunden-Zusammenfassung
+    const cost = projectCost(project);
+    const budgetPct = project.budget > 0 ? Math.round((cost / project.budget) * 100) : 0;
+    document.getElementById('pd-budget-label').textContent = `${formatEUR(cost)} / ${formatEUR(project.budget)}`;
+    const pdBudgetFill = document.getElementById('pd-budget-fill');
+    pdBudgetFill.style.width = Math.min(budgetPct, 100) + '%';
+    pdBudgetFill.style.background = budgetPct > 100 ? '#F76E6E' : budgetPct >= 85 ? '#F5A623' : '#34D399';
+
+    const hrs = projectHours(project);
+    const hoursPct = hrs.planned > 0 ? Math.round((hrs.actual / hrs.planned) * 100) : 0;
+    document.getElementById('pd-hours-label').textContent = `${formatHours(hrs.actual)} / ${formatHours(hrs.planned)} Std.`;
+    const pdHoursFill = document.getElementById('pd-hours-fill');
+    pdHoursFill.style.width = Math.min(hoursPct, 100) + '%';
+    pdHoursFill.style.background = hoursPct > 100 ? '#F76E6E' : hoursPct >= 85 ? '#F5A623' : '#22D3EE';
+
     const taskList = document.getElementById('pd-task-list');
     if (project.tasks.length === 0) {
       taskList.innerHTML = `<p class="text-sm text-inksoft py-2">Noch keine Aufgaben — füge unten die erste hinzu.</p>`;
@@ -1474,12 +1905,17 @@
           else if (days === 0) { dueClass = 'text-amber'; dueLabel += ' · heute'; }
         }
         return `
-          <div class="flex items-center gap-3 py-2.5 border-b border-line last:border-0">
+          <div class="flex flex-wrap items-center gap-3 py-2.5 border-b border-line last:border-0">
             <span class="checkbox-custom ${t.done ? 'checked' : ''}" data-toggle-task="${t.id}">
               ${t.done ? '<i class="fa-solid fa-check text-white text-[10px]"></i>' : ''}
             </span>
-            <span class="flex-1 min-w-0 text-sm ${t.done ? 'strike' : ''} truncate">${escapeHtml(t.text)}</span>
+            <span class="flex-1 min-w-[120px] text-sm ${t.done ? 'strike' : ''} truncate">${escapeHtml(t.text)}</span>
+            ${t.assignee ? `<span class="tag bg-surface2 text-inksoft"><i class="fa-regular fa-circle-user text-[10px]"></i>${escapeHtml(t.assignee)}</span>` : ''}
             <span class="tag ${pm.bg} ${pm.text}">${escapeHtml(t.priority)}</span>
+            <span class="flex items-center gap-1 text-xs text-inksoft whitespace-nowrap" title="Tatsächlicher / geplanter Aufwand">
+              <input type="number" min="0" step="0.5" value="${t.actualHours || 0}" data-actual-hours-task="${t.id}" class="w-14 px-1.5 py-1 text-xs text-right">
+              / ${formatHours(t.estimatedHours)} Std.
+            </span>
             ${t.deadline ? `<span class="text-xs ${dueClass} whitespace-nowrap w-24 text-right">${dueLabel}</span>` : '<span class="w-24"></span>'}
             <button data-delete-task="${t.id}" class="text-inksoft hover:text-red text-xs px-1"><i class="fa-solid fa-xmark"></i></button>
           </div>`;
@@ -1492,16 +1928,45 @@
     const project = state.projects.find(p => p.id === activeProjectId);
     if (!project) return;
     const text = document.getElementById('task-text').value.trim();
+    const assignee = document.getElementById('task-assignee').value.trim();
     const priority = document.getElementById('task-priority').value;
+    const estimatedHours = Number(document.getElementById('task-est-hours').value) || 0;
     const deadline = document.getElementById('task-deadline').value;
     if (!text) return;
-    project.tasks.push({ id: uid(), text, priority, deadline, done: false });
+    project.tasks.push({ id: uid(), text, priority, deadline, done: false, assignee, estimatedHours, actualHours: 0 });
     saveState();
     document.getElementById('form-add-task').reset();
     document.getElementById('task-priority').value = 'Mittel';
     refreshProjectDetail();
     renderDashboard();
     renderProjects();
+  }
+
+  // Tatsächlichen Aufwand einer Aufgabe aktualisieren (Inline-Eingabefeld in der Task-Liste)
+  function updateTaskActualHours(taskId, value) {
+    const project = state.projects.find(p => p.id === activeProjectId);
+    if (!project) return;
+    const task = project.tasks.find(t => t.id === taskId);
+    if (!task) return;
+    task.actualHours = Math.max(0, Number(value) || 0);
+    saveState();
+    // Nur die Budget-/Stunden-Zusammenfassung und Dashboard-KPIs aktualisieren,
+    // kompletter Re-Render der Taskliste würde das Eingabefeld beim Tippen stören.
+    const cost = projectCost(project);
+    const budgetPct = project.budget > 0 ? Math.round((cost / project.budget) * 100) : 0;
+    document.getElementById('pd-budget-label').textContent = `${formatEUR(cost)} / ${formatEUR(project.budget)}`;
+    const pdBudgetFill = document.getElementById('pd-budget-fill');
+    pdBudgetFill.style.width = Math.min(budgetPct, 100) + '%';
+    pdBudgetFill.style.background = budgetPct > 100 ? '#F76E6E' : budgetPct >= 85 ? '#F5A623' : '#34D399';
+
+    const hrs = projectHours(project);
+    const hoursPct = hrs.planned > 0 ? Math.round((hrs.actual / hrs.planned) * 100) : 0;
+    document.getElementById('pd-hours-label').textContent = `${formatHours(hrs.actual)} / ${formatHours(hrs.planned)} Std.`;
+    const pdHoursFill = document.getElementById('pd-hours-fill');
+    pdHoursFill.style.width = Math.min(hoursPct, 100) + '%';
+    pdHoursFill.style.background = hoursPct > 100 ? '#F76E6E' : hoursPct >= 85 ? '#F5A623' : '#22D3EE';
+
+    renderDashboard();
   }
 
   function toggleTask(taskId) {
@@ -1639,6 +2104,152 @@
     showToast('Ressource gelöscht.');
   }
 
+  // --- Risiken -------------------------------------------------------
+  function updateRiskScorePreview() {
+    const probability = Number(document.getElementById('rk-probability').value) || 1;
+    const impact = Number(document.getElementById('rk-impact').value) || 1;
+    const score = probability * impact;
+    const meta = riskLevelMeta(score);
+    const el = document.getElementById('rk-score-preview');
+    el.textContent = `${score} · ${meta.label}`;
+    el.className = `tag ${meta.bg} ${meta.text}`;
+  }
+
+  function openRiskForm(risk) {
+    if (state.projects.length === 0) {
+      showToast('Bitte zuerst ein Projekt anlegen.');
+      return;
+    }
+    const form = document.getElementById('form-risk');
+    form.reset();
+    document.getElementById('rk-heading').textContent = risk ? 'Risiko bearbeiten' : 'Neues Risiko';
+    document.getElementById('rk-id').value = risk ? risk.id : '';
+    document.getElementById('rk-project').value = risk ? risk.projectId : (activeProjectId || state.projects[0].id);
+    document.getElementById('rk-desc').value = risk ? risk.description : '';
+    document.getElementById('rk-probability').value = risk ? risk.probability : 3;
+    document.getElementById('rk-impact').value = risk ? risk.impact : 3;
+    document.getElementById('rk-mitigation').value = risk ? (risk.mitigation || '') : '';
+    updateRiskScorePreview();
+    document.getElementById('rk-delete').classList.toggle('hidden', !risk);
+    openModal('modal-risk-form');
+  }
+
+  function saveRiskForm(e) {
+    e.preventDefault();
+    const id = document.getElementById('rk-id').value;
+    const projectId = document.getElementById('rk-project').value;
+    const description = document.getElementById('rk-desc').value.trim();
+    const probability = Number(document.getElementById('rk-probability').value);
+    const impact = Number(document.getElementById('rk-impact').value);
+    const mitigation = document.getElementById('rk-mitigation').value.trim();
+    if (!description || !projectId) return;
+
+    if (id) {
+      const risk = state.risks.find(r => r.id === id);
+      if (risk) Object.assign(risk, { projectId, description, probability, impact, mitigation });
+      showToast('Risiko aktualisiert.');
+    } else {
+      state.risks.push({ id: uid(), projectId, description, probability, impact, mitigation, createdAt: todayISO() });
+      showToast('Risiko erfasst.');
+    }
+    saveState();
+    closeModal('modal-risk-form');
+    renderRisks();
+    renderDashboard();
+  }
+
+  function deleteRisk(id) {
+    if (!confirm('Dieses Risiko wirklich löschen?')) return;
+    state.risks = state.risks.filter(r => r.id !== id);
+    saveState();
+    closeModal('modal-risk-form');
+    renderRisks();
+    renderDashboard();
+    showToast('Risiko gelöscht.');
+  }
+
+  // --- Statusbericht & Export -----------------------------------------
+  function computeProjectRag(project) {
+    const cost = projectCost(project);
+    const budgetPct = project.budget > 0 ? (cost / project.budget) * 100 : 0;
+    const risks = projectRisks(project);
+    const criticalRisks = risks.filter(r => riskScore(r) >= 15).length;
+    const mediumRisks = risks.filter(r => riskScore(r) >= 7 && riskScore(r) < 15).length;
+    const overdueTasks = project.tasks.filter(t => !t.done && t.deadline && daysUntil(t.deadline) < 0);
+    const overdueHighPriority = overdueTasks.some(t => t.priority === 'Hoch');
+
+    if (budgetPct > 100 || criticalRisks > 0 || overdueHighPriority) {
+      return { level: 'red', label: 'Rot — Eingreifen erforderlich', color: '#F76E6E' };
+    }
+    if (budgetPct >= 85 || mediumRisks > 0 || overdueTasks.length > 0) {
+      return { level: 'amber', label: 'Gelb — Aufmerksamkeit nötig', color: '#F5A623' };
+    }
+    return { level: 'green', label: 'Grün — im Plan', color: '#34D399' };
+  }
+
+  let reportProjectId = null; // Projekt, für das der aktuell geöffnete Statusbericht gilt
+
+  function openStatusReport(project) {
+    reportProjectId = project.id;
+    const progress = projectProgress(project);
+    const cost = projectCost(project);
+    const hrs = projectHours(project);
+    const risks = projectRisks(project);
+    const criticalRisks = risks.filter(r => riskScore(r) >= 15).length;
+    const overdueTasks = project.tasks.filter(t => !t.done && t.deadline && daysUntil(t.deadline) < 0);
+    const openTasks = project.tasks.filter(t => !t.done).length;
+    const rag = computeProjectRag(project);
+
+    document.getElementById('sr-project-name').textContent = project.name;
+    document.getElementById('sr-rag-dot').style.background = rag.color;
+    const ragLabel = document.getElementById('sr-rag-label');
+    ragLabel.textContent = rag.label;
+    ragLabel.style.color = rag.color;
+
+    const summaryLines = [
+      `Fortschritt: ${progress}% der Aufgaben erledigt (${openTasks} offen von ${project.tasks.length}).`,
+      `Budget: ${formatEUR(cost)} von ${formatEUR(project.budget)} verbraucht${project.budget > 0 ? ` (${Math.round((cost / project.budget) * 100)}%)` : ''}.`,
+      `Arbeitsstunden: ${formatHours(hrs.actual)} von ${formatHours(hrs.planned)} Std. geleistet.`,
+      `Überfällige Aufgaben: ${overdueTasks.length}.`,
+      `Risiken im Register: ${risks.length}, davon ${criticalRisks} kritisch (Hoch).`,
+    ];
+    document.getElementById('sr-summary').innerHTML = summaryLines.map(l => `<p><i class="fa-solid fa-circle text-[5px] align-middle mr-2 opacity-60"></i>${escapeHtml(l)}</p>`).join('');
+
+    const risksWrap = document.getElementById('sr-risks');
+    if (risks.length === 0) {
+      risksWrap.innerHTML = '';
+    } else {
+      const topRisks = [...risks].sort((a, b) => riskScore(b) - riskScore(a)).slice(0, 5);
+      risksWrap.innerHTML = `<p class="font-semibold mb-2">Wichtigste Risiken</p>` + topRisks.map(r => {
+        const meta = riskLevelMeta(riskScore(r));
+        return `<p class="text-xs text-inksoft mb-1"><span class="tag ${meta.bg} ${meta.text} mr-1.5">${meta.label}</span>${escapeHtml(r.description)}</p>`;
+      }).join('');
+    }
+    openModal('modal-status-report');
+  }
+
+  function exportProjectJSON(project) {
+    const payload = {
+      exportedAt: new Date().toISOString(),
+      project: {
+        name: project.name, description: project.description, status: project.status,
+        createdAt: project.createdAt, budget: project.budget, hourlyRate: project.hourlyRate,
+      },
+      tasks: project.tasks,
+      risks: projectRisks(project),
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `${project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-export.json`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+    showToast('Projektdaten als JSON exportiert.');
+  }
+
   /* ------------------------------------------------------------------ *
    * 6. NAVIGATION, MODALS & EVENT-BINDINGS
    * ------------------------------------------------------------------ */
@@ -1743,6 +2354,20 @@
       if (toggle) toggleTask(toggle.dataset.toggleTask);
       if (del) deleteTask(del.dataset.deleteTask);
     });
+    document.getElementById('pd-task-list').addEventListener('change', (e) => {
+      const hoursInput = e.target.closest('[data-actual-hours-task]');
+      if (hoursInput) updateTaskActualHours(hoursInput.dataset.actualHoursTask, hoursInput.value);
+    });
+
+    document.getElementById('btn-project-report').addEventListener('click', () => {
+      const project = state.projects.find(p => p.id === activeProjectId);
+      if (project) openStatusReport(project);
+    });
+    document.getElementById('btn-project-export').addEventListener('click', () => {
+      const project = state.projects.find(p => p.id === activeProjectId);
+      if (project) exportProjectJSON(project);
+    });
+    document.getElementById('btn-report-print').addEventListener('click', () => window.print());
 
     // --- Notizen ---
     document.getElementById('btn-new-note').addEventListener('click', () => openNoteForm(null));
@@ -1801,6 +2426,28 @@
       if (editBtn) {
         const resource = state.resources.find(r => r.id === editBtn.dataset.id);
         if (resource) openResourceForm(resource);
+      }
+    });
+
+    // --- Risiken ---
+    document.getElementById('btn-new-risk').addEventListener('click', () => openRiskForm(null));
+    document.getElementById('form-risk').addEventListener('submit', saveRiskForm);
+    document.getElementById('rk-delete').addEventListener('click', () => {
+      deleteRisk(document.getElementById('rk-id').value);
+    });
+    document.getElementById('rk-probability').addEventListener('change', updateRiskScorePreview);
+    document.getElementById('rk-impact').addEventListener('change', updateRiskScorePreview);
+    document.getElementById('risk-search').addEventListener('input', (e) => {
+      filters.riskQuery = e.target.value; renderRisks();
+    });
+    document.getElementById('risk-project-filter').addEventListener('change', (e) => {
+      filters.riskProject = e.target.value; renderRisks();
+    });
+    document.getElementById('risks-list').addEventListener('click', (e) => {
+      const editBtn = e.target.closest('.edit-risk');
+      if (editBtn) {
+        const risk = state.risks.find(r => r.id === editBtn.dataset.id);
+        if (risk) openRiskForm(risk);
       }
     });
 
