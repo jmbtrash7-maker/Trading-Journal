@@ -547,6 +547,39 @@
   .subtab{background:transparent; border:none; color:var(--text-dim); padding:8px 15px; border-radius:9px; font-size:13.5px; font-weight:600; white-space:nowrap;}
   .subtab:hover{color:var(--text);}
   .subtab.active{background:var(--white); color:#0a0a0d;}
+
+  /* ---------- Live-Reiter: Unterreiter "Analyse" (Markt-Bias-Board) ---------- */
+  .live-main-subnav{display:inline-flex; margin-bottom:18px;}
+  .analyse-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px; margin-top:4px;}
+  .analyse-card{
+    text-align:left; background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius);
+    padding:20px; display:flex; flex-direction:column; gap:12px; transition:border-color .15s, background .15s, transform .1s;
+  }
+  .analyse-card:hover{border-color:var(--border-light); background:var(--bg-card-hover); transform:translateY(-1px);}
+  .analyse-card:active{transform:scale(.98);}
+  .analyse-card-head{display:flex; align-items:center; gap:10px;}
+  .analyse-icon{font-size:26px; line-height:1; width:34px; height:34px; display:flex; align-items:center; justify-content:center; flex-shrink:0;}
+  .analyse-icon-dax{
+    font-size:14px; font-weight:800; font-family:var(--mono); color:#fff; border-radius:9px;
+    background:linear-gradient(145deg, #2f6bff, #0d3fc4); box-shadow:0 2px 8px -2px rgba(47,107,255,.6);
+  }
+  .analyse-icon-flag{width:34px; height:24px; flex-shrink:0; border-radius:4px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.12);}
+  .analyse-icon-flag svg{display:block; width:100%; height:100%;}
+  .analyse-card-title{font-size:16.5px; font-weight:800; color:var(--cyan); letter-spacing:.2px;}
+  .analyse-card-tags{display:flex; gap:6px; flex-wrap:wrap;}
+  .analyse-tag{
+    display:inline-block; padding:3px 10px; border-radius:999px; font-size:12px; font-weight:700;
+    background:var(--bg-card); border:1px solid var(--border-light); color:var(--text-dim);
+  }
+  .analyse-tag.tag-green{background:var(--green-dim); border-color:var(--green); color:var(--green);}
+  .analyse-tag.tag-red{background:var(--red-dim); border-color:var(--red); color:var(--red);}
+  .analyse-tag.tag-amber{background:var(--amber-dim); border-color:var(--amber); color:var(--amber);}
+  .analyse-tag.tag-magenta{background:var(--magenta-dim); border-color:var(--magenta); color:var(--magenta);}
+  .analyse-card-fields{display:flex; flex-direction:column; gap:10px; margin:2px 0 0;}
+  .analyse-card-field-label{font-size:10.5px; font-weight:800; text-transform:uppercase; letter-spacing:.6px; color:var(--violet); margin-bottom:3px;}
+  .analyse-card-field-value{font-size:14px; color:var(--text); line-height:1.5;}
+  .analyse-card-updated{font-size:11px; color:var(--text-faint); margin-top:6px; padding-top:10px; border-top:1px solid var(--border);}
+  .analyse-card-empty{font-size:13px; color:var(--text-faint); font-style:italic;}
   .day-detail-list{display:flex; flex-direction:column; gap:8px;}
   .day-detail-item{
     display:flex; align-items:center; gap:12px; background:var(--bg-card); border:1px solid var(--border);
@@ -2011,7 +2044,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.12g";
+const APP_VERSION = "2026.09.17d";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -2094,6 +2127,7 @@ const LS_ENTRYCHECK = "tj_entrychecklist_v1"; // Entry-Checklisten pro Entry-Mod
 const LS_NEWS = "tj_news_v1"; // Wirtschafts-News, manuell gepflegt: [{id,date,time,country,impact,title}]
 const LS_MENTALEVAL = "tj_mentaleval_v1"; // Freitext-Auswertung pro Mental-Wochen-Zusammenfassung: { "JAHR-MONAT-WOCHENINDEX": "Text" }
 const LS_BUECHER = "tj_buecher_v1"; // Einträge auf der "Mindset of a Trader"-Seite: [{id,titel,autor,genre,image,text,createdAt,updatedAt}]
+const LS_ANALYSE = "tj_analyse_v1"; // Live-Reiter "Analyse": aktueller Bias-Stand je Markt { marketKey: {bias,marktdynamik,kerzendynamik,phase,updatedAt} }
 
 // Merkt sich, dass sich Daten geändert haben (wird von allen save*()-Funktionen aufgerufen).
 function markDataChanged(){
@@ -2124,6 +2158,7 @@ function buildBackupPayload(){
     entryChecklists: STATE.entryChecklists,
     mentalWeekEvaluations: STATE.mentalWeekEvaluations,
     buecher: STATE.buecher,
+    analyseEntries: STATE.analyseEntries,
     savedAt: Date.now(),
     exportedAt: new Date().toISOString()
   };
@@ -2145,8 +2180,9 @@ function applyImportedPayload(data){
   if(data.entryChecklists && typeof data.entryChecklists === "object") STATE.entryChecklists = data.entryChecklists;
   if(data.mentalWeekEvaluations && typeof data.mentalWeekEvaluations === "object") STATE.mentalWeekEvaluations = data.mentalWeekEvaluations;
   if(Array.isArray(data.buecher)) STATE.buecher = data.buecher;
+  if(data.analyseEntries && typeof data.analyseEntries === "object") STATE.analyseEntries = data.analyseEntries;
   saveTrades(); saveConfig(); saveInsights(); saveDayConfirmations(); saveNews();
-  saveDiaryEntries(); saveDailyCheckHistory(); saveEntryChecklists(); saveMentalWeekEvaluations(); saveBuecher();
+  saveDiaryEntries(); saveDailyCheckHistory(); saveEntryChecklists(); saveMentalWeekEvaluations(); saveBuecher(); saveAnalyseEntries();
 }
 
 // Bringt Trades aus älteren Speicherständen (localStorage oder importiertes JSON-Backup)
@@ -2323,6 +2359,12 @@ function loadBuecher(){
   catch(e){ return []; }
 }
 function saveBuecher(){ localStorage.setItem(LS_BUECHER, JSON.stringify(STATE.buecher)); markDataChanged(); }
+
+function loadAnalyseEntries(){
+  try{ return JSON.parse(localStorage.getItem(LS_ANALYSE)) || {}; }
+  catch(e){ return {}; }
+}
+function saveAnalyseEntries(){ localStorage.setItem(LS_ANALYSE, JSON.stringify(STATE.analyseEntries)); markDataChanged(); }
 
 
 // Berechnet den Disziplin-Score (0–100) aus der kompletten Tages-Check-Historie: Anteil
@@ -2550,7 +2592,13 @@ const STATE = {
   noteMergeMode: false,
   noteMergeSelection: [],
   insightMergeMode: false,
-  insightMergeSelection: []
+  insightMergeSelection: [],
+  // Live-Reiter: aktiver Unterreiter ("trades" | "analyse") — bewusst nicht persistiert,
+  // startet bei jedem Öffnen wieder auf der Trade-Liste.
+  liveSubView: "trades",
+  analyseEntries: loadAnalyseEntries(),
+  analyseEditingKey: null,
+  analyseDraft: null
 };
 
 // Demo-Trades nur einfügen, wenn wirklich noch nichts gespeichert ist (erster Start).
@@ -5128,6 +5176,20 @@ function getAreaFilteredTrades(area){
 }
 
 function renderAreaView(area){
+  // Live-Reiter hat einen eigenen Unterreiter "Analyse" (Markt-Bias-Board), der die
+  // komplette übrige Live-Seite (Trade-Liste, Kalender, Gallery) ersetzt, statt sie nur
+  // zu ergänzen — daher hier ein früher, eigener Rückgabe-Pfad.
+  if(area==="live" && STATE.liveSubView==="analyse"){
+    return `
+      <div class="page-head">
+        <h1>${AREA_LABEL[area]}</h1>
+        <p>${AREA_INTRO[area]}</p>
+      </div>
+      ${liveSubNavHtml()}
+      ${renderLiveAnalyse()}
+    `;
+  }
+
   const trades = getAreaFilteredTrades(area);
   const limit = STATE.areaListLimit[area] || 7;
   const visibleTrades = trades.slice(0, limit);
@@ -5156,6 +5218,7 @@ function renderAreaView(area){
       <h1>${AREA_LABEL[area]}</h1>
       <p>${AREA_INTRO[area]}</p>
     </div>
+    ${area==="live" ? liveSubNavHtml() : ""}
     ${area==="live" ? liveInfoRowHtml() : ""}
     ${area==="live" ? `<div class="live-info-row-divider"></div>` : ""}
     <div class="row-between" style="align-items:flex-start;">
@@ -5183,6 +5246,189 @@ function renderAreaView(area){
     </div>
     ` : ""}
   `;
+}
+
+// Unterreiter-Umschalter "Trades" / "Analyse" oben im Live-Reiter (nutzt dieselbe Optik
+// wie die Datums-Unterreiter darunter, .subtab-row/.subtab).
+function liveSubNavHtml(){
+  const sub = STATE.liveSubView || "trades";
+  return `
+    <div class="subtab-row live-main-subnav" id="liveMainSubNav">
+      <button type="button" data-livesub="trades" class="subtab ${sub==="trades"?"active":""}">Trades</button>
+      <button type="button" data-livesub="analyse" class="subtab ${sub==="analyse"?"active":""}">Analyse</button>
+    </div>
+  `;
+}
+
+/* =========================================================================
+   LIVE-REITER: UNTERREITER "ANALYSE"  (Markt-Bias-Board)
+   Eine Kachel pro Markt (Gold/GBP/EUR/DAX). Klick öffnet ein Modal zum Erfassen von
+   HTF-Bias, Markt-/Kerzendynamik und aktueller Phase. Bewusst als reiner "aktueller
+   Stand" pro Markt gespeichert (STATE.analyseEntries[key], wird beim Speichern
+   überschrieben) — kein Verlauf, da es eine laufend aktualisierte Einschätzung ist und
+   keine abgeschlossene Trade-Historie.
+   ========================================================================= */
+const ANALYSE_MARKETS = [
+  { key:"gold", label:"Gold", icon:"🪙" },
+  { key:"gbp",  label:"GBP",  icon:null }, // echte GB-Flagge als Inline-SVG statt Emoji, siehe analyseIconHtml()
+  { key:"eur",  label:"EUR",  icon:null }, // echte EU-Flagge als Inline-SVG statt Emoji, siehe analyseIconHtml()
+  { key:"dax",  label:"DAX",  icon:null }  // eigenes blaues "40"-Badge statt Emoji, siehe analyseIconHtml()
+];
+const ANALYSE_BIAS   = ["Long","Neutral","Short"];
+const ANALYSE_PHASES = ["Konsolidierung","Push","Manipulation"];
+const ANALYSE_BIAS_COLOR  = { Long:"green", Short:"red", Neutral:"" };
+const ANALYSE_PHASE_COLOR = { Konsolidierung:"amber", Push:"green", Manipulation:"magenta" };
+
+// Für GBP/EUR echte Flaggen statt Emoji — Flaggen-Emoji werden auf vielen Systemen
+// (v.a. Windows-Browser) gar nicht als Bild dargestellt (siehe newsFlagSvg weiter unten),
+// deshalb hier dieselben Inline-SVG-Flaggen wie im News-Formular.
+function analyseIconHtml(m){
+  if(m.key === "dax") return `<span class="analyse-icon analyse-icon-dax">40</span>`;
+  if(m.key === "gbp") return `<span class="analyse-icon-flag">${newsFlagSvg("GBP")}</span>`;
+  if(m.key === "eur") return `<span class="analyse-icon-flag">${newsFlagSvg("EUR")}</span>`;
+  return `<span class="analyse-icon">${m.icon}</span>`;
+}
+
+function formatAnalyseTimestamp(ts){
+  if(!ts) return "";
+  const d = new Date(ts);
+  return d.toLocaleDateString("de-DE") + ", " + d.toLocaleTimeString("de-DE",{hour:"2-digit",minute:"2-digit"}) + " Uhr";
+}
+
+function renderLiveAnalyse(){
+  const cards = ANALYSE_MARKETS.map(m=>{
+    const e = STATE.analyseEntries[m.key];
+    const hasEntry = !!(e && (e.bias || e.phase || e.marktdynamik || e.kerzendynamik));
+    const biasColor = (e && e.bias) ? ANALYSE_BIAS_COLOR[e.bias] : "";
+    const phaseColor = (e && e.phase) ? ANALYSE_PHASE_COLOR[e.phase] : "";
+
+    return `
+      <button type="button" class="analyse-card" data-analysemarket="${m.key}">
+        <div class="analyse-card-head">
+          ${analyseIconHtml(m)}
+          <span class="analyse-card-title">${m.label}</span>
+        </div>
+        ${hasEntry ? `
+          <div class="analyse-card-tags">
+            ${e.bias ? `<span class="analyse-tag${biasColor?" tag-"+biasColor:""}">${e.bias}</span>` : ""}
+            ${e.phase ? `<span class="analyse-tag${phaseColor?" tag-"+phaseColor:""}">${e.phase}</span>` : ""}
+          </div>
+          ${(e.marktdynamik || e.kerzendynamik) ? `
+          <div class="analyse-card-fields">
+            ${e.marktdynamik ? `<div><div class="analyse-card-field-label">Marktdynamik</div><div class="analyse-card-field-value">${escHtml(e.marktdynamik)}</div></div>` : ""}
+            ${e.kerzendynamik ? `<div><div class="analyse-card-field-label">Kerzendynamik</div><div class="analyse-card-field-value">${escHtml(e.kerzendynamik)}</div></div>` : ""}
+          </div>` : ""}
+          <div class="analyse-card-updated">Zuletzt aktualisiert: ${formatAnalyseTimestamp(e.updatedAt)}</div>
+        ` : `<div class="analyse-card-empty">Noch keine Analyse — klicken zum Erfassen.</div>`}
+      </button>
+    `;
+  }).join("");
+
+  return `<div class="analyse-grid">${cards}</div>`;
+}
+
+function wireLiveAnalyse(){
+  document.querySelectorAll("[data-analysemarket]").forEach(card=>{
+    card.addEventListener("click", ()=> openAnalyseModal(card.dataset.analysemarket));
+  });
+}
+
+function openAnalyseModal(key){
+  STATE.analyseEditingKey = key;
+  STATE.analyseDraft = Object.assign({ bias:null, marktdynamik:"", kerzendynamik:"", phase:null }, STATE.analyseEntries[key] || {});
+  renderAnalyseModal();
+}
+
+function closeAnalyseModal(){
+  document.getElementById("modalRoot").innerHTML = "";
+  STATE.analyseEditingKey = null;
+  STATE.analyseDraft = null;
+}
+
+function renderAnalyseModal(){
+  const key = STATE.analyseEditingKey;
+  const m = ANALYSE_MARKETS.find(x=>x.key===key);
+  const d = STATE.analyseDraft;
+  const root = document.getElementById("modalRoot");
+  const prevBackdrop = document.getElementById("analyseModalBackdrop");
+  const animClass = prevBackdrop ? "" : " modal-anim-in";
+
+  root.innerHTML = `
+    <div class="modal-backdrop${animClass}" id="analyseModalBackdrop">
+      <div class="modal">
+        <div class="modal-header-row">
+          <div><h2>${analyseIconHtml(m)} ${m.label} — Analyse</h2></div>
+          <button type="button" class="icon-btn modal-close" id="analyseModalCloseBtn">✕</button>
+        </div>
+        <div class="field-group">
+          <label class="fg-label">HTF Bias</label>
+          ${chipGroupHtml("bias", ANALYSE_BIAS, d.bias)}
+        </div>
+        <div class="field-group">
+          <label class="fg-label">Marktdynamik</label>
+          <input type="text" id="analyseMarktdynamik" placeholder="z. B. trending, ranging, volatil…" value="${escAttr(d.marktdynamik||"")}">
+        </div>
+        <div class="field-group">
+          <label class="fg-label">Kerzendynamik</label>
+          <input type="text" id="analyseKerzendynamik" placeholder="z. B. impulsiv, korrektiv, choppy…" value="${escAttr(d.kerzendynamik||"")}">
+        </div>
+        <div class="field-group">
+          <label class="fg-label">Phase</label>
+          ${chipGroupHtml("phase", ANALYSE_PHASES, d.phase)}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-ghost" id="analyseModalDeleteBtn">Zurücksetzen</button>
+          <button type="button" class="btn btn-primary" id="analyseModalSaveBtn">Speichern</button>
+        </div>
+      </div>
+    </div>`;
+
+  wireAnalyseModal();
+}
+
+function wireAnalyseModal(){
+  const backdrop = document.getElementById("analyseModalBackdrop");
+  backdrop.addEventListener("click", (e)=>{ if(e.target===backdrop) closeAnalyseModal(); });
+  document.getElementById("analyseModalCloseBtn").addEventListener("click", closeAnalyseModal);
+
+  document.querySelectorAll("#analyseModalBackdrop [data-chipgroup]").forEach(group=>{
+    group.addEventListener("click", (e)=>{
+      const btn = e.target.closest("button[data-value]");
+      if(!btn) return;
+      const g = group.dataset.chipgroup;
+      const val = btn.dataset.value;
+      STATE.analyseDraft[g] = (STATE.analyseDraft[g]===val) ? null : val;
+      renderAnalyseModal();
+    });
+  });
+
+  document.getElementById("analyseMarktdynamik").addEventListener("input", (e)=>{ STATE.analyseDraft.marktdynamik = e.target.value; });
+  document.getElementById("analyseKerzendynamik").addEventListener("input", (e)=>{ STATE.analyseDraft.kerzendynamik = e.target.value; });
+
+  document.getElementById("analyseModalDeleteBtn").addEventListener("click", ()=>{
+    if(!confirm("Analyse für diesen Markt wirklich zurücksetzen?")) return;
+    delete STATE.analyseEntries[STATE.analyseEditingKey];
+    saveAnalyseEntries();
+    closeAnalyseModal();
+    render();
+    toast("Analyse zurückgesetzt.");
+  });
+
+  document.getElementById("analyseModalSaveBtn").addEventListener("click", ()=>{
+    const key = STATE.analyseEditingKey;
+    const d = STATE.analyseDraft;
+    STATE.analyseEntries[key] = {
+      bias: d.bias || null,
+      marktdynamik: (d.marktdynamik||"").trim(),
+      kerzendynamik: (d.kerzendynamik||"").trim(),
+      phase: d.phase || null,
+      updatedAt: Date.now()
+    };
+    saveAnalyseEntries();
+    closeAnalyseModal();
+    render();
+    toast("Analyse gespeichert.");
+  });
 }
 
 // Bild-Galerie unter dem Kalender (nur Live): nutzt dieselben Trades wie die Liste
@@ -5767,6 +6013,23 @@ function refreshAreaListForFilter(area, newFilter){
 }
 
 function wireAreaView(area){
+  const liveMainSubNav = document.getElementById("liveMainSubNav");
+  if(liveMainSubNav) liveMainSubNav.addEventListener("click", (e)=>{
+    const btn = e.target.closest("[data-livesub]");
+    if(!btn) return;
+    STATE.liveSubView = btn.dataset.livesub;
+    render();
+  });
+
+  // Der Analyse-Unterreiter ersetzt die komplette übrige Live-Seite (siehe
+  // renderAreaView) — hier daher nur die Analyse-Kacheln verdrahten, der Rest dieser
+  // Funktion erwartet DOM-Elemente (Trade-Liste, Kalender, Gallery), die dort gar nicht
+  // existieren.
+  if(area==="live" && STATE.liveSubView==="analyse"){
+    wireLiveAnalyse();
+    return;
+  }
+
   document.getElementById("btnAddTrade").addEventListener("click", ()=> openTradeModal(area, null));
 
   const liveInfoRow = document.querySelector(".live-info-row");
