@@ -2247,7 +2247,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.19c";
+const APP_VERSION = "2026.09.19d";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -7399,7 +7399,9 @@ function tradeCategoryColumnsOverview(area){
 const GENOMMEN_COL_WIDTH = 122; // px, Listen-Ansicht — reicht für "nicht genommen" ohne Umbruch
 function tradeCategoryGrid(area){
   return tradeCategoryColumnsOverview(area)
-    .map(c => (c.key === "genommen" ? GENOMMEN_COL_WIDTH : TRADE_CATEGORY_COL_WIDTH) + "px")
+    .map(c => c.key === "genommen"
+      ? `minmax(${GENOMMEN_COL_WIDTH}px, 1.5fr)`
+      : `minmax(${TRADE_CATEGORY_COL_WIDTH}px, 1fr)`)
     .join(" ");
 }
 // Responsives Raster (wächst/schrumpft mit der verfügbaren Breite, umbrechend in mehrere
@@ -7479,18 +7481,18 @@ function tradeListGrid(area){
   // Die "Gewinn / Risiko"-Spalte gibt es nur im Live-Reiter (dort gibt es Risiko-% und
   // Euro-Beträge) — bei EOD (nur manuelles R-Ergebnis, kein Risiko/Euro) komplett weglassen.
   const extraColWidth = area === "live" ? "100px " : "";
-  // Der flexible Freiraum (1fr) sitzt bewusst direkt NACH den Kategorien und VOR
-  // Gewinn/Risiko + RR, damit diese beiden Spalten rechts unmittelbar neben den
-  // Buttons stehen. Die Button-Spalte hat deshalb eine feste Breite (statt 1fr), sonst
-  // würde der Freiraum wieder zwischen RR und Buttons landen.
-  return `78px 76px ${eodExtraCol}${tradeCategoryGrid(area)} minmax(0,1fr) ${extraColWidth}64px 122px`;
+  // Der freie Platz wird gleichmäßig auf Markt und Kategorien verteilt (jede Spalte hat eine
+  // Mindestbreite und wächst mit dem Fenster mit) — statt als eine große Lücke direkt nach
+  // den Kategorien zu stehen. Datum, EOD-Badge, Gewinn/Risiko, RR und Buttons bleiben fest,
+  // damit Gewinn/Risiko + RR weiter unmittelbar neben den Buttons sitzen.
+  return `minmax(78px,1.2fr) 76px ${eodExtraCol}${tradeCategoryGrid(area)} ${extraColWidth}64px 122px`;
 }
 function tradeListHeaderHtml(area){
   const catLabels = tradeCategoryColumnsOverview(area).map(c=>`<div class="cat-col-label">${c.label}</div>`).join("");
   const eodExtraSlot = area === "eod" ? "" : "<div></div>";
   const extraLabelSlot = area === "live" ? `<div class="cat-col-label" style="text-align:right;">Gewinn / Risiko</div>` : "";
   return `<div class="cat-table-header-bar"><div class="cat-table-header" style="grid-template-columns:${tradeListGrid(area)}">
-    <div></div><div></div>${eodExtraSlot}${catLabels}<div class="trade-list-spacer"></div>${extraLabelSlot}<div class="cat-col-label" style="text-align:right;">RR</div><div></div>
+    <div></div><div></div>${eodExtraSlot}${catLabels}${extraLabelSlot}<div class="cat-col-label" style="text-align:right;">RR</div><div></div>
   </div></div>`;
 }
 function tradeListRowHtml(t, cyclePositions){
@@ -7526,7 +7528,6 @@ function tradeListRowHtml(t, cyclePositions){
     <div class="trade-date-badge">${formatDateShort(t.date)}</div>
     ${eodExtraSlot}
     ${catCells}
-    <div class="trade-list-spacer"></div>
     ${extraDisplay}
     <div class="trade-r ${rClass}">${rrDisplay}</div>
     <div class="trade-actions">
