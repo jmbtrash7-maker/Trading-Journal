@@ -548,7 +548,8 @@
   .subtab.active{background:var(--white); color:#0a0a0d;}
 
   /* ---------- Live-Reiter: Unterreiter "Analyse" (Markt-Bias-Board) ---------- */
-  .live-main-subnav{display:inline-flex; margin-bottom:18px;}
+  .live-head{display:flex; align-items:flex-end; justify-content:space-between; gap:12px 20px; flex-wrap:wrap; margin-bottom:16px;}
+  .live-main-subnav{display:inline-flex;}
   .analyse-grid{display:grid; grid-template-columns:repeat(auto-fit, minmax(230px, 1fr)); gap:14px; margin-top:4px;}
   .analyse-card{
     text-align:left; background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius);
@@ -1318,47 +1319,44 @@
   .stat-card, .mini-stat-row, .day-detail-item{transition:.15s cubic-bezier(.22,.9,.32,1);}
   .day-detail-item:hover{transform:translateY(-1px);}
 
-  /* ---------- Live-Reiter: Session-Status + News (nebeneinander) ---------- */
-  .live-info-row{display:flex; justify-content:center; align-items:stretch; gap:14px; margin-bottom:18px; flex-wrap:wrap;}
-  /* Hauchdünne horizontale Trennlinie unterhalb der Live-Kopfzeile (Tagesziel/Session/News),
-     vor den Subtabs — gleiche dezente Optik wie die vertikalen Trenner zwischen den Feldern. */
-  .live-info-row-divider{height:1px; background:var(--border); opacity:.6; margin-bottom:18px;}
-  /* Hauchdünne Trennlinie zwischen den vier Feldern der Live-Kopfzeile (Tagesziel/Session/
-     News/Nächste News) — bewusst sehr dezent (dünner + blasser als der reguläre
-     .nav-divider), da sie nur die Übersicht erleichtern, nicht selbst auffallen soll. */
-  .live-info-divider{width:1px; align-self:stretch; background:var(--border); opacity:.6; flex-shrink:0;}
-  @media (max-width:900px){ .live-info-divider{display:none;} }
-  .live-info-row .session-panel{width:100%; max-width:300px; flex:0 1 300px;}
+  /* ---------- Live-Reiter: Kopfzeile — Tagesziel | Session | News (ein Raster, gleich hohe Karten) ----------
+     Die drei Spalten füllen die volle Inhaltsbreite und sind gleich hoch (align-items:stretch).
+     "News heute" und "Nächste News" teilen sich EINE Karte (.live-news-col): oben die Liste,
+     unten der Countdown als Fußzeile. Die Ids der Panels bleiben unverändert, damit die lokalen
+     outerHTML-Updates (refreshLiveNewsPanels, startSessionClock) weiter greifen. */
+  .live-info-row{display:grid; grid-template-columns:minmax(150px,190px) minmax(0,1fr) minmax(0,1.25fr); gap:12px; align-items:stretch; margin-bottom:12px;}
+  .live-news-col{display:flex; flex-direction:column; min-width:0; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; overflow:hidden;}
+  /* Session-Karte: linksbündig, der Zustand steckt in einem schmalen Farbstreifen links + im Punkt
+     (--state/--state-dim), die Kartenrahmen bleiben ruhig neutral. */
   .session-panel{
-    display:flex; flex-direction:column; align-items:center; text-align:center; gap:5px;
+    --state:var(--text-faint); --state-dim:var(--border);
+    display:flex; flex-direction:column; align-items:flex-start; text-align:left; gap:10px;
     background:var(--bg-panel); border:1px solid var(--border); border-radius:10px;
-    padding:14px 16px; position:relative; overflow:hidden; cursor:pointer; transition:.15s ease;
+    padding:14px 16px 12px 20px; position:relative; overflow:hidden; cursor:pointer; transition:.15s ease;
   }
+  .session-panel::before{content:""; position:absolute; left:0; top:14px; bottom:14px; width:3px; border-radius:0 3px 3px 0; background:var(--state);}
   .session-panel:hover{border-color:var(--border-light); transform:translateY(-1px);}
-  .session-panel.session-state-active{border-color:var(--green);}
-  .session-panel.session-state-pause{border-color:var(--text-faint);}
-  .session-panel.session-state-closed{border-color:var(--red);}
-  .session-status-dot{
-    width:8px; height:8px; border-radius:50%; flex-shrink:0;
-    background:var(--text-faint);
-  }
-  .session-state-active .session-status-dot{background:var(--green); box-shadow:0 0 0 3px var(--green-dim);}
-  .session-state-pause .session-status-dot{background:var(--text-faint); box-shadow:0 0 0 3px var(--border);}
-  .session-state-closed .session-status-dot{background:var(--red); box-shadow:0 0 0 3px var(--red-dim);}
-  .session-eyebrow{font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text-dim);}
-  .session-name{font-size:15.5px; font-weight:800; color:var(--text);}
-  .session-time{font-family:var(--mono); font-size:12px; color:var(--text-dim);}
-  .session-next{font-size:11px; color:var(--text-dim); margin-top:5px; padding-top:7px; border-top:1px solid var(--border); width:100%;}
+  .session-panel.session-state-active{--state:var(--green); --state-dim:var(--green-dim);}
+  .session-panel.session-state-pause{--state:var(--text-faint); --state-dim:var(--border);}
+  .session-panel.session-state-closed{--state:var(--red); --state-dim:var(--red-dim);}
+  .session-head{display:flex; align-items:center; gap:8px;}
+  .session-status-dot{width:8px; height:8px; border-radius:50%; flex-shrink:0; background:var(--state); box-shadow:0 0 0 3px var(--state-dim);}
+  .session-eyebrow{font-size:11.5px; font-weight:600; color:var(--text-dim);}
+  .session-main{display:flex; flex-direction:column; gap:3px;}
+  .session-name{font-size:19px; font-weight:800; line-height:1.15; color:var(--text);}
+  .session-time{font-family:var(--mono); font-size:12.5px; color:var(--text-dim);}
+  .session-next{font-size:11.5px; color:var(--text-dim); margin-top:auto; padding-top:9px; border-top:1px solid var(--border); width:100%;}
   .session-next strong{color:var(--text); font-weight:700;}
 
   /* ---------- Session Meter (Live-Reiter): 24h-Zeitstrahl über die volle Breite, unterhalb der
      Live-Kopfzeile. Segmentbreite = Dauer der Session (Prozent von 24h), der weiße Marker zeigt
      die aktuelle Uhrzeit — beides nutzt dieselbe Prozentbasis, damit Marker und Segmente exakt
      zueinander passen (siehe sessionMeterHtml). ---------- */
-  .session-meter{margin:0 0 4px;}
-  .sm-head{display:flex; justify-content:space-between; align-items:flex-end; gap:6px 12px; flex-wrap:wrap; padding:0 2px;}
-  .sm-eyebrow{font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text-dim);}
-  .sm-current{font-size:15.5px; font-weight:800; color:var(--text); margin-top:2px;}
+  .session-meter{margin:0 0 18px; background:var(--bg-panel); border:1px solid var(--border); border-radius:10px; padding:12px 16px 4px;}
+  .sm-head{display:flex; justify-content:space-between; align-items:baseline; gap:6px 12px; flex-wrap:wrap; padding:0 2px;}
+  .sm-head-left{display:flex; align-items:baseline; gap:10px;}
+  .sm-eyebrow{font-size:11.5px; font-weight:600; color:var(--text-dim);}
+  .sm-current{font-size:14px; font-weight:800; color:var(--text);}
   .sm-count-num{font-family:var(--mono); font-size:12.5px; font-weight:800; color:var(--text);}
   .sm-count-to{font-size:11px; color:var(--text-dim);}
   .sm-track{position:relative; padding:10px 0 8px;}
@@ -1397,21 +1395,19 @@
     .sm-track{min-width:600px;}
   }
 
-  /* News-Panel ("News heute", selbst befüllt) — bewusst exakt gleich groß wie das
-     Session-Panel daneben (gleiche max-width/flex-Werte), damit beide Karten in der
-     Live-Kopfzeile als gleichwertiges Paar wirken. */
+  /* News-Panel ("News heute", selbst befüllt) — oberer Teil der gemeinsamen News-Karte
+     (.live-news-col), hat daher keinen eigenen Rahmen. */
   .news-panel{
-    flex:0 1 300px; max-width:300px; min-width:220px;
-    background:var(--bg-panel); border:1px solid var(--border); border-radius:10px;
-    padding:14px 16px; display:flex; flex-direction:column; gap:8px;
+    flex:1 1 auto; min-width:0; padding:12px 14px 10px 16px;
+    display:flex; flex-direction:column; gap:8px;
   }
   .news-panel-head{display:flex; align-items:center; justify-content:space-between; gap:8px;}
-  .news-panel-title{font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text-dim);}
+  .news-panel-title{font-size:11.5px; font-weight:600; color:var(--text-dim);}
   /* "+ News"-Button bewusst nur noch als kleines Icon (ohne Beschriftung) — der Text "News"
      war neben dem eindeutigen Panel-Titel darüber redundant. */
   .news-add-btn{width:26px; height:26px; padding:0; display:flex; align-items:center; justify-content:center; font-size:14px; line-height:1; flex-shrink:0;}
   .news-panel-head-actions{display:flex; align-items:center; gap:6px; flex-shrink:0;}
-  .news-list{display:flex; flex-direction:column; gap:6px; max-height:190px; overflow-y:auto;}
+  .news-list{display:flex; flex-direction:column; gap:5px; max-height:136px; overflow-y:auto;}
   .news-empty{color:var(--text-faint); font-size:11.5px; padding:4px 0;}
   /* Jede Zeile: oben Flagge + Land + Uhrzeit (am wichtigsten, deshalb groß/fett), darunter
      die News selbst — als eigene Zeile statt nebeneinander, damit Land ausgeschrieben
@@ -1453,29 +1449,35 @@
      data-editnews weiter oben). */
   .news-row-edit{color:var(--text-faint); font-size:11px; flex-shrink:0; margin-left:2px;}
   .news-row:hover .news-row-edit{color:var(--text);}
+  /* Kompakte Einzeiler in der Live-Kopfzeile ("News heute"): Flagge | Uhrzeit | Titel | Land |
+     Impact-Punkt in einer Reihe. .news-row-head wird per display:contents aufgelöst, damit die
+     Teile direkt im Raster der Zeile liegen; die feste Punkt-Spalte hält das Land bündig, auch
+     wenn eine News keinen High-Impact-Punkt hat. Die Zeilen im Modal "Eingetragene News"
+     bleiben unverändert (Regeln gelten nur unter .news-panel). */
+  .news-panel .news-row{display:grid; grid-template-columns:18px 40px minmax(0,1fr) auto 8px; align-items:center; column-gap:8px; padding:6px 10px;}
+  .news-panel .news-row-head{display:contents;}
+  .news-panel .news-row-flag{grid-column:1; grid-row:1;}
+  .news-panel .news-row-time{grid-column:2; grid-row:1; font-size:12px; color:var(--text);}
+  .news-panel .news-row-title{grid-column:3; grid-row:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; color:var(--text-dim);}
+  .news-panel .news-row-country{grid-column:4; grid-row:1; flex:none; font-size:11px; font-weight:600; color:var(--text-faint);}
+  .news-panel .news-impact-dot{grid-column:5; grid-row:1;}
 
-  /* Separate kleine Karte für die nächste anstehende News — eigenständiges drittes Feld
-     neben Session- und News-Panel in der Live-Kopfzeile (siehe live-info-row). Bewusst
-     NICHT auf die volle Höhe der Nachbar-Panels gestreckt (align-self statt dem
-     align-items:stretch der .live-info-row) — der Inhalt ist kurz, die Karte soll nur so
-     hoch sein wie ihr eigener Inhalt braucht, nicht bis unten leer auffüllen. */
+  /* "Nächste News" — Fußzeile der gemeinsamen News-Karte (.live-news-col): links die Bezeichnung,
+     rechts der Countdown (Tage/Std/Min). Wird lokal per outerHTML aktualisiert
+     (refreshLiveNewsPanels, startSessionClock). */
   .next-news-panel{
-    flex:0 1 190px; max-width:190px; min-width:150px; align-self:flex-start;
-    background:var(--bg-panel); border:1px solid var(--border); border-radius:10px;
-    padding:10px 16px; display:flex; flex-direction:column; align-items:center; text-align:center; gap:5px;
+    flex:none; display:flex; align-items:center; justify-content:space-between; gap:10px;
+    padding:9px 16px; border-top:1px solid var(--border);
   }
-  .next-news-eyebrow{font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--text-dim);}
-  .next-news-time{font-family:var(--mono); font-size:14px; font-weight:800; color:var(--text); white-space:nowrap;}
+  .next-news-eyebrow{font-size:11.5px; font-weight:600; color:var(--text-dim);}
+  .next-news-time{font-family:var(--mono); font-size:13px; font-weight:800; color:var(--text); white-space:nowrap;}
   .next-news-sub{font-size:11px; color:var(--text-dim); display:flex; align-items:center; gap:6px;}
   .next-news-sub .news-row-flag{width:16px; height:11px;}
-  .next-news-empty{font-size:11.5px; color:var(--text-faint); margin-top:4px;}
+  .next-news-empty{font-size:11.5px; color:var(--text-faint);}
   /* Rote Warn-Variante, sobald die nächste News nur noch <= 1 Std entfernt ist (siehe
-     nextNewsCardHtml) — dezent per Border/Hintergrund statt reinem Text-Rot, damit die
-     Karte auch bei einem Blick aus der Distanz sofort als "Achtung" erkennbar ist. */
-  .next-news-panel.next-news-soon{
-    border-color:#5a2b2b; background:linear-gradient(160deg, var(--red-dim) 0%, var(--bg-panel) 75%);
-    box-shadow:0 0 0 1px rgba(248,113,113,.12);
-  }
+     nextNewsCardHtml) — dezent über einen roten Verlauf in der Fußzeile, damit sie auch aus
+     der Distanz als "Achtung" erkennbar ist. */
+  .next-news-panel.next-news-soon{border-top-color:#5a2b2b; background:linear-gradient(90deg, var(--red-dim) 0%, transparent 85%);}
   .next-news-panel.next-news-soon .next-news-time{color:var(--red);}
   .next-news-panel.next-news-soon .next-news-eyebrow{color:var(--red);}
 
@@ -1483,17 +1485,16 @@
      (Violett-Verlauf statt der neutralen Panel-Farbe der Nachbarkarten), damit das
      Tagesziel beim Öffnen des Live-Reiters sofort ins Auge fällt. */
   .daily-goal-panel{
-    flex:0 1 190px; max-width:190px; min-width:150px;
     background:linear-gradient(160deg, var(--violet-dim) 0%, var(--bg-panel) 75%);
-    border:1px solid #4a3d80; border-radius:10px; padding:12px 14px;
-    display:flex; flex-direction:column; gap:8px; box-shadow:0 0 0 1px rgba(167,139,250,.08), 0 4px 16px rgba(167,139,250,.08);
+    border:1px solid #4a3d80; border-radius:10px; padding:14px 16px;
+    display:flex; flex-direction:column; gap:10px; box-shadow:0 0 0 1px rgba(167,139,250,.08), 0 4px 16px rgba(167,139,250,.08);
     cursor:pointer; transition:border-color .18s, box-shadow .18s;
   }
   .daily-goal-panel:hover, .daily-goal-panel:focus-visible{
     border-color:var(--violet); box-shadow:0 0 0 1px rgba(167,139,250,.22), 0 8px 22px -10px rgba(167,139,250,.4);
     outline:none;
   }
-  .daily-goal-eyebrow{font-size:10px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--violet);}
+  .daily-goal-eyebrow{font-size:11.5px; font-weight:600; color:var(--violet);}
   .daily-goal-list{display:flex; flex-direction:column; gap:4px;}
   .daily-goal-item{display:flex; align-items:baseline; gap:7px;}
   .daily-goal-num{font-family:var(--mono); font-size:16px; font-weight:800; color:var(--text); min-width:16px;}
@@ -1526,10 +1527,13 @@
   .ftmo-eta-panel.ftmo-eta-done .ftmo-eta-value{color:var(--green);}
 
   @media (max-width:900px){
-    .live-info-row .session-panel{max-width:340px;}
-    .news-panel{max-width:none;}
-    .next-news-panel{max-width:none; flex-basis:100%;}
-    .daily-goal-panel{max-width:none; flex-basis:100%;}
+    .live-info-row{grid-template-columns:1fr 1fr;}
+    .live-news-col{grid-column:1 / -1;}
+  }
+  @media (max-width:560px){
+    .live-info-row{grid-template-columns:1fr;}
+    .daily-goal-list{flex-direction:row; gap:18px;}
+    .news-panel .news-row-country{display:none;}
   }
   .diary-has-entry{animation:pulseOnce .6s ease;}
   .shot-thumb img{transition:.2s ease;}
@@ -2139,7 +2143,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.18h";
+const APP_VERSION = "2026.09.19a";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -4225,13 +4229,15 @@ function sessionPanelHtml(){
 
   return `
     <div class="session-panel session-state-${current.state}" id="sessionPanel">
-      <div class="session-status-dot"></div>
-      <div class="session-body">
-        <div class="session-eyebrow">${stateLabel}</div>
+      <div class="session-head">
+        <span class="session-status-dot"></span>
+        <span class="session-eyebrow">${stateLabel}</span>
+      </div>
+      <div class="session-main">
         <div class="session-name">${current.label}</div>
         <div class="session-time">${current.start} – ${current.end} Uhr</div>
-        <div class="session-next">Nächste: <strong>${next.label}</strong> · in ${remainLabel} (${next.start} Uhr)</div>
       </div>
+      <div class="session-next">Nächste: <strong>${next.label}</strong> · in ${remainLabel} (${next.start} Uhr)</div>
     </div>
   `;
 }
@@ -4493,18 +4499,18 @@ function todayNewsCardHtml(){
   `;
 }
 
-// Kombinierte Zeile für den Live-Reiter — Tagesziel-Karte, Session-Status, manuell
-// gepflegtes "News heute"-Feld und die separate "Nächste News"-Karte nebeneinander.
+// Kombinierte Zeile für den Live-Reiter — Tagesziel-Karte, Session-Status und eine
+// gemeinsame News-Karte (manuell gepflegtes "News heute" + darunter "Nächste News" als
+// Fußzeile) in einem Raster mit gleich hohen Karten.
 function liveInfoRowHtml(){
-  const divider = `<span class="live-info-divider"></span>`;
   return `
     <div class="live-info-row">
       ${dailyGoalPanelHtml()}
-      ${divider}
       ${sessionPanelHtml()}
-      ${divider}
-      ${todayNewsCardHtml()}
-      ${nextNewsCardHtml()}
+      <div class="live-news-col">
+        ${todayNewsCardHtml()}
+        ${nextNewsCardHtml()}
+      </div>
     </div>
   `;
 }
@@ -5426,11 +5432,7 @@ function renderAreaView(area){
   // zu ergänzen — daher hier ein früher, eigener Rückgabe-Pfad.
   if(area==="live" && STATE.liveSubView==="analyse"){
     return `
-      <div class="page-head">
-        <h1>${AREA_LABEL[area]}</h1>
-        <p>${AREA_INTRO[area]}</p>
-      </div>
-      ${liveSubNavHtml()}
+      ${liveHeadHtml()}
       ${renderLiveAnalyse()}
     `;
   }
@@ -5459,13 +5461,12 @@ function renderAreaView(area){
     : "";
 
   return `
-    <div class="page-head">
+    ${area==="live" ? liveHeadHtml() : `<div class="page-head">
       <h1>${AREA_LABEL[area]}</h1>
       <p>${AREA_INTRO[area]}</p>
-    </div>
-    ${area==="live" ? liveSubNavHtml() : ""}
+    </div>`}
     ${area==="live" ? liveInfoRowHtml() : ""}
-    ${area==="live" ? `<div class="live-info-row-divider"></div>${sessionMeterHtml()}<div class="live-info-row-divider"></div>` : ""}
+    ${area==="live" ? sessionMeterHtml() : ""}
     <div class="row-between" style="align-items:flex-start;">
       <div class="subtab-row" id="subtabRow">${subtabs}${challengeTab}</div>
       <div style="display:flex; align-items:center; gap:10px;">
@@ -5490,6 +5491,21 @@ function renderAreaView(area){
       <div class="trade-gallery-collapse-inner" id="tradeGalleryCollapseInner">${STATE.tradeGalleryExpanded ? tradeGalleryHtml(trades) : ""}</div>
     </div>
     ` : ""}
+  `;
+}
+
+// Kopf des Live-Reiters (gilt für Trades UND Analyse): Titel + Untertitel links, der Umschalter
+// Trades/Analyse rechts in derselben Zeile — spart eine Zeile Höhe, und der Umschalter bleibt
+// beim Wechseln zwischen den Unterreitern an derselben Stelle.
+function liveHeadHtml(){
+  return `
+    <div class="page-head live-head">
+      <div class="live-head-text">
+        <h1>${AREA_LABEL.live}</h1>
+        <p>${AREA_INTRO.live}</p>
+      </div>
+      ${liveSubNavHtml()}
+    </div>
   `;
 }
 
