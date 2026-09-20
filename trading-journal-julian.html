@@ -2242,7 +2242,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.19e";
+const APP_VERSION = "2026.09.20a";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -4350,8 +4350,9 @@ function sessionPanelHtml(){
    SESSION METER (Live-Reiter)
    24h-Zeitstrahl, der seine Zeiten direkt aus TRADING_SESSIONS liest (dieselben Zeiten wie
    der Session-Hinweis auf der Startseite) — Zeiten also nur dort ändern, der Meter zieht automatisch nach.
-   Der Balken beginnt beim Start von "Feierabend" (key "closed"), damit keine Session über
-   den Rand des Balkens läuft. SESSION_METER_STYLE legt pro Session-key Kurzlabel, Farbklasse
+   Der Balken beginnt IMMER beim Start der gerade laufenden Session — die aktuelle Session steht
+   also stets ganz links, danach folgen die übrigen Sessions in zeitlicher Reihenfolge (rotiert
+   sich beim Sessionwechsel neu). Keine Session läuft dabei über den Rand des Balkens. SESSION_METER_STYLE legt pro Session-key Kurzlabel, Farbklasse
    und "trade" fest — "trade:true" = Sessions, auf die der Countdown zielt (Asia und
    Frankfurt zählen bewusst nicht mit).
    ========================================================================= */
@@ -4365,8 +4366,14 @@ const SESSION_METER_STYLE = {
 };
 // Baut die Segmente aus TRADING_SESSIONS: Dauer (Min) und Start-/Endversatz (Min) relativ
 // zum Balkenanfang. Gibt zusätzlich den Balkenanfang (Minuten seit 00:00) zurück.
-function sessionMeterLayout(){
-  const origin = sessionTimeToMinutes((TRADING_SESSIONS.find(s=>s.key==="closed") || TRADING_SESSIONS[0]).start);
+function sessionMeterLayout(now){
+  now = now || new Date();
+  const nowMin = now.getHours()*60 + now.getMinutes();
+  // Gerade laufende Session (Zeitfenster [Start, Ende), funktioniert auch über Mitternacht) —
+  // ihr Start ist der linke Rand des Balkens.
+  const durOf = (s)=> (sessionTimeToMinutes(s.end) - sessionTimeToMinutes(s.start) + 1440) % 1440;
+  const curDef = TRADING_SESSIONS.find(s => ((nowMin - sessionTimeToMinutes(s.start) + 1440) % 1440) < durOf(s)) || TRADING_SESSIONS[0];
+  const origin = sessionTimeToMinutes(curDef.start);
   const rel = (t)=> (sessionTimeToMinutes(t) - origin + 1440) % 1440;
   const segs = TRADING_SESSIONS.map(s=>{
     const st = SESSION_METER_STYLE[s.key] || { label:s.label, cls:"pause", trade:false };
@@ -4377,8 +4384,8 @@ function sessionMeterLayout(){
   return { origin, segs };
 }
 function sessionMeterHtml(){
-  const { origin, segs } = sessionMeterLayout();
   const now = new Date();
+  const { origin, segs } = sessionMeterLayout(now);
   const off = ((now.getHours()*60 + now.getMinutes()) - origin + 1440) % 1440;
   const offExact = off + now.getSeconds()/60;
   const cur = segs.find(s => off >= s.startOff && off < s.endOff) || segs[0];
