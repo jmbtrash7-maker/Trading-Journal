@@ -1545,6 +1545,20 @@
   .sm-news-flag{width:15px; height:10px; border-radius:2px; overflow:hidden; box-shadow:0 0 0 1px rgba(255,255,255,.12); flex-shrink:0;}
   .sm-news-flag svg{display:block; width:100%; height:100%;}
   .sm-news-tick.sm-news-past, .sm-news-label.sm-news-past{opacity:.35;}
+  /* Klare Trennlinie zwischen dem Kopfbereich (Tagesziel · News · Session Meter) und dem
+     Trades-Bereich darunter (Filter, Liste, Kalender): schmale Zeile mit Beschriftung, deren
+     Linien zu den Seiten hin auslaufen. */
+  .live-section-divider{
+    display:flex; align-items:center; gap:16px; margin:34px 0 24px;
+    font-size:11.5px; font-weight:800; letter-spacing:1.6px; text-transform:uppercase; color:var(--text-dim);
+  }
+  .live-section-divider::before, .live-section-divider::after{
+    content:""; flex:1; height:2px; border-radius:2px;
+  }
+  .live-section-divider::before{background:linear-gradient(90deg, transparent, var(--violet));}
+  .live-section-divider::after{background:linear-gradient(270deg, transparent, var(--violet));}
+  .live-section-divider span{display:inline-flex; align-items:center; gap:8px;}
+  .live-section-divider span::before{content:""; width:6px; height:6px; border-radius:50%; background:var(--violet);}
   @media (max-width:640px){
     /* Schmale Bildschirme: Zeitstrahl bekommt eine Mindestbreite und scrollt seitlich, statt
        die kurzen Segmente (Frankfurt = 1 Std) auf unlesbare Breite zu stauchen. */
@@ -2298,7 +2312,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.20e";
+const APP_VERSION = "2026.09.20f";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -5663,6 +5677,7 @@ function renderAreaView(area){
     </div>`}
     ${area==="live" ? liveInfoRowHtml() : ""}
     ${area==="live" ? sessionMeterHtml() : ""}
+    ${area==="live" ? `<div class="live-section-divider" role="separator" aria-label="Trades"><span>Trades</span></div>` : ""}
     <div class="row-between" style="align-items:flex-start;">
       <div class="subtab-row" id="subtabRow">${subtabs}${challengeTab}</div>
       <div style="display:flex; align-items:center; gap:10px;">
