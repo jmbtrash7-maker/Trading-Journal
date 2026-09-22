@@ -1915,6 +1915,25 @@
     background:var(--bg-card); border-left:3px solid var(--green); padding:13px 16px; border-radius:0 9px 9px 0;
     font-size:13.5px; color:var(--text); line-height:1.6; margin:14px 0;
   }
+  .strategy-quote-violet{border-left-color:var(--violet); font-weight:600;}
+  /* Denkhilfe (Strategie): Situation → Werkzeug, mit abschließendem Merksatz im Fragen-Kasten-Stil */
+  .denkhilfe-panel{margin-bottom:28px; padding:0; overflow:hidden;}
+  .denkhilfe-toggle-btn{
+    display:flex; align-items:center; justify-content:space-between; gap:14px; width:100%;
+    padding:16px 20px; background:none; border:none; cursor:pointer; text-align:left;
+  }
+  .denkhilfe-toggle-btn:hover .denkhilfe-toggle-title{color:var(--violet);}
+  .denkhilfe-toggle-title{font-size:14px; font-weight:700; color:var(--text); line-height:1.4; transition:color .15s ease;}
+  .denkhilfe-toggle-chevron{flex-shrink:0; font-size:15px; color:var(--text-faint); transition:transform .25s cubic-bezier(.22,.9,.32,1);}
+  .denkhilfe-toggle-chevron.open{transform:rotate(180deg);}
+  .denkhilfe-collapse{max-height:0; overflow:hidden; transition:max-height .35s cubic-bezier(.22,.9,.32,1);}
+  .denkhilfe-collapse-inner{padding:0 20px 20px;}
+  @media (prefers-reduced-motion: reduce){ .denkhilfe-collapse{transition:none !important;} }
+  .denkhilfe-table td:first-child{color:var(--text); width:62%;}
+  .denkhilfe-table td small{display:block; color:var(--text-faint); font-size:11px; margin-top:4px; font-weight:500;}
+  .denkhilfe-closing{margin-top:16px;}
+  .denkhilfe-closing .bat-q-title{color:var(--text); font-size:13.5px; font-weight:700; margin-bottom:8px;}
+  .denkhilfe-closing .bat-q-body{font-size:13px; line-height:1.7;}
   .strategy-table{width:100%; border-collapse:collapse; margin:6px 0 16px; font-size:12.8px;}
   .strategy-table th, .strategy-table td{text-align:left; padding:9px 11px; border-bottom:1px solid var(--border); vertical-align:top;}
   .strategy-table th{color:var(--text-faint); font-weight:800; font-size:10.5px; text-transform:uppercase; letter-spacing:.4px;}
@@ -1973,6 +1992,10 @@
   .cheat-tag-limit{background:var(--green-dim); color:var(--green);}
   .cheat-tag-ce{background:var(--amber-dim); color:var(--amber);}
   .cheat-tag-none{background:var(--red-dim); color:var(--red);}
+  .cheat-tag-se{background:var(--cyan-dim); color:var(--cyan);}
+  .cheat-tag-flip{background:var(--magenta-dim); color:var(--magenta);}
+  .cheat-tag-conti{background:var(--violet-dim); color:var(--violet);}
+  .cheat-tag-counter{background:var(--red-dim); color:var(--red);}
 
   .risk-ampel{display:flex; flex-direction:column; gap:8px; margin-bottom:18px;}
   .risk-row{
@@ -2312,7 +2335,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.20f";
+const APP_VERSION = "2026.09.20i";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -10891,6 +10914,46 @@ function renderEntryModal(key){
 }
 
 function wireStrategie(){
+  // Bewusst KEIN render() beim Auf-/Zuklappen — gleiches Prinzip wie bei der Trade-Gallery
+  // (siehe dort): nur der Denkhilfe-Container wird lokal animiert (max-height-Transition),
+  // der Inhalt wird erst beim ersten Öffnen ins DOM eingefügt.
+  const denkhilfeBtn = document.getElementById("denkhilfeToggleBtn");
+  const denkhilfeCollapse = document.getElementById("denkhilfeCollapse");
+  const denkhilfeInner = document.getElementById("denkhilfeCollapseInner");
+  if(denkhilfeBtn && denkhilfeCollapse && denkhilfeInner){
+    denkhilfeBtn.addEventListener("click", ()=>{
+      const chevron = denkhilfeBtn.querySelector(".denkhilfe-toggle-chevron");
+      STATE.denkhilfeOpen = !STATE.denkhilfeOpen;
+      denkhilfeBtn.setAttribute("aria-expanded", String(STATE.denkhilfeOpen));
+
+      if(STATE.denkhilfeOpen){
+        denkhilfeInner.innerHTML = denkhilfeBodyHtml();
+        const targetHeight = denkhilfeInner.scrollHeight;
+        denkhilfeCollapse.style.maxHeight = "0px";
+        void denkhilfeCollapse.offsetHeight; // erzwungener Reflow, sonst überspringt der Browser die Transition
+        denkhilfeCollapse.classList.add("open");
+        denkhilfeCollapse.style.maxHeight = targetHeight + "px";
+        if(chevron) chevron.classList.add("open");
+        denkhilfeCollapse.addEventListener("transitionend", function onOpenEnd(e){
+          if(e.propertyName !== "max-height") return;
+          if(STATE.denkhilfeOpen) denkhilfeCollapse.style.maxHeight = "none";
+          denkhilfeCollapse.removeEventListener("transitionend", onOpenEnd);
+        });
+      }else{
+        denkhilfeCollapse.style.maxHeight = denkhilfeCollapse.scrollHeight + "px";
+        void denkhilfeCollapse.offsetHeight;
+        denkhilfeCollapse.classList.remove("open");
+        denkhilfeCollapse.style.maxHeight = "0px";
+        if(chevron) chevron.classList.remove("open");
+        denkhilfeCollapse.addEventListener("transitionend", function onCloseEnd(e){
+          if(e.propertyName !== "max-height") return;
+          if(!STATE.denkhilfeOpen) denkhilfeInner.innerHTML = "";
+          denkhilfeCollapse.removeEventListener("transitionend", onCloseEnd);
+        });
+      }
+    });
+  }
+
   document.querySelectorAll("[data-entryopen]").forEach(el=>{
     el.addEventListener("click", ()=> openEntryModal(el.dataset.entryopen));
     el.addEventListener("keydown", (e)=>{
@@ -10918,6 +10981,53 @@ function wireStrategie(){
   if(btnOpenChecklists) btnOpenChecklists.addEventListener("click", openChecklistModal);
 }
 
+// Inhalt des Denkhilfe-Felds (Strategie-Seite) — wird erst beim Aufklappen ins DOM eingefügt
+// (siehe wireStrategie), damit beim ersten Seitenaufbau nichts unnötig gerendert wird.
+function denkhilfeBodyHtml(){
+  return `
+    <div class="strategy-quote strategy-quote-violet">
+      Wir handeln nicht sieben getrennte Modelle.<br>
+      Wir handeln die aktuell führende Struktur – und wählen je nach Situation das passende Werkzeug.
+    </div>
+
+    <table class="strategy-table denkhilfe-table">
+      <tr><th>Situation</th><th>Werkzeug</th></tr>
+      <tr>
+        <td>Starke Location + gute Kriterien, idealerweise mit Fibonacci</td>
+        <td><span class="cheat-tag cheat-tag-limit">Limit</span></td>
+      </tr>
+      <tr>
+        <td>Fehlt ein Kriterium oder wollen wir besseren CRV</td>
+        <td><span class="cheat-tag cheat-tag-ce">CE oder Engulfing</span><small>je nachdem, wie die Liquidität abgegriffen wird</small></td>
+      </tr>
+      <tr>
+        <td>Location wird gesweept</td>
+        <td><span class="cheat-tag cheat-tag-se">SE</span></td>
+      </tr>
+      <tr>
+        <td>Location wird gebrochen</td>
+        <td><span class="cheat-tag cheat-tag-flip">Flip</span></td>
+      </tr>
+      <tr>
+        <td>CE, SE oder Engulfing verpasst</td>
+        <td><span class="cheat-tag cheat-tag-conti">Conti</span></td>
+      </tr>
+      <tr>
+        <td>Unsere POIs werden gebrochen und die Gegenseite übernimmt</td>
+        <td><span class="cheat-tag cheat-tag-counter">Counter</span></td>
+      </tr>
+    </table>
+    <p class="cheat-inline-note">So schließt sich der Kreis.</p>
+
+    <div class="bat-question-box denkhilfe-closing">
+      <div class="bat-q-title">Die Entry-Modelle sind keine isolierten Setups, sondern ein Repertoire für verschiedene Phasen desselben Marktprozesses.</div>
+      <div class="bat-q-body">
+        Nicht: „Welches Modell trade ich?“<br>
+        Sondern: „Was zeigt der Markt gerade – und welches Werkzeug passt dazu?“
+      </div>
+    </div>`;
+}
+
 function renderStrategie(){
   return `
     <div class="page-head">
@@ -10928,6 +11038,7 @@ function renderStrategie(){
     <div class="strategy-nav-row">
       <div class="strategy-nav">
         <a href="#strat-entries">Entry-Arten</a>
+        <a href="#strat-denkhilfe">Denkhilfe</a>
         <a href="#strat-cheatsheet">Cheat Sheet</a>
       </div>
       <button type="button" class="entry-checklist-launch" id="btnOpenChecklists">☑ Checklisten</button>
@@ -10954,6 +11065,17 @@ function renderStrategie(){
         </div>
       </div>
     `).join("")}</div>
+
+    <div class="section-title" id="strat-denkhilfe">Denkhilfe</div>
+    <div class="panel strategy-panel denkhilfe-panel">
+      <button type="button" class="denkhilfe-toggle-btn" id="denkhilfeToggleBtn" aria-expanded="${STATE.denkhilfeOpen ? "true" : "false"}">
+        <span class="denkhilfe-toggle-title">Wir handeln nicht sieben getrennte Modelle, sondern die aktuell führende Struktur</span>
+        <span class="denkhilfe-toggle-chevron${STATE.denkhilfeOpen ? " open" : ""}">⌄</span>
+      </button>
+      <div class="denkhilfe-collapse${STATE.denkhilfeOpen ? " open" : ""}" id="denkhilfeCollapse" style="${STATE.denkhilfeOpen ? "max-height:none;" : ""}">
+        <div class="denkhilfe-collapse-inner" id="denkhilfeCollapseInner">${STATE.denkhilfeOpen ? denkhilfeBodyHtml() : ""}</div>
+      </div>
+    </div>
 
     <div class="panel strategy-panel cheat-sheet" id="strat-cheatsheet">
       <div class="cheat-sheet-head">
