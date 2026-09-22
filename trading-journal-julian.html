@@ -2335,7 +2335,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.20i";
+const APP_VERSION = "2026.09.22a";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -3214,7 +3214,10 @@ function initDateRangePicker(){
     STATE.berichtDateFrom = pendingFrom || "";
     STATE.berichtDateTo = pendingTo || "";
     panel.hidden = true;
-    render();
+    // Baut den Filterbereich (Zeitraum-Anzeige) und die davon abhängigen Auswertungen lokal
+    // neu auf — kein render(), damit die restliche Seite nicht kurz aufblitzt.
+    refreshBerichtFilterPanelBody();
+    refreshBerichtBody();
   }
 
   trigger.addEventListener("click", (e)=>{
@@ -5659,15 +5662,25 @@ function getAreaFilteredTrades(area){
   return trades.sort((a,b)=> (b.date||"").localeCompare(a.date||"") || (b.createdAt||0)-(a.createdAt||0));
 }
 
+// In Kopf (Titel + bei Live der Trades/Analyse-Umschalter) und #areaBody aufgeteilt: der
+// Umschalter zwischen Trades- und Analyse-Unterreiter ändert praktisch den kompletten Rest
+// der Seite (Trade-Liste/Kalender/Gallery vs. Analyse-Board) — nur der Kopf bleibt in beiden
+// Fällen gleich. Ein Klick dort baut daher nur #areaBody neu auf (siehe refreshAreaBody()),
+// statt render() aufzurufen (kompletter Neuaufbau von #app inkl. kurzem Aufblitzen).
 function renderAreaView(area){
+  const head = area==="live" ? liveHeadHtml() : `<div class="page-head">
+    <h1>${AREA_LABEL[area]}</h1>
+    <p>${AREA_INTRO[area]}</p>
+  </div>`;
+  return `${head}<div id="areaBody">${areaBodyHtml(area)}</div>`;
+}
+
+function areaBodyHtml(area){
   // Live-Reiter hat einen eigenen Unterreiter "Analyse" (Markt-Bias-Board), der die
   // komplette übrige Live-Seite (Trade-Liste, Kalender, Gallery) ersetzt, statt sie nur
   // zu ergänzen — daher hier ein früher, eigener Rückgabe-Pfad.
   if(area==="live" && STATE.liveSubView==="analyse"){
-    return `
-      ${liveHeadHtml()}
-      ${renderLiveAnalyse()}
-    `;
+    return renderLiveAnalyse();
   }
 
   const trades = getAreaFilteredTrades(area);
@@ -5694,10 +5707,6 @@ function renderAreaView(area){
     : "";
 
   return `
-    ${area==="live" ? liveHeadHtml() : `<div class="page-head">
-      <h1>${AREA_LABEL[area]}</h1>
-      <p>${AREA_INTRO[area]}</p>
-    </div>`}
     ${area==="live" ? liveInfoRowHtml() : ""}
     ${area==="live" ? sessionMeterHtml() : ""}
     ${area==="live" ? `<div class="live-section-divider" role="separator" aria-label="Trades"><span>Trades</span></div>` : ""}
@@ -5726,6 +5735,17 @@ function renderAreaView(area){
     </div>
     ` : ""}
   `;
+}
+
+// Baut NUR #areaBody neu auf (Trades/Analyse-Umschalter, s.o.) — bewusst kein render().
+function refreshAreaBody(area){
+  const el = document.getElementById("areaBody");
+  if(!el) return;
+  el.innerHTML = areaBodyHtml(area);
+  wireAreaViewBody(area);
+  renderChallengeCharts(); // no-op, falls Analyse-Panel gerade nicht im DOM steht
+  if(area==="live" && STATE.liveSubView!=="analyse"){ startSessionClock(); }
+  else { stopSessionClock(); }
 }
 
 // Kopf des Live-Reiters (gilt für Trades UND Analyse): Titel + Untertitel links, der Umschalter
@@ -6504,7 +6524,14 @@ function wireCalDaySection(area){
    damit sich wiederkehrende Zögerlichkeits-Muster erkennen lassen. Zeigt zu jedem Grund
    auch das (falls eingetragene) Ergebnis, um zu sehen ob die Zurückhaltung im Nachhinein
    gut oder schlecht war. ---------- */
+// Fester äußerer Wrapper mit stabiler id, damit sich die Sektion beim Auf-/Zuklappen per
+// innerHTML lokal ersetzen lässt (siehe wireAreaViewBody), statt ein volles render() zu
+// brauchen.
 function eodReasonsSectionHtml(){
+  return `<div id="eodReasonsSection">${eodReasonsSectionInnerHtml()}</div>`;
+}
+
+function eodReasonsSectionInnerHtml(){
   const items = accountTrades().filter(t=>t.area==="eod" && t.genommen===false && t.grundNichtGenommen && t.grundNichtGenommen.trim());
   const count = items.length;
   const expanded = STATE.eodReasonsExpanded;
@@ -6879,18 +6906,33 @@ function refreshAreaListForFilter(area, newFilter){
 }
 
 function wireAreaView(area){
+  wireAreaViewHead(area);
+  wireAreaViewBody(area);
+}
+
+// Kopf (nur Live): Trades/Analyse-Umschalter. Lebt außerhalb von #areaBody und wird beim
+// Umschalten NICHT neu aufgebaut — nur die zwei Buttons bekommen direkt ihre aktive Klasse,
+// der Rest der Seite baut sich lokal per refreshAreaBody() neu auf (kein render()).
+function wireAreaViewHead(area){
   const liveMainSubNav = document.getElementById("liveMainSubNav");
   if(liveMainSubNav) liveMainSubNav.addEventListener("click", (e)=>{
     const btn = e.target.closest("[data-livesub]");
     if(!btn) return;
     STATE.liveSubView = btn.dataset.livesub;
-    render();
+    liveMainSubNav.querySelectorAll("[data-livesub]").forEach(b=>{
+      b.classList.toggle("active", b.dataset.livesub === STATE.liveSubView);
+    });
+    refreshAreaBody("live");
   });
+}
 
-  // Der Analyse-Unterreiter ersetzt die komplette übrige Live-Seite (siehe
-  // renderAreaView) — hier daher nur die Analyse-Kacheln verdrahten, der Rest dieser
-  // Funktion erwartet DOM-Elemente (Trade-Liste, Kalender, Gallery), die dort gar nicht
-  // existieren.
+// Alles unterhalb des Kopfs (#areaBody): Trade-Liste, Kalender, Gallery, EOD-Gründe bzw. das
+// Analyse-Board. Wird sowohl beim ersten Seitenaufbau als auch nach refreshAreaBody() erneut
+// aufgerufen — daher bewusst idempotent (jeder Aufruf bindet nur an frisch erzeugte Elemente).
+function wireAreaViewBody(area){
+  // Der Analyse-Unterreiter ersetzt die komplette übrige Live-Seite (siehe areaBodyHtml) —
+  // hier daher nur die Analyse-Kacheln verdrahten, der Rest dieser Funktion erwartet DOM-
+  // Elemente (Trade-Liste, Kalender, Gallery), die dort gar nicht existieren.
   if(area==="live" && STATE.liveSubView==="analyse"){
     wireLiveAnalyse();
     return;
@@ -7031,32 +7073,48 @@ function wireAreaView(area){
     });
   });
 
-  const toggleReasonsBtn = document.getElementById("toggleEodReasons");
-  if(toggleReasonsBtn) toggleReasonsBtn.addEventListener("click", ()=>{
+  wireEodReasonsSection();
+}
+
+// EOD-Gründe-Sektion (#eodReasonsSection, nur area==="eod"): Auf-/Zuklappen, Suche und
+// Wort-Chips aktualisieren bewusst NUR diesen einen Wrapper per innerHTML — kein render().
+// Wird nach jedem lokalen Rebuild der Sektion erneut aufgerufen, um die frischen Elemente
+// zu verkabeln (daher als eigenständige, wiederholt aufrufbare Funktion statt inline).
+function wireEodReasonsSection(){
+  const wrap = document.getElementById("eodReasonsSection");
+  if(!wrap) return;
+
+  const toggleBtn = document.getElementById("toggleEodReasons");
+  if(toggleBtn) toggleBtn.addEventListener("click", ()=>{
     STATE.eodReasonsExpanded = !STATE.eodReasonsExpanded;
-    render();
+    wrap.innerHTML = eodReasonsSectionInnerHtml();
+    wireEodReasonsSection();
   });
 
   const reasonsSearch = document.getElementById("eodReasonsSearchInput");
+  const refreshResults = ()=>{
+    const items = accountTrades().filter(t=>t.area==="eod" && t.genommen===false && t.grundNichtGenommen && t.grundNichtGenommen.trim());
+    const container = document.getElementById("eodReasonsListContainer");
+    if(container) container.innerHTML = eodReasonsListHtml(items, STATE.eodReasonsQuery);
+    if(container) container.querySelectorAll("[data-viewtrade]").forEach(el=>{
+      el.addEventListener("click", (e)=>{
+        if(e.target.closest("button")) return;
+        const t = STATE.trades.find(x=>x.id===el.dataset.viewtrade);
+        if(t) openTradeDetail(t);
+      });
+    });
+  };
   if(reasonsSearch){
     reasonsSearch.addEventListener("input",(e)=>{
       STATE.eodReasonsQuery = e.target.value;
-      const items = accountTrades().filter(t=>t.area==="eod" && t.genommen===false && t.grundNichtGenommen && t.grundNichtGenommen.trim());
-      const container = document.getElementById("eodReasonsListContainer");
-      if(container) container.innerHTML = eodReasonsListHtml(items, STATE.eodReasonsQuery);
-      if(container) container.querySelectorAll("[data-viewtrade]").forEach(el=>{
-        el.addEventListener("click", (e)=>{
-          if(e.target.closest("button")) return;
-          const t = STATE.trades.find(x=>x.id===el.dataset.viewtrade);
-          if(t) openTradeDetail(t);
-        });
-      });
+      refreshResults();
     });
   }
   document.querySelectorAll("[data-eodreasonword]").forEach(chip=>{
     chip.addEventListener("click", ()=>{
       STATE.eodReasonsQuery = chip.dataset.eodreasonword;
-      render();
+      if(reasonsSearch) reasonsSearch.value = STATE.eodReasonsQuery;
+      refreshResults();
     });
   });
 }
@@ -9090,16 +9148,58 @@ function compareSectionHtml(){
   `;
 }
 
+// Bericht ist in drei unabhängig aktualisierbare Container aufgeteilt, damit ein Klick auf
+// einen Filter, einen Toggle oder eine Chip NICHT mehr render() (= kompletter Neuaufbau von
+// #app samt view-fade-Blitz) auslöst, sondern nur den betroffenen Container lokal ersetzt:
+//   #berichtTopRow    — Live/EOD-Toggle + Gegenüberstellung-Umschalter
+//   #filterPanelBody  — die eigentlichen Filterzeilen (nur sichtbar wenn ausgeklappt)
+//   #berichtBody      — Kennzahlen, Equity/Wochentage, Auswertungen, Notizen, Export
+// Siehe refreshBerichtTopRow() / refreshBerichtFilterPanelBody() / refreshBerichtBody().
 function renderBericht(){
-  const cfg = STATE.config;
-  const filteredTrades = getBerichtFilteredTrades();
-  const stats = computeStats(filteredTrades);
+  return `
+    <div class="page-head">
+      <h1>Bericht</h1>
+      <p>Statistik & Performance über Live und EOD.</p>
+    </div>
 
+    ${berichtTopRowHtml()}
+
+    <div class="panel filter-panel">
+      <div class="filter-panel-title-row">
+        <div class="filter-panel-title" id="filterPanelTitle">FILTER${!STATE.berichtFiltersExpanded ? activeFilterCountLabel() : ""}</div>
+        <div class="filter-panel-title-actions">
+          <button type="button" class="btn btn-sm btn-ghost" id="clearFiltersBtn" title="Alle Filter zurücksetzen">↺ Filter zurücksetzen</button>
+          <button type="button" class="btn btn-sm btn-ghost" id="toggleFiltersBtn" title="Filterbereich ein-/ausblenden">👁 ${STATE.berichtFiltersExpanded ? "Filter ausblenden" : "Filter einblenden"}</button>
+        </div>
+      </div>
+      <div id="filterPanelBody">${filterPanelBodyHtml()}</div>
+    </div>
+
+    <div id="berichtBody">${berichtBodyHtml()}</div>
+  `;
+}
+
+function berichtTopRowHtml(){
   const areaBtns = ["live","eod"].map(a=>{
     const on = STATE.berichtAreas[a];
     return `<button data-area="${a}" class="${on?"on":""}">${AREA_LABEL[a]}</button>`;
   }).join("");
+  const canCompare = STATE.berichtAreas.live && STATE.berichtAreas.eod;
+  const compareActive = canCompare && STATE.berichtCompareMode === "vergleich";
+  return `
+    <div class="row-between" id="berichtTopRow" style="align-items:flex-start;">
+      <div class="area-toggle" id="areaToggle">${areaBtns}</div>
+      ${canCompare ? `
+      <div class="subtab-row" id="compareToggle">
+        <button type="button" data-mode="gesamt" class="subtab ${!compareActive?"active":""}">Gesamt</button>
+        <button type="button" data-mode="vergleich" class="subtab ${compareActive?"active":""}">Gegenüberstellung</button>
+      </div>` : ""}
+    </div>`;
+}
 
+function filterPanelBodyHtml(){
+  const cfg = STATE.config;
+  if(!STATE.berichtFiltersExpanded) return "";
   const filterRows = getFilterDimensions().map(dim=>{
     const opts = cfg[dim.cfgKey];
     const sel = STATE.berichtFilters[dim.key] || [];
@@ -9108,44 +9208,24 @@ function renderBericht(){
       <div>${chipGroupHtml("f_"+dim.key, opts, sel, {multi:true})}</div>
     </div>`;
   }).join("");
+  return `
+    <div class="filter-row">
+      <div class="filter-label">Zeitraum</div>
+      <div class="dp-wrap dp-range-wrap" id="dateRangeWrap">
+        <button type="button" class="dp-trigger" id="dateRangeTrigger"></button>
+        <div class="dp-panel" id="dateRangePanel" hidden></div>
+      </div>
+    </div>
+    ${filterRows}`;
+}
 
+function berichtBodyHtml(){
+  const filteredTrades = getBerichtFilteredTrades();
+  const stats = computeStats(filteredTrades);
   const canCompare = STATE.berichtAreas.live && STATE.berichtAreas.eod;
   const compareActive = canCompare && STATE.berichtCompareMode === "vergleich";
 
   return `
-    <div class="page-head">
-      <h1>Bericht</h1>
-      <p>Statistik & Performance über Live und EOD.</p>
-    </div>
-
-    <div class="row-between" style="align-items:flex-start;">
-      <div class="area-toggle" id="areaToggle">${areaBtns}</div>
-      ${canCompare ? `
-      <div class="subtab-row" id="compareToggle">
-        <button type="button" data-mode="gesamt" class="subtab ${!compareActive?"active":""}">Gesamt</button>
-        <button type="button" data-mode="vergleich" class="subtab ${compareActive?"active":""}">Gegenüberstellung</button>
-      </div>` : ""}
-    </div>
-
-    <div class="panel filter-panel">
-      <div class="filter-panel-title-row">
-        <div class="filter-panel-title">FILTER${!STATE.berichtFiltersExpanded ? activeFilterCountLabel() : ""}</div>
-        <div class="filter-panel-title-actions">
-          <button type="button" class="btn btn-sm btn-ghost" id="clearFiltersBtn" title="Alle Filter zurücksetzen">↺ Filter zurücksetzen</button>
-          <button type="button" class="btn btn-sm btn-ghost" id="toggleFiltersBtn" title="Filterbereich ein-/ausblenden">👁 ${STATE.berichtFiltersExpanded ? "Filter ausblenden" : "Filter einblenden"}</button>
-        </div>
-      </div>
-      ${STATE.berichtFiltersExpanded ? `
-      <div class="filter-row">
-        <div class="filter-label">Zeitraum</div>
-        <div class="dp-wrap dp-range-wrap" id="dateRangeWrap">
-          <button type="button" class="dp-trigger" id="dateRangeTrigger"></button>
-          <div class="dp-panel" id="dateRangePanel" hidden></div>
-        </div>
-      </div>
-      ${filterRows}` : ""}
-    </div>
-
     ${compareActive ? compareSectionHtml() : reportSummaryHtml(stats, filteredTrades)}
 
     <div class="rp-pair">
@@ -9185,6 +9265,7 @@ function renderBericht(){
       <button class="btn" id="exportCsvBtn">CSV exportieren</button>
       <button class="btn" id="exportXlsxBtn">Excel (.xlsx) exportieren</button>
       <button class="btn" id="exportJsonBtn">Backup exportieren (JSON)</button>
+      <button class="btn" id="exportKiBtn" title="Eine Datei mit allen Live-Trades, Kennzahlen, Mental-Tagebuch, Checkliste und Regelwerk – inkl. Analyse-Auftrag. Einfach einer KI geben. Aktuelles Konto, gesamte Historie (ignoriert die Filter oben).">KI-Analyse exportieren</button>
       <label class="btn" style="margin:0;">
         Backup importieren
         <input type="file" id="importJsonInput" accept="application/json" style="display:none;">
@@ -9194,6 +9275,33 @@ function renderBericht(){
       ${hasUnbackedChanges() ? "⚠ " : "✓ "}Zuletzt gesichert: ${formatBackupTimestamp(getLastBackupAt())}${(hasUnbackedChanges() && getLastBackupAt()) ? " — es gibt Änderungen seitdem" : ""}
     </div>
   `;
+}
+
+// Bewusst KEIN render() bei diesen drei Refresh-Funktionen — siehe Kommentar über
+// renderBericht(). Jede ersetzt nur ihren eigenen Container per outerHTML/innerHTML und
+// verkabelt anschließend nur das, was in genau diesem Container liegt.
+function refreshBerichtTopRow(){
+  const el = document.getElementById("berichtTopRow");
+  if(!el) return;
+  el.outerHTML = berichtTopRowHtml();
+  wireBerichtTopRow();
+}
+
+function refreshBerichtFilterPanelBody(){
+  const body = document.getElementById("filterPanelBody");
+  const title = document.getElementById("filterPanelTitle");
+  if(!body) return;
+  body.innerHTML = filterPanelBodyHtml();
+  if(title) title.textContent = `FILTER${!STATE.berichtFiltersExpanded ? activeFilterCountLabel() : ""}`;
+  wireBerichtFilterPanelBody();
+}
+
+function refreshBerichtBody(){
+  const el = document.getElementById("berichtBody");
+  if(!el) return;
+  el.innerHTML = berichtBodyHtml();
+  wireBerichtBody();
+  renderCharts();
 }
 
 // Gruppiert die aktuell gefilterten Trades (dieselbe Filterbasis wie "Auswertung nach
@@ -9993,21 +10101,21 @@ function equityCalendarData(trades, days){
 }
 
 function wireBericht(){
-  wireDriveSyncPanel();
+  wireBerichtTopRow();
+  wireBerichtFilterPanelBody();
+  wireBerichtBody();
+}
 
-  document.querySelectorAll("[data-openentrymodel]").forEach(el=>{
-    el.addEventListener("click", ()=> openEntryModelDetail(el.dataset.openentrymodel));
-    el.addEventListener("keydown", (e)=>{
-      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openEntryModelDetail(el.dataset.openentrymodel); }
-    });
-  });
-
+function wireBerichtTopRow(){
   document.getElementById("areaToggle").addEventListener("click",(e)=>{
     const btn = e.target.closest("button[data-area]");
     if(!btn) return;
     const a = btn.dataset.area;
     STATE.berichtAreas[a] = !STATE.berichtAreas[a];
-    render();
+    // Kann die Gegenüberstellung ein-/ausblenden (nur sichtbar wenn Live+EOD aktiv sind) —
+    // deshalb Top-Reihe UND Body neu, aber beide bewusst lokal statt eines vollen render().
+    refreshBerichtTopRow();
+    refreshBerichtBody();
   });
 
   const compareToggle = document.getElementById("compareToggle");
@@ -10015,9 +10123,12 @@ function wireBericht(){
     const btn = e.target.closest("button[data-mode]");
     if(!btn) return;
     STATE.berichtCompareMode = btn.dataset.mode;
-    render();
+    refreshBerichtTopRow();
+    refreshBerichtBody();
   });
+}
 
+function wireBerichtFilterPanelBody(){
   document.querySelectorAll('[data-chipgroup^="f_"]').forEach(group=>{
     group.addEventListener("click",(e)=>{
       const btn = e.target.closest("button[data-group]");
@@ -10027,18 +10138,35 @@ function wireBericht(){
       const arr = STATE.berichtFilters[key] || (STATE.berichtFilters[key]=[]);
       const i = arr.indexOf(val);
       if(i>-1) arr.splice(i,1); else arr.push(val);
-      render();
+      // Der Chip selbst wird direkt umgeschaltet (kein Neuaufbau des Filterbereichs nötig) —
+      // nur die davon abhängigen Auswertungen im Body aktualisieren sich.
+      btn.classList.toggle("selected");
+      refreshBerichtBody();
     });
   });
 
   initDateRangePicker();
   const clearFiltersBtn = document.getElementById("clearFiltersBtn");
   if(clearFiltersBtn) clearFiltersBtn.addEventListener("click",()=>{
-    STATE.berichtFilters = {}; STATE.berichtDateFrom=""; STATE.berichtDateTo=""; render();
+    STATE.berichtFilters = {}; STATE.berichtDateFrom=""; STATE.berichtDateTo="";
+    refreshBerichtFilterPanelBody();
+    refreshBerichtBody();
   });
-  document.getElementById("toggleFiltersBtn").addEventListener("click",()=>{
+  document.getElementById("toggleFiltersBtn").addEventListener("click",(e)=>{
     STATE.berichtFiltersExpanded = !STATE.berichtFiltersExpanded;
-    render();
+    e.currentTarget.innerHTML = `👁 ${STATE.berichtFiltersExpanded ? "Filter ausblenden" : "Filter einblenden"}`;
+    refreshBerichtFilterPanelBody();
+  });
+}
+
+function wireBerichtBody(){
+  wireDriveSyncPanel();
+
+  document.querySelectorAll("[data-openentrymodel]").forEach(el=>{
+    el.addEventListener("click", ()=> openEntryModelDetail(el.dataset.openentrymodel));
+    el.addEventListener("keydown", (e)=>{
+      if(e.key === "Enter" || e.key === " "){ e.preventDefault(); openEntryModelDetail(el.dataset.openentrymodel); }
+    });
   });
 
   const dimSel = document.getElementById("breakdownDimSelector");
@@ -10046,7 +10174,7 @@ function wireBericht(){
     const btn = e.target.closest("button[data-dim]");
     if(!btn) return;
     STATE.breakdownDim = btn.dataset.dim;
-    render();
+    refreshBerichtBody();
   });
 
   // Notizen-Suche: nur die Ergebnisliste live aktualisieren, damit der Suchfokus beim Tippen erhalten bleibt
@@ -10062,14 +10190,18 @@ function wireBericht(){
   document.querySelectorAll("[data-noteword]").forEach(chip=>{
     chip.addEventListener("click", ()=>{
       STATE.notesSearchQuery = chip.dataset.noteword;
-      render();
+      // Wie die Sucheingabe oben: nur die Ergebnisliste aktualisieren, nicht den ganzen Body.
+      if(notesInput) notesInput.value = STATE.notesSearchQuery;
+      const container = document.getElementById("notesResultsContainer");
+      if(container) container.innerHTML = notesListHtml(getBerichtFilteredTrades(), STATE.notesSearchQuery);
+      wireNoteItemClicks();
     });
   });
   wireWordCloudEvents({
     hideAttr: "hidenoteword", restoreAttr: "restorenoteword", dissolveAttr: "dissolvenotegroup",
     mergeToggleAttr: "togglenotemerge", mergeSelectAttr: "selectnoteword",
     mergeConfirmAttr: "confirmnotemerge", mergeCancelAttr: "cancelnotemerge",
-    scope: "notes", hiddenArrayKey: "hiddenNoteWords", groupsArrayKey: "noteWordGroups", onChange: render
+    scope: "notes", hiddenArrayKey: "hiddenNoteWords", groupsArrayKey: "noteWordGroups", onChange: refreshBerichtBody
   });
   wireNoteItemClicks();
 
@@ -10082,6 +10214,8 @@ function wireBericht(){
   }
   const jsonBtn = document.getElementById("exportJsonBtn");
   if(jsonBtn) jsonBtn.addEventListener("click", exportJson);
+  const kiBtn = document.getElementById("exportKiBtn");
+  if(kiBtn) kiBtn.addEventListener("click", exportKiAnalyse);
   const importInput = document.getElementById("importJsonInput");
   if(importInput) importInput.addEventListener("change", importJson);
 }
@@ -10339,6 +10473,417 @@ function exportJson(){
   markBackedUp();
   render();
   toast("Backup exportiert.");
+}
+
+/* =========================================================================
+   KI-ANALYSE-EXPORT — eine einzige Markdown-Datei mit allem, was eine KI für eine
+   professionelle Auswertung der Live-Trades braucht: Analyse-Auftrag (Prompt),
+   exakt vorberechnete Kennzahlen + Aufschlüsselungen, alle Live-Trades mit Notizen,
+   Mental-Tagebuch inkl. Tagesergebnis, Tages-Checkliste, Regelwerk (Entry-Modelle,
+   Denkhilfe, Cheat Sheet), Erkenntnisse, EOD-Reviews, Markt-Bias und News.
+   Bewusst: aktuelles Konto, GESAMTE Historie (ignoriert die Bericht-Filter), keine
+   Bilder (Base64-Screenshots würden die Datei sprengen) — nur Chart-Links (http).
+   Kennzahlen kommen aus challengeStats(), damit sie mit der App identisch sind und
+   die KI nicht selbst rechnen muss (Sprachmodelle verrechnen sich bei Summen).
+   Reiner Lese-Export: kein markBackedUp(), kein render().
+   ========================================================================= */
+const KI_WEEKDAYS = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+
+// Wandelt gespeichertes HTML (Rich-Text-Felder, Strategie-Seite) in lesbaren Klartext
+// mit Absätzen und Aufzählungszeichen um. DOMParser führt keine Skripte aus und lädt keine Bilder.
+function kiNodeText(node){
+  if(node.nodeType === 3) return node.nodeValue.replace(/\s+/g, " ");
+  if(node.nodeType !== 1) return "";
+  const tag = node.tagName.toLowerCase();
+  if(["script","style","img","svg","button","select","input","canvas"].includes(tag)) return "";
+  let inner = Array.from(node.childNodes).map(kiNodeText).join("");
+  if(tag === "br") return "\n";
+  if(tag === "li"){
+    const ordered = node.parentElement && node.parentElement.tagName.toLowerCase() === "ol";
+    const pos = ordered ? (Array.from(node.parentElement.children).indexOf(node)+1)+". " : "- ";
+    return "\n" + pos + inner.trim();
+  }
+  if(/^h[1-6]$/.test(tag)) return "\n\n**" + inner.trim() + "**\n";
+  if(["p","div","section","ul","ol","tr","table","blockquote"].includes(tag)) return "\n" + inner + "\n";
+  if(tag === "td" || tag === "th") return inner.trim() + " | ";
+  return inner;
+}
+function kiHtmlToText(html){
+  if(!html) return "";
+  const s = String(html);
+  if(!/[<&]/.test(s)) return s.trim();
+  try{
+    const doc = new DOMParser().parseFromString(s, "text/html");
+    // Dekor-Zeilen der Flow-Karten (nur Pfeil oder nur Schrittnummer) fallen weg.
+    return kiNodeText(doc.body).replace(/[ \t]+\n/g, "\n").replace(/\n[ \t]+/g, "\n")
+      .split("\n").filter(l=>!/^(→|›|⌄|\d{1,2})$/.test(l.trim())).join("\n")
+      .replace(/\n{3,}/g, "\n\n").trim();
+  }catch(e){ return s.replace(/<[^>]*>/g, " ").trim(); }
+}
+// Mehrzeiliger Freitext als Markdown-Zitat (bleibt für die KI klar einem Feld zugeordnet).
+function kiQuote(text){
+  const t = kiHtmlToText(text);
+  return t ? t.split("\n").map(l=>"> "+l).join("\n") : "";
+}
+function kiNum(v, digits){ return Number(v).toFixed(digits===undefined?2:digits).replace(".", ","); }
+function kiPct(v){ return v===null||v===undefined||!isFinite(v) ? "–" : kiNum(v,1)+" %"; }
+function kiR(v){ return v===null||v===undefined||!isFinite(v) ? "–" : formatR(v); }
+function kiEur(v){ return v===null||v===undefined||!isFinite(v) ? "–" : formatEUR(v); }
+function kiDate(iso){
+  if(!iso) return "ohne Datum";
+  const d = new Date(iso+"T00:00:00");
+  if(isNaN(d)) return iso;
+  return KI_WEEKDAYS[(d.getDay()+6)%7] + " " + d.toLocaleDateString("de-DE", {day:"2-digit", month:"2-digit", year:"numeric"});
+}
+function kiVal(v){
+  if(Array.isArray(v)) return v.length ? v.join(", ") : "–";
+  if(v===null || v===undefined || v==="") return "–";
+  if(v===true) return "Ja";
+  if(v===false) return "Nein";
+  return String(v);
+}
+function kiSortChron(trades){
+  return trades.slice().sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.createdAt||0)-(b.createdAt||0));
+}
+
+// Kompakte Gruppen-Kennzahlen (gleiche Hit-Rate-Definition wie überall: ohne Break-Even).
+function kiGroupStats(trades){
+  const closed = trades.filter(t=>t.r!==null && t.r!==undefined);
+  const w = closed.filter(t=>t.r>0).length;
+  const l = closed.filter(t=>t.r<0).length;
+  const be = closed.length - w - l;
+  const sumR = closed.reduce((a,t)=>a+t.r,0);
+  return { n: trades.length, closed: closed.length, w, l, be,
+    hit: (w+l) ? w/(w+l)*100 : null, sumR, avgR: closed.length ? sumR/closed.length : null };
+}
+function kiStatsRow(label, s){
+  return `| ${label} | ${s.n} | ${s.w}/${s.l}/${s.be} | ${kiPct(s.hit)} | ${kiR(s.sumR)} | ${kiR(s.avgR)} |`;
+}
+const KI_STATS_HEAD = "| Wert | Trades | W/L/BE | Hit Rate | Σ R | Ø R/Trade |\n|---|---|---|---|---|---|";
+
+// Aufschlüsselung nach einer Dimension; Mehrfachfelder (Level, Zeiteinheit …) zählen einen
+// Trade in jeder gewählten Ausprägung — das steht auch als Hinweis in der Datei.
+function kiBreakdown(trades, getVals){
+  const groups = {};
+  trades.forEach(t=>{
+    let vals = getVals(t);
+    if(!Array.isArray(vals)) vals = [vals];
+    vals = vals.filter(v=>v!==null && v!==undefined && v!=="");
+    if(!vals.length) vals = ["(leer)"];
+    vals.forEach(v=>{ (groups[v] = groups[v] || []).push(t); });
+  });
+  return Object.entries(groups)
+    .map(([k,arr])=>({ k, s: kiGroupStats(arr) }))
+    .sort((a,b)=> b.s.sumR - a.s.sumR);
+}
+function kiBreakdownTable(title, trades, getVals, note){
+  const rows = kiBreakdown(trades, getVals);
+  if(!rows.length) return "";
+  return `### ${title}\n${note ? "_"+note+"_\n" : ""}\n${KI_STATS_HEAD}\n${rows.map(r=>kiStatsRow(r.k, r.s)).join("\n")}\n`;
+}
+
+// Chart-Links eines Trades (nur echte URLs — Base64-Bilder werden bewusst weggelassen).
+function kiChartLinks(t){
+  const sh = t.screenshots || {};
+  const out = [];
+  [["htf","HTF"],["ltf","LTF"],["sonstige","Zusätzlich"]].forEach(([k,lbl])=>{
+    (sh[k]||[]).forEach(u=>{ if(typeof u === "string" && /^https?:\/\//i.test(u)) out.push(`${lbl}: ${u}`); });
+  });
+  return out;
+}
+
+// Ein Trade als Markdown-Block. `meta` liefert laufende Nummer, Kumulation, 20er-Position usw.
+function kiTradeBlock(t, meta){
+  const res = t.ergebnis ? `${t.ergebnis} ${kiR(t.r)}` : (t.r!==null && t.r!==undefined ? kiR(t.r) : "offen");
+  const head = `### ${meta.label} | ${kiDate(t.date)} | ${kiVal(t.markt)} ${t.richtung||""} | ${res}${meta.cum!==undefined ? ` (kumuliert ${kiR(meta.cum)})` : ""}`;
+  const lines = [head];
+  if(meta.info) lines.push(`- ${meta.info}`);
+  const cats = tradeCategoryColumns(t.area)
+    .filter(c=>c.key!=="genommen")
+    .map(c=>`${c.label}: ${kiVal(c.custom ? (t.customCategories||{})[c.key] : t[c.key])}`);
+  lines.push(`- ${cats.join(" | ")}`);
+  const money = [];
+  if(t.risikoProzent!==null && t.risikoProzent!==undefined) money.push(`Risiko: ${kiNum(t.risikoProzent)} %`);
+  if(t.eurResult!==null && t.eurResult!==undefined) money.push(`Ergebnis €: ${kiEur(t.eurResult)}`);
+  if(money.length) lines.push(`- ${money.join(" | ")}`);
+  if(t.area==="eod") lines.push(`- Setup genommen: ${kiVal(t.genommen)}${t.copiedFromLiveId ? " (Kopie eines Live-Trades)" : ""}`);
+  const texts = [
+    ["Kriterien – wieso nicht erfüllt", t.kriterienBegruendung],
+    ["Warum nicht genommen", t.grundNichtGenommen],
+    ["Wie ist der Trade entstanden", t.notizen],
+    ["Emotionen vor/nach dem Trade", t.emotionen],
+    ["Was besser machen", t.verbesserung]
+  ];
+  texts.forEach(([lbl,val])=>{
+    const q = kiQuote(val);
+    if(q) lines.push(`- **${lbl}:**\n${q}`);
+  });
+  const links = kiChartLinks(t);
+  if(links.length) lines.push(`- Chart-Links: ${links.join(" | ")}`);
+  return lines.join("\n");
+}
+
+function buildKiAnalyseExport(){
+  const acc = getCurrentAccount();
+  const all = accountTrades();
+  const live = kiSortChron(all.filter(t=>t.area==="live"));
+  const eod = kiSortChron(all.filter(t=>t.area==="eod"));
+  const other = kiSortChron(all.filter(t=>t.area!=="live" && t.area!=="eod"));
+  const today = todayISO();
+  const out = [];
+  const push = s => out.push(s);
+
+  // Laufende Nummer, 20er-Runde, Trade-Nr. des Tages, kumuliertes R — einmal berechnet,
+  // überall verwendet (Trade-Liste, Tagebuch, Folge-Analysen).
+  const liveMeta = new Map();
+  const perDay = {};
+  let cum = 0;
+  live.forEach((t,i)=>{
+    perDay[t.date] = (perDay[t.date]||0) + 1;
+    if(t.r!==null && t.r!==undefined) cum += t.r;
+    liveMeta.set(t.id, { nr: i+1, round: Math.floor(i/20)+1, pos: (i%20)+1, dayNr: perDay[t.date], cum });
+  });
+  const liveByDay = {};
+  live.forEach(t=>{ (liveByDay[t.date] = liveByDay[t.date] || []).push(t); });
+  const dayResultText = (date)=>{
+    const arr = liveByDay[date] || [];
+    if(!arr.length) return "keine Live-Trades";
+    const s = kiGroupStats(arr);
+    return `${arr.length} Live-Trade${arr.length===1?"":"s"}, ${kiR(s.sumR)} (${arr.map(t=>"#"+liveMeta.get(t.id).nr).join(", ")})`;
+  };
+
+  // ---------- Kopf + Auftrag ----------
+  push(`# JMB Trades – Datenpaket für eine KI-Analyse`);
+  push(`Exportiert am ${new Date().toLocaleString("de-DE")} aus dem Trading-Journal (Version ${APP_VERSION}).`);
+  push(`Konto: **${acc.name}**${acc.startCapital ? ` | Startkapital: ${kiEur(acc.startCapital).replace("+","")}` : ""} | Zeitraum: gesamte Historie${live.length ? ` (${kiDate(live[0].date)} bis ${kiDate(live[live.length-1].date)})` : ""}`);
+  push(`Umfang: ${live.length} Live-Trades, ${eod.length} EOD-Einträge, ${Object.keys(STATE.diaryEntries||{}).length} Mental-Tagebuchtage, ${(STATE.insights||[]).length} Erkenntnisse.`);
+  push(`
+## 0. Auftrag an die KI
+Du bist ein erfahrener Trading-Coach und quantitativer Analyst. Der Trader handelt diskretionär nach Smart-Money-/ICT-Konzepten (Zonen, Liquidität, Order Flow, Struktur). Werte die folgenden Daten aus, mit Schwerpunkt auf den **Live-Trades** (echtes Geld). Antworte auf Deutsch.
+
+**Regeln für die Auswertung**
+1. Die Kennzahlen und Aufschlüsselungen in Abschnitt 2 und 3 hat die App exakt berechnet. Übernimm sie, statt selbst nachzurechnen. Rechne nur dort selbst, wo etwas fehlt, und zeig dann kurz den Rechenweg.
+2. Hit Rate = Gewinner ÷ (Gewinner + Verlierer). Break-Even-Trades zählen weder als Gewinn noch als Verlust.
+3. R = Ergebnis als Vielfaches des eingesetzten Risikos (+2R = doppeltes Risiko gewonnen, −1R = voller Stop).
+4. Achte auf die Stichprobengröße: Gruppen mit weniger als ca. 15–20 Trades sind Tendenzen, keine Beweise. Kennzeichne das.
+5. Belege Aussagen mit Trade-Nummern (#) oder Datum.
+6. Prüfe die Regeltreue gegen das Regelwerk in Abschnitt 8. „Kriterien: Nicht erfüllt“ bedeutet: Trade wurde trotz nicht erfüllter Kriterien genommen.
+7. Sei direkt und ehrlich. Keine Schönfärberei, aber auch keine unbelegten Vermutungen.
+
+**Gewünschte Ausgabe**
+1. Kurzfazit (3–5 Sätze): Hat das System aktuell eine positive Erwartung? Wo steht der Trader?
+2. Edge: Welche Kombinationen (Markt, Session, Entry-Art, Trend, Level, Struktur …) tragen das Ergebnis?
+3. Leaks: Was kostet Geld? Regelverstöße, wiederkehrende Fehler, Muster in Notizen und Emotionen.
+4. Verhalten: Overtrading (Trade-Nr. des Tages), Verhalten nach Verlusten, Serien, Drawdown.
+5. Mental & Disziplin: Zusammenhang zwischen Tagebuch-Bewertungen, Tages-Checkliste und Tagesergebnis.
+6. Maßnahmen: höchstens 5, priorisiert, konkret und messbar (z. B. „Counter-Trades in der NY-Session streichen“).
+7. Fehlende Daten: Was sollte der Trader zusätzlich erfassen, damit die nächste Analyse besser wird?`);
+
+  // ---------- 1. Legende ----------
+  push(`
+## 1. Legende
+- **Live**: echte, ausgeführte Trades. **EOD**: End-of-Day-Review – nachträglich markierte Setups, auch nicht genommene (Feld „Setup genommen“).
+- **Kriterien**: „Erfüllt“ = Setup entsprach dem Regelwerk, „Nicht erfüllt“ = trotzdem genommen.
+- **Trend**: „pro“ = mit dem übergeordneten Order Flow, „Counter“ = dagegen. **Level**: die im Regelwerk definierten Level (32er, 50er, 71er, „passiv“), siehe Abschnitt 8.
+- **20er-Runden**: Der Trader wertet Live-Trades in Runden zu je 20 Trades aus (20-Trade-Challenge).
+- **Mental-Tagebuch**: pro Tag vier Fragen mit Text und Regler 0–10 (5 = neutral und zugleich Standardwert, falls nichts verstellt wurde).
+- Verfügbare Auswahlwerte: ${CATEGORY_META.map(m=>`${categoryLabel(m.field, m.label)} = ${(STATE.config[m.cfgKey]||[]).join(" / ")}`).join("; ")}.`);
+
+  // ---------- 2. Kennzahlen ----------
+  const s = challengeStats(live);
+  push(`
+## 2. Kennzahlen Live (gesamt)
+| Kennzahl | Wert |
+|---|---|
+| Trades gesamt / geschlossen / offen | ${s.n} / ${s.closedCount} / ${s.n - s.closedCount} |
+| Gewinner / Verlierer / Break-Even | ${s.winnersCount} / ${s.losersCount} / ${s.closedCount - s.winnersCount - s.losersCount} |
+| Hit Rate (ohne BE) | ${kiPct(s.closedCount ? s.hitRate : null)} |
+| Summe R | ${kiR(s.totalR)} |
+| Ø Gewinn / Ø Verlust (R) | ${kiR(s.avgWinR)} / ${s.avgLossR===null ? "–" : kiR(-s.avgLossR)} |
+| Erwartungswert pro Trade | ${kiR(s.expectancyR)} |
+| Payoff-Ratio (Ø Gewinn ÷ Ø Verlust) | ${s.payoffRatio===null ? "–" : kiNum(s.payoffRatio)} |
+| Nötige Hit Rate für Break-Even | ${kiPct(s.beWinRate)} |
+| SQN (Van Tharp) | ${s.sqn===null ? "–" : kiNum(s.sqn)} |
+| Max. Drawdown (R) | ${kiNum(s.maxDDR)}R |
+| Längste Gewinn- / Verlustserie | ${s.maxWinStreak} / ${s.maxLossStreak} |
+| Kriterien erfüllt / nicht erfüllt | ${s.disciplinedCount} / ${s.undisciplinedCount} |
+| Summe € | ${kiEur(s.totalEur)} |
+| Profit-Faktor € | ${s.profitFactorEur===null ? "–" : (s.profitFactorEur===Infinity ? "∞ (keine Verluste)" : kiNum(s.profitFactorEur))} |
+| Max. Drawdown € | ${s.maxDDEur===null ? "– (nicht bei allen Trades € erfasst)" : kiEur(-s.maxDDEur)} |`);
+
+  // ---------- 3. Aufschlüsselungen ----------
+  push(`\n## 3. Aufschlüsselungen Live\n_Sortiert nach Σ R. Bei Mehrfachfeldern zählt ein Trade in jeder gewählten Ausprägung mit. Offene Trades zählen bei „Trades“ mit, aber nicht bei W/L/BE._\n`);
+  getFilterDimensions().forEach(dim=>{
+    push(kiBreakdownTable(dim.label, live, t=>filterDimValue(t, dim), dim.multi ? "Mehrfachauswahl" : ""));
+  });
+  push(kiBreakdownTable("Wochentag", live, t=> t.date ? KI_WEEKDAYS[(new Date(t.date+"T00:00:00").getDay()+6)%7] : null));
+  push(kiBreakdownTable("Monat", live, t=> t.date ? t.date.slice(0,7) : null));
+  push(kiBreakdownTable("Markt × Richtung", live, t=> t.markt ? `${t.markt} ${t.richtung||"?"}` : null));
+  push(kiBreakdownTable("Session × Entry-Art", live, t=> (t.session||t.art) ? `${t.session||"?"} / ${t.art||"?"}` : null));
+  push(kiBreakdownTable("Trend × Kriterien", live, t=> (t.trend||t.kriterien) ? `${t.trend||"?"} / ${t.kriterien||"?"}` : null));
+  push(kiBreakdownTable("Trade-Nr. am selben Tag", live, t=>{ const n = liveMeta.get(t.id).dayNr; return n>=3 ? "3. Trade oder später" : n+". Trade des Tages"; }, "Hinweis auf Overtrading"));
+  // Ergebnis des jeweils nächsten Trades nach Gewinn/Verlust/BE — Tilt- bzw. Revenge-Indikator.
+  push(kiBreakdownTable("Trade direkt nach …", live.slice(1), t=>{
+    const prev = live[live.indexOf(t)-1];
+    if(prev.r===null || prev.r===undefined) return "nach offenem Trade";
+    const sameDay = prev.date===t.date ? " (gleicher Tag)" : " (anderer Tag)";
+    return (prev.r>0 ? "nach Gewinn" : prev.r<0 ? "nach Verlust" : "nach Break-Even") + sameDay;
+  }, "Zeigt, ob sich das Verhalten nach Verlusten ändert"));
+
+  // ---------- 4. 20er-Runden ----------
+  if(live.length){
+    push(`\n## 4. 20er-Runden (20-Trade-Challenge)\n| Runde | Trades | Zeitraum | W/L/BE | Hit Rate | Σ R | Max. DD (R) | Kriterien nicht erfüllt |\n|---|---|---|---|---|---|---|---|`);
+    for(let i=0; i<live.length; i+=20){
+      const chunk = live.slice(i, i+20);
+      const cs = challengeStats(chunk);
+      push(`| ${i/20+1}${chunk.length<20 ? " (läuft)" : ""} | ${chunk.length} | ${kiDate(chunk[0].date)} – ${kiDate(chunk[chunk.length-1].date)} | ${cs.winnersCount}/${cs.losersCount}/${cs.closedCount-cs.winnersCount-cs.losersCount} | ${kiPct(cs.closedCount ? cs.hitRate : null)} | ${kiR(cs.totalR)} | ${kiNum(cs.maxDDR)}R | ${cs.undisciplinedCount} |`);
+    }
+  }
+
+  // ---------- 5. Live-Trades einzeln ----------
+  push(`\n## 5. Alle Live-Trades (chronologisch)`);
+  if(!live.length) push(`_Keine Live-Trades vorhanden._`);
+  live.forEach(t=>{
+    const m = liveMeta.get(t.id);
+    push("\n" + kiTradeBlock(t, { label:"#"+m.nr, cum:m.cum, info:`Runde ${m.round}, Trade ${m.pos}/20 | ${m.dayNr}. Trade des Tages` }));
+  });
+
+  // ---------- 6. Mental-Tagebuch ----------
+  const diaryDates = Object.keys(STATE.diaryEntries||{}).sort()
+    .filter(d=> diaryEntryHasContent(normalizeDiaryEntry(STATE.diaryEntries[d])));
+  push(`\n## 6. Mental-Tagebuch (mit Tagesergebnis)`);
+  push(`Fragen: ${DIARY_FIELDS.map(f=>`**${f.label}** – ${f.question} (Regler: ${f.scaleQuestion})`).join(" ")}`);
+  if(diaryDates.length){
+    // Tagesergebnis je Bewertungsstufe — nur Tage mit Tagebuch UND Live-Trades.
+    const overlapDays = diaryDates.filter(d=>liveByDay[d]);
+    push(`\n### Tagesergebnis nach Tagebuch-Bewertung\n_Nur Tage mit Tagebucheintrag und mindestens einem Live-Trade. Stufen: niedrig 0–4, neutral 5–6, hoch 7–10._`);
+    if(!overlapDays.length) push(`_Noch keine Tage mit Tagebucheintrag und Live-Trade._`);
+    else push(`\n| Frage | Stufe | Tage | Trades | Σ R | Ø R/Tag |\n|---|---|---|---|---|---|`);
+    if(overlapDays.length) DIARY_FIELDS.forEach(f=>{
+      const buckets = { "niedrig":[], "neutral":[], "hoch":[] };
+      diaryDates.forEach(d=>{
+        if(!liveByDay[d]) return;
+        const v = normalizeDiaryEntry(STATE.diaryEntries[d]).ratings[f.key];
+        buckets[v<=4 ? "niedrig" : v<=6 ? "neutral" : "hoch"].push(d);
+      });
+      Object.entries(buckets).forEach(([b,days])=>{
+        if(!days.length) return;
+        const trades = days.flatMap(d=>liveByDay[d]);
+        const gs = kiGroupStats(trades);
+        push(`| ${f.label} | ${b} | ${days.length} | ${trades.length} | ${kiR(gs.sumR)} | ${kiR(gs.sumR/days.length)} |`);
+      });
+    });
+    push(`\n### Einträge`);
+    diaryDates.forEach(d=>{
+      const e = normalizeDiaryEntry(STATE.diaryEntries[d]);
+      push(`\n#### ${kiDate(d)} – ${dayResultText(d)}`);
+      push(`Bewertungen: ${DIARY_FIELDS.map(f=>`${f.label} ${e.ratings[f.key]}/10`).join(" | ")}`);
+      DIARY_FIELDS.forEach(f=>{ const q = kiQuote(e[f.key]); if(q) push(`**${f.label}:**\n${q}`); });
+    });
+  }else push(`_Keine Tagebucheinträge._`);
+
+  // Wochen-Auswertungen (Freitext je Mo–So-Woche) — Key = Jahr-Monat(0-basiert)-Wochenindex.
+  const evalKeys = Object.keys(STATE.mentalWeekEvaluations||{}).filter(k=>kiHtmlToText(STATE.mentalWeekEvaluations[k]));
+  if(evalKeys.length){
+    push(`\n### Wochen-Auswertungen (vom Trader geschrieben)`);
+    evalKeys.map(k=>{
+      const [y,mo,wi] = k.split("-").map(Number);
+      const days = (monthMondaySundayWeeks(y, mo)[wi]) || [];
+      const from = days.length ? isoFromDate(days[0]) : "";
+      return { k, from, to: days.length ? isoFromDate(days[6]) : "" };
+    }).sort((a,b)=>a.from.localeCompare(b.from)).forEach(w=>{
+      const wTrades = live.filter(t=>t.date>=w.from && t.date<=w.to);
+      push(`\n#### Woche ${kiDate(w.from)} – ${kiDate(w.to)} (${wTrades.length} Live-Trades, ${kiR(kiGroupStats(wTrades).sumR)})\n${kiQuote(STATE.mentalWeekEvaluations[w.k])}`);
+    });
+  }
+
+  // ---------- 7. Tages-Checkliste ----------
+  const checkDates = Object.keys(STATE.dailyCheckHistory||{}).sort()
+    .filter(d=> ALL_DAILY_CHECK_ITEMS.some(it=>STATE.dailyCheckHistory[d][it.key]));
+  push(`\n## 7. Tages-Checkliste (Disziplin)`);
+  const score = typeof computeDisciplineScore === "function" ? computeDisciplineScore() : null;
+  if(score!==null && score!==undefined) push(`Aktueller Disziplin-Score der App: ${score}/100.`);
+  if(checkDates.length){
+    const full = [], partial = [];
+    checkDates.forEach(d=>{
+      if(!liveByDay[d]) return;
+      (ALL_DAILY_CHECK_ITEMS.every(it=>STATE.dailyCheckHistory[d][it.key]) ? full : partial).push(d);
+    });
+    const line = (lbl, days)=>{ const tr = days.flatMap(d=>liveByDay[d]); return `| ${lbl} | ${days.length} | ${tr.length} | ${kiR(kiGroupStats(tr).sumR)} | ${days.length ? kiR(kiGroupStats(tr).sumR/days.length) : "–"} |`; };
+    if(full.length || partial.length) push(`\n_Nur Tage mit Live-Trades:_\n\n| Checkliste | Tage | Trades | Σ R | Ø R/Tag |\n|---|---|---|---|---|\n${line("alle "+ALL_DAILY_CHECK_ITEMS.length+" Punkte erledigt", full)}\n${line("unvollständig", partial)}`);
+    push(`\n| Datum | ${ALL_DAILY_CHECK_ITEMS.map(it=>it.label).join(" | ")} | Live-Ergebnis |\n|---|${ALL_DAILY_CHECK_ITEMS.map(()=>"---").join("|")}|---|`);
+    checkDates.forEach(d=>{
+      const rec = STATE.dailyCheckHistory[d];
+      push(`| ${kiDate(d)} | ${ALL_DAILY_CHECK_ITEMS.map(it=>rec[it.key] ? "✓" : "–").join(" | ")} | ${liveByDay[d] ? kiR(kiGroupStats(liveByDay[d]).sumR) : "–"} |`);
+    });
+  }else push(`_Keine Checklisten-Historie._`);
+
+  // ---------- 8. Regelwerk ----------
+  push(`\n## 8. Regelwerk des Traders`);
+  ENTRY_MODEL_LIST.forEach(e=>{
+    push(`\n### Entry-Modell: ${e.name}\nKurz-Kriterien:\n${(e.criteria||[]).map(c=>"- "+kiHtmlToText(c)).join("\n")}\n\n${kiHtmlToText(e.bodyHtml)}`);
+  });
+  try{
+    const dh = kiHtmlToText(denkhilfeBodyHtml());
+    if(dh) push(`\n### Denkhilfe\n${dh}`);
+  }catch(err){ /* Denkhilfe optional */ }
+  try{
+    const doc = new DOMParser().parseFromString(renderStrategie(), "text/html");
+    const cs = doc.getElementById("strat-cheatsheet");
+    if(cs) push(`\n### Cheat Sheet / Playbook\n${kiHtmlToText(cs.innerHTML)}`);
+  }catch(err){ /* Cheat Sheet optional */ }
+
+  // ---------- 9. Erkenntnisse ----------
+  const insights = (STATE.insights||[]).slice().sort((a,b)=>(a.date||"").localeCompare(b.date||""));
+  if(insights.length){
+    push(`\n## 9. Erkenntnisse (Markt-/System-Learnings)`);
+    insights.forEach(i=> push(`\n#### ${kiDate(i.date)}${i.titel ? " – "+i.titel : ""}\n${kiQuote(i.text) || "_ohne Text_"}`));
+  }
+
+  // ---------- 10. EOD + weitere Bereiche ----------
+  if(eod.length){
+    const taken = eod.filter(t=>t.genommen===true), skipped = eod.filter(t=>t.genommen===false);
+    push(`\n## 10. EOD-Reviews\nGenommen: ${taken.length} (${kiR(kiGroupStats(taken).sumR)}) | Nicht genommen: ${skipped.length} (hypothetisch ${kiR(kiGroupStats(skipped).sumR)}) | ohne Angabe: ${eod.length-taken.length-skipped.length}`);
+    push(kiBreakdownTable("Nicht genommene Setups nach Grund", skipped, t=> kiHtmlToText(t.grundNichtGenommen).slice(0,80) || null));
+    eod.forEach((t,i)=> push("\n" + kiTradeBlock(t, { label:"EOD-"+(i+1) })));
+  }
+  if(other.length){
+    push(`\n## 10b. Weitere Einträge (Bereich ${AREA_LABEL[other[0].area] || other[0].area})`);
+    other.forEach((t,i)=> push("\n" + kiTradeBlock(t, { label:(AREA_LABEL[t.area]||t.area)+"-"+(i+1) })));
+  }
+
+  // ---------- 11. Markt-Bias ----------
+  const biasKeys = Object.keys(STATE.analyseEntries||{});
+  if(biasKeys.length){
+    push(`\n## 11. Aktueller Markt-Bias (Live → Analyse)\n| Markt | ${ANALYSE_FIELDS.map(f=>analyseLabel(f.key)).join(" | ")} | Stand |\n|---|${ANALYSE_FIELDS.map(()=>"---").join("|")}|---|`);
+    biasKeys.forEach(k=>{
+      const e = STATE.analyseEntries[k] || {};
+      push(`| ${k} | ${ANALYSE_FIELDS.map(f=>kiVal(e[f.key]).replace(/\|/g,"/")).join(" | ")} | ${e.updatedAt ? new Date(e.updatedAt).toLocaleDateString("de-DE") : "–"} |`);
+    });
+  }
+
+  // ---------- 12. News ----------
+  const news = (STATE.news||[]).filter(n=>n && n.date && n.date<=today).sort((a,b)=>(a.date+(a.time||"")).localeCompare(b.date+(b.time||"")));
+  if(news.length){
+    push(`\n## 12. Eingetragene Wirtschafts-News (bis heute)\n_Zum Abgleich, ob Trades an News-Tagen anders laufen._\n\n| Datum | Zeit | Land | Impact | Titel | Live-Ergebnis am Tag |\n|---|---|---|---|---|---|`);
+    news.forEach(n=> push(`| ${kiDate(n.date)} | ${n.time||"–"} | ${n.country||"–"} | ${kiVal(n.impact)} | ${String(n.title||"").replace(/\|/g,"/")} | ${liveByDay[n.date] ? kiR(kiGroupStats(liveByDay[n.date]).sumR) : "–"} |`));
+  }
+
+  push(`\n---\n_Ende des Datenpakets._`);
+  return out.filter(Boolean).join("\n");
+}
+
+function exportKiAnalyse(){
+  const liveCount = accountTrades().filter(t=>t.area==="live").length;
+  if(!liveCount){ toast("Keine Live-Trades zum Exportieren."); return; }
+  try{
+    const md = buildKiAnalyseExport();
+    downloadBlob(md, `ki-analyse-${todayISO()}.md`, "text/markdown;charset=utf-8;");
+    toast("KI-Analyse exportiert.");
+  }catch(err){
+    console.error("KI-Export fehlgeschlagen:", err);
+    toast("KI-Export fehlgeschlagen — Details in der Konsole.", null, null, { duration: 6000, error: true });
+  }
 }
 
 function importJson(e){
@@ -12204,7 +12749,26 @@ function renderZiele(){
 }
 
 function renderErkenntnisse(){
+  return `
+    <div class="page-head">
+      <h1>Erkenntnisse</h1>
+      <p>Learnings aus dem Markt — mit eigener Notiz und optionalem Screenshot festhalten.</p>
+    </div>
 
+    <div class="row-between">
+      <div style="color:var(--text-dim); font-size:13.5px;">${STATE.insights.length} Erkenntnis${STATE.insights.length===1?"":"se"}</div>
+      <button class="btn btn-primary" id="btnAddInsight">+ Erkenntnis hinzufügen</button>
+    </div>
+
+    <div id="insightCloudPanel">${insightCloudPanelHtml()}</div>
+
+    <div id="insightListContainer">${insightListHtml(STATE.insights, STATE.insightSearchQuery)}</div>
+  `;
+}
+
+// Sucheingabe + Wortwolke, in einem eigenen Container (siehe refreshInsightCloudPanel) —
+// Begriffe ausblenden/zusammenführen wirkt sich nur auf die Wolke aus, nicht auf die Liste.
+function insightCloudPanelHtml(){
   const cloudBlock = wordCloudBlockHtml({
     items: STATE.insights,
     getText: i=>i.text,
@@ -12225,26 +12789,20 @@ function renderErkenntnisse(){
     wordMenuOpen: STATE.insightWordMenuOpen,
     emptyMsg: "Noch nicht genug Erkenntnisse für wiederkehrende Themen (ein Begriff muss in mind. 2 Erkenntnissen vorkommen)."
   });
-
   return `
-    <div class="page-head">
-      <h1>Erkenntnisse</h1>
-      <p>Learnings aus dem Markt — mit eigener Notiz und optionalem Screenshot festhalten.</p>
-    </div>
-
-    <div class="row-between">
-      <div style="color:var(--text-dim); font-size:13.5px;">${STATE.insights.length} Erkenntnis${STATE.insights.length===1?"":"se"}</div>
-      <button class="btn btn-primary" id="btnAddInsight">+ Erkenntnis hinzufügen</button>
-    </div>
-
     <div class="panel" style="margin-bottom:22px;">
       <input type="text" id="insightSearchInput" placeholder="Erkenntnisse durchsuchen…" value="${escAttr(STATE.insightSearchQuery||"")}">
       <div style="color:var(--text-faint); font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:.5px; margin:14px 0 8px;">Wiederkehrende Themen</div>
       ${cloudBlock}
-    </div>
+    </div>`;
+}
 
-    <div id="insightListContainer">${insightListHtml(STATE.insights, STATE.insightSearchQuery)}</div>
-  `;
+// Bewusst KEIN render() — nur die Wortwolke lokal neu aufbauen (siehe wireInsightCloudPanel).
+function refreshInsightCloudPanel(){
+  const el = document.getElementById("insightCloudPanel");
+  if(!el) return;
+  el.innerHTML = insightCloudPanelHtml();
+  wireInsightCloudPanel();
 }
 
 function insightListHtml(insights, query){
@@ -12278,29 +12836,39 @@ function insightListHtml(insights, query){
 
 function wireErkenntnisse(){
   document.getElementById("btnAddInsight").addEventListener("click", ()=> openInsightModal(null));
+  wireInsightCloudPanel();
+  wireInsightListClicks();
+}
 
+// Verkabelt #insightCloudPanel (Suche, Wort-Chips, Ausblenden/Zusammenführen) — eigenständig
+// aufrufbar, damit refreshInsightCloudPanel() nach einem lokalen Rebuild erneut verkabeln kann.
+function wireInsightCloudPanel(){
   const searchInput = document.getElementById("insightSearchInput");
+  const refreshList = ()=>{
+    const container = document.getElementById("insightListContainer");
+    if(container) container.innerHTML = insightListHtml(STATE.insights, STATE.insightSearchQuery);
+    wireInsightListClicks();
+  };
   if(searchInput){
     searchInput.addEventListener("input",(e)=>{
       STATE.insightSearchQuery = e.target.value;
-      const container = document.getElementById("insightListContainer");
-      if(container) container.innerHTML = insightListHtml(STATE.insights, STATE.insightSearchQuery);
-      wireInsightListClicks();
+      refreshList();
     });
   }
   document.querySelectorAll("[data-insightword]").forEach(chip=>{
     chip.addEventListener("click", ()=>{
       STATE.insightSearchQuery = chip.dataset.insightword;
-      render();
+      // Wie die Sucheingabe: nur die Ergebnisliste aktualisieren, kein render().
+      if(searchInput) searchInput.value = STATE.insightSearchQuery;
+      refreshList();
     });
   });
   wireWordCloudEvents({
     hideAttr: "hideinsightword", restoreAttr: "restoreinsightword", dissolveAttr: "dissolveinsightgroup",
     mergeToggleAttr: "toggleinsightmerge", mergeSelectAttr: "selectinsightword",
     mergeConfirmAttr: "confirminsightmerge", mergeCancelAttr: "cancelinsightmerge",
-    scope: "insights", hiddenArrayKey: "hiddenInsightWords", groupsArrayKey: "insightWordGroups", onChange: render
+    scope: "insights", hiddenArrayKey: "hiddenInsightWords", groupsArrayKey: "insightWordGroups", onChange: refreshInsightCloudPanel
   });
-  wireInsightListClicks();
 }
 
 function wireInsightListClicks(){
