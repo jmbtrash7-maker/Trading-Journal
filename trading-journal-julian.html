@@ -1220,6 +1220,7 @@
   .area-toggle button[data-area=live].on{background:var(--green); border-color:var(--green);}
   .area-toggle button[data-area=backtest].on{background:var(--violet); border-color:var(--violet); color:#1a1330;}
   .area-toggle button[data-area=eod].on{background:var(--amber); border-color:var(--amber);}
+  .area-toggle button[data-mode20].on{background:var(--cyan); border-color:var(--cyan);}
 
   .equity-card{background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius); padding:18px; margin-bottom:26px;}
 
@@ -1255,6 +1256,19 @@
   .compare-table td:first-child{font-family:var(--font); color:var(--text-dim); font-size:13px;}
   .compare-table tr:last-child td{border-bottom:none;}
   .compare-rings{display:flex; flex-direction:column; gap:16px;}
+  /* Bericht → "20 Trades": Runden-Auswahl + Gegenüberstellungstabelle */
+  .cmp20-picker{margin-bottom:14px;}
+  .cmp20-picker-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
+  .cmp20-picker-hint{color:var(--text-dim); font-size:12.5px;}
+  .cmp20-chip{display:inline-flex; flex-direction:column; align-items:flex-start; gap:2px; line-height:1.2;}
+  .cmp20-chip-sub{font-size:11px; font-weight:500; opacity:.7;}
+  .cmp20-scroll{overflow-x:auto; margin-bottom:10px;}
+  .cmp20-scroll .compare-table{min-width:520px;}
+  .cmp20-scroll .compare-table th, .cmp20-scroll .compare-table td{white-space:nowrap;}
+  .cmp20-best{font-weight:800;}
+  .cmp20-delta{border-left:1px solid var(--border-light);}
+  .cmp20-note{color:var(--text-faint); font-size:12px; margin:10px 0 20px;}
+  .cmp20-note-filter{color:var(--amber);}
   .compare-ring-item{background:var(--bg-panel); border:1px solid var(--border); border-radius:var(--radius); padding:16px; text-align:center;}
   .compare-ring-label{margin-top:10px; font-weight:700; font-size:13px; display:flex; align-items:center; justify-content:center; gap:6px;}
   .compare-ring-sub{color:var(--text-dim); font-size:12px; margin-top:4px;}
@@ -2335,7 +2349,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.22a";
+const APP_VERSION = "2026.09.23a";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -2901,6 +2915,8 @@ const STATE = {
   breakdownDim: "markt",
   berichtFiltersExpanded: true,
   berichtCompareMode: "gesamt", // "gesamt" | "vergleich" (nur bei Live+EOD gleichzeitig aktiv)
+  bericht20: false,          // Bericht-Modus "20 Trades": Gegenüberstellung der 20er-Runden statt Live/EOD
+  bericht20Rounds: null,     // gewählte Runden (1-basiert); null = Standard (die letzten zwei Runden)
   notesSearchQuery: "",
   // Datums-Unterkategorien pro Bereich: "alles" | "monat" | "woche" | "heute"
   areaDateFilter: { live:"alles", backtest:"alles", eod:"alles" },
@@ -3733,7 +3749,9 @@ function closeEntryModelDetail(){
 // exakt die Trades erscheinen, die in die Kartenzahlen oben eingeflossen sind.
 function computeEntryModelDetail(artKey){
   const activeAreas = Object.keys(STATE.berichtAreas).filter(a=>STATE.berichtAreas[a]);
-  const trades = accountTrades().filter(t=> activeAreas.includes(t.area) && t.art===artKey)
+  // Im "20 Trades"-Modus exakt dieselbe Trade-Basis wie die Kartenzahlen (gewählte Runden)
+  const base = STATE.bericht20 ? challenge20SelectedTrades() : accountTrades().filter(t=> activeAreas.includes(t.area));
+  const trades = base.filter(t=> t.art===artKey)
     .sort((a,b)=> (b.date||"").localeCompare(a.date||"") || (b.createdAt||0)-(a.createdAt||0));
   const stats = computeStats(trades);
   const marketMap = {};
@@ -9093,6 +9111,193 @@ function compareRingHtml(label, color, stats){
   </div>`;
 }
 
+/* ---------- Bericht → "20 Trades": 20er-Runden gegenüberstellen ----------
+   Runden = alle Live-Trades des Kontos chronologisch in Blöcken zu je 20 (identisch zur
+   Zählung von liveTradeCyclePositions()/20-Trade-Challenge). Die Bericht-Filter (Markt,
+   Session, Zeitraum …) ändern die Runden-Einteilung bewusst NICHT, sondern nur, welche
+   Trades innerhalb einer Runde in die Kennzahlen einfließen — so bleibt "Runde 3" immer
+   dieselbe Runde, egal welcher Markt gerade ausgeblendet ist. */
+const CMP20_COLORS = ["#8d94a6", "#31d0a8", "#8b7bff", "#f5b544", "#22d3ee", "#f5537a", "#f87171"];
+
+function challengeRoundsAll(){
+  const chron = accountTrades().filter(t=>t.area==="live").slice()
+    .sort((a,b)=> (a.date||"").localeCompare(b.date||"") || (a.createdAt||0)-(b.createdAt||0));
+  const rounds = [];
+  for(let i=0; i<chron.length; i+=20){
+    const tr = chron.slice(i, i+20);
+    rounds.push({ idx: i/20+1, trades: tr, complete: tr.length===20 });
+  }
+  return rounds;
+}
+// Gewählte Runden (aufsteigend). Standard = die letzten zwei Runden; ungültige (z. B. nach
+// Kontowechsel) werden verworfen und fallen auf den Standard zurück.
+function challenge20SelectedIdx(rounds){
+  if(!rounds.length) return [];
+  let sel = (STATE.bericht20Rounds||[]).filter(n=> n>=1 && n<=rounds.length);
+  if(!sel.length) sel = rounds.slice(-2).map(r=>r.idx);
+  return sel.slice().sort((a,b)=>a-b);
+}
+function challenge20RoundTrades(round){ return round.trades.filter(matchesBerichtFilters); }
+function challenge20SelectedTrades(){
+  const rounds = challengeRoundsAll();
+  return challenge20SelectedIdx(rounds).flatMap(idx=> challenge20RoundTrades(rounds[idx-1]));
+}
+function challenge20FiltersActive(){
+  if(STATE.berichtDateFrom || STATE.berichtDateTo) return true;
+  return getFilterDimensions().some(dim=>{ const s = STATE.berichtFilters[dim.key]; return s && s.length; });
+}
+
+function challenge20SectionHtml(){
+  const rounds = challengeRoundsAll();
+  if(!rounds.length){
+    return `<div class="panel" style="text-align:center; color:var(--text-dim); font-size:13.5px; padding:30px 20px; margin-bottom:20px;">Noch keine Live-Trades. Sobald du Live-Trades einträgst, entstehen hier automatisch 20er-Runden zum Vergleichen.</div>`;
+  }
+  const sel = challenge20SelectedIdx(rounds);
+  const dateRange = r=>{
+    const first = r.trades[0], last = r.trades[r.trades.length-1];
+    return `${formatDateShort(first.date)}–${formatDateShort(last.date)}${r.complete ? "" : ` · läuft ${r.trades.length}/20`}`;
+  };
+  const chips = rounds.map(r=>`
+    <button type="button" class="chip cmp20-chip ${sel.includes(r.idx)?"selected":""}" data-round20="${r.idx}">
+      Runde ${r.idx}<span class="cmp20-chip-sub">${dateRange(r)}</span>
+    </button>`).join("");
+
+  // Kennzahlen je gewählter Runde — challengeStats() erwartet chronologisch sortierte Trades
+  const cols = sel.map((idx,i)=>{
+    const s = challengeStats(challenge20RoundTrades(rounds[idx-1]));
+    return { idx, s, color: CMP20_COLORS[i % CMP20_COLORS.length] };
+  });
+  const hasEur = cols.some(c=> c.s.totalEur!==null);
+  const none = `<span style="color:var(--text-faint);">—</span>`;
+  const fmtPct = v=> v.toFixed(1).replace(".", ",") + " %";
+  const rCls = v=> v>0 ? "pos" : (v<0 ? "neg" : "");
+  // better: "high" = höher ist besser, "low" = niedriger ist besser, null = kein Vergleich
+  const rows = [
+    { label:"Trades (geschlossen)", get:s=>s.n, show:s=>`${s.n} <span style="color:var(--text-faint); font-size:11.5px;">(${s.closedCount})</span>`, better:null, kind:"n" },
+    { label:"Gewinner / Verlierer / BE", get:()=>null, show:s=>`${s.winnersCount} / ${s.losersCount} / ${s.closedCount - s.winnersCount - s.losersCount}`, better:null },
+    { label:"Hit Rate (ohne BE)", get:s=> (s.winnersCount+s.losersCount) ? s.hitRate : null, show:v=>fmtPct(v), better:"high", kind:"pct" },
+    { label:"Summe", get:s=> s.closedCount ? s.totalR : null, show:v=>`<span class="${rCls(v)}">${formatR(v)}</span>`, better:"high", kind:"r" },
+    { label:"Erwartungswert je Trade", get:s=> s.expectancyR, show:v=>`<span class="${rCls(v)}">${formatR(v)}</span>`, better:"high", kind:"r" },
+    { label:"Ø Gewinn", get:s=> s.avgWinR, show:v=>formatR(v), better:"high", kind:"r" },
+    { label:"Ø Verlust", get:s=> s.avgLossR===null ? null : -s.avgLossR, show:v=>formatR(v), better:"high", kind:"r" },
+    { label:"Payoff-Ratio", get:s=> (s.payoffRatio===null || !isFinite(s.payoffRatio)) ? null : s.payoffRatio, show:v=>rpDec(v), better:"high", kind:"f" },
+    { label:"Größter Rückgang", get:s=> s.closedCount ? -s.maxDDR : null, show:v=>formatR(v), better:"high", kind:"r" },
+    { label:"Längste Verlustserie", get:s=> s.closedCount ? s.maxLossStreak : null, show:v=>`${v} in Folge`, better:"low", kind:"n" },
+    { label:"Kriterien nicht erfüllt", get:s=> s.n ? s.undisciplinedCount : null, show:v=>String(v), better:"low", kind:"n" }
+  ];
+  if(hasEur) rows.push({ label:"Summe €", get:s=> s.totalEur, show:v=>`<span class="${rCls(v)}">${formatEUR(v)}</span>`, better:"high", kind:"eur" });
+
+  const fmtDelta = (d, kind)=>{
+    const sign = d>0 ? "+" : "";
+    if(kind==="r") return formatR(d);
+    if(kind==="pct") return sign + d.toFixed(1).replace(".", ",") + " %-P.";
+    if(kind==="eur") return formatEUR(d);
+    if(kind==="f") return sign + rpDec(d);
+    return sign + d;
+  };
+  const showDelta = cols.length >= 2;
+  const rowsHtml = rows.map(row=>{
+    const vals = cols.map(c=> row.get(c.s));
+    // Beste Runde je Zeile dezent hervorheben (nur bei mind. zwei vergleichbaren Werten)
+    const valid = vals.filter(v=> v!==null && v!==undefined);
+    let bestVal = null;
+    if(row.better && valid.length >= 2){
+      bestVal = row.better==="high" ? Math.max(...valid) : Math.min(...valid);
+      if(valid.every(v=> v===bestVal)) bestVal = null;
+    }
+    const cells = cols.map((c,i)=>{
+      const v = vals[i];
+      if(row.label==="Trades (geschlossen)" || row.label==="Gewinner / Verlierer / BE") return `<td>${row.show(c.s)}</td>`;
+      if(v===null || v===undefined) return `<td>${none}</td>`;
+      return `<td class="${bestVal!==null && v===bestVal ? "cmp20-best" : ""}">${row.show(v)}</td>`;
+    }).join("");
+    let deltaCell = "";
+    if(showDelta){
+      const a = vals[0], b = vals[vals.length-1];
+      if(!row.better || a===null || a===undefined || b===null || b===undefined){
+        deltaCell = `<td class="cmp20-delta">${row.better ? none : ""}</td>`;
+      }else{
+        const d = b - a;
+        const good = row.better==="high" ? d>0 : d<0;
+        const cls = Math.abs(d) < 1e-9 ? "" : (good ? "pos" : "neg");
+        deltaCell = `<td class="cmp20-delta"><span class="${cls}">${fmtDelta(Math.round(d*100)/100, row.kind)}</span></td>`;
+      }
+    }
+    return `<tr><td>${row.label}</td>${cells}${deltaCell}</tr>`;
+  }).join("");
+
+  const head = cols.map(c=>`<th><span style="display:inline-flex; align-items:center; gap:6px;"><span class="dot" style="background:${c.color}"></span>Runde ${c.idx}${rounds[c.idx-1].complete ? "" : " (läuft)"}</span></th>`).join("");
+  const deltaHead = showDelta ? `<th class="cmp20-delta">Δ Runde ${cols[0].idx} → ${cols[cols.length-1].idx}</th>` : "";
+
+  return `
+    <div class="panel cmp20-picker">
+      <div class="cmp20-picker-head">
+        <span class="cmp20-picker-hint">Runden zum Vergleichen wählen</span>
+        <span style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-sm btn-ghost" data-round20quick="last2">Letzte 2</button>
+          <button type="button" class="btn btn-sm btn-ghost" data-round20quick="all">Alle</button>
+        </span>
+      </div>
+      <div class="chip-group" id="cmp20Chips">${chips}</div>
+    </div>
+    <div class="cmp20-scroll">
+      <table class="compare-table">
+        <thead><tr><th></th>${head}${deltaHead}</tr></thead>
+        <tbody>${rowsHtml}</tbody>
+      </table>
+    </div>
+    <div class="cmp20-note">
+      Alles in R, nur Live-Trades. Fett = beste Runde je Zeile. Δ vergleicht die erste mit der letzten gewählten Runde, grün heißt besser geworden.
+      ${challenge20FiltersActive() ? `<br><span class="cmp20-note-filter">Filter aktiv: Die Runden bleiben gleich, gezählt werden nur die Trades, die zu den Filtern passen.</span>` : ""}
+    </div>
+  `;
+}
+
+// Chip-Auswahl der Runden — ersetzt nur den Bericht-Body (kein render(), siehe renderBericht()).
+function wireChallenge20Picker(){
+  const chips = document.getElementById("cmp20Chips");
+  if(!chips) return;
+  chips.addEventListener("click", (e)=>{
+    const btn = e.target.closest("button[data-round20]");
+    if(!btn) return;
+    const idx = parseInt(btn.dataset.round20, 10);
+    const sel = challenge20SelectedIdx(challengeRoundsAll());
+    const i = sel.indexOf(idx);
+    if(i>-1){
+      if(sel.length===1) return; // mindestens eine Runde bleibt gewählt
+      sel.splice(i,1);
+    }else sel.push(idx);
+    STATE.bericht20Rounds = sel;
+    refreshBerichtBody();
+  });
+  document.querySelectorAll("[data-round20quick]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const rounds = challengeRoundsAll();
+      STATE.bericht20Rounds = btn.dataset.round20quick==="all" ? rounds.map(r=>r.idx) : null;
+      refreshBerichtBody();
+    });
+  });
+}
+
+// Equity je Runde übereinander: X-Achse = Trade-Nummer innerhalb der Runde (Start, 1 … 20),
+// Farben identisch zu den Punkten im Tabellenkopf. Offene Trades zählen mit 0 R (wie challengeStats).
+function renderChallenge20Chart(canvas, wrap){
+  const rounds = challengeRoundsAll();
+  const sel = challenge20SelectedIdx(rounds);
+  const datasets = sel.map((idx,i)=>{
+    let eq = 0;
+    const data = [0].concat(challenge20RoundTrades(rounds[idx-1]).map(t=>{ eq += (t.r===null||t.r===undefined) ? 0 : t.r; return eq; }));
+    return { label:`Runde ${idx}`, data, color: CMP20_COLORS[i % CMP20_COLORS.length] };
+  }).filter(ds=> ds.data.length > 1);
+  if(!datasets.length){
+    if(wrap) wrap.innerHTML = `<div style="display:flex; align-items:center; justify-content:center; height:100%; color:var(--text-faint); font-size:12.5px;">Keine Trades in den gewählten Runden.</div>`;
+    return;
+  }
+  const maxLen = Math.max(...datasets.map(ds=>ds.data.length));
+  const labels = Array.from({length:maxLen}, (_,i)=> i===0 ? "Start" : String(i));
+  drawEquityChart(canvas, labels, datasets);
+}
+
 function compareSectionHtml(){
   const liveTrades = getBerichtFilteredTradesForArea("live");
   const eodTrades = getBerichtFilteredTradesForArea("eod");
@@ -9180,11 +9385,13 @@ function renderBericht(){
 }
 
 function berichtTopRowHtml(){
+  // Im "20 Trades"-Modus sind Live/EOD bewusst nicht als aktiv markiert — ein Klick darauf
+  // verlässt den Modus wieder (siehe wireBerichtTopRow), die Bereichsauswahl bleibt erhalten.
   const areaBtns = ["live","eod"].map(a=>{
-    const on = STATE.berichtAreas[a];
+    const on = !STATE.bericht20 && STATE.berichtAreas[a];
     return `<button data-area="${a}" class="${on?"on":""}">${AREA_LABEL[a]}</button>`;
-  }).join("");
-  const canCompare = STATE.berichtAreas.live && STATE.berichtAreas.eod;
+  }).join("") + `<button data-mode20="1" class="${STATE.bericht20?"on":""}" title="20er-Runden deiner Live-Trades gegenüberstellen">20 Trades</button>`;
+  const canCompare = !STATE.bericht20 && STATE.berichtAreas.live && STATE.berichtAreas.eod;
   const compareActive = canCompare && STATE.berichtCompareMode === "vergleich";
   return `
     <div class="row-between" id="berichtTopRow" style="align-items:flex-start;">
@@ -9222,15 +9429,15 @@ function filterPanelBodyHtml(){
 function berichtBodyHtml(){
   const filteredTrades = getBerichtFilteredTrades();
   const stats = computeStats(filteredTrades);
-  const canCompare = STATE.berichtAreas.live && STATE.berichtAreas.eod;
+  const canCompare = !STATE.bericht20 && STATE.berichtAreas.live && STATE.berichtAreas.eod;
   const compareActive = canCompare && STATE.berichtCompareMode === "vergleich";
 
   return `
-    ${compareActive ? compareSectionHtml() : reportSummaryHtml(stats, filteredTrades)}
+    ${STATE.bericht20 ? challenge20SectionHtml() : (compareActive ? compareSectionHtml() : reportSummaryHtml(stats, filteredTrades))}
 
     <div class="rp-pair">
       <div>
-        <div class="section-title">Equity-Kurve</div>
+        <div class="section-title">${STATE.bericht20 ? `Equity je Runde <span class="section-title-sub">· R über Trade 1–20</span>` : "Equity-Kurve"}</div>
         <div class="panel equity-card">
           <div class="chart-wrap" style="height:260px;"><canvas id="chart_equity"></canvas></div>
         </div>
@@ -9994,6 +10201,8 @@ function matchesBerichtFilters(t){
 }
 
 function getBerichtFilteredTrades(){
+  // "20 Trades"-Modus: genau die Live-Trades der gewählten Runden (Filter oben greifen innerhalb der Runden)
+  if(STATE.bericht20) return challenge20SelectedTrades();
   const activeAreas = Object.keys(STATE.berichtAreas).filter(a=>STATE.berichtAreas[a]);
   return accountTrades().filter(t=> activeAreas.includes(t.area) && matchesBerichtFilters(t));
 }
@@ -10002,6 +10211,7 @@ function getBerichtFilteredTrades(){
 // Live/Backtest/EOD-Umschalter. Wird für die Gegenüberstellung und die mehrfarbige
 // Equity-Kurve gebraucht, damit jede Linie/Spalte nur "ihre eigenen" Trades zeigt.
 function getBerichtFilteredTradesForArea(area){
+  if(STATE.bericht20) return area==="live" ? challenge20SelectedTrades() : [];
   return accountTrades().filter(t=> t.area===area && matchesBerichtFilters(t));
 }
 
@@ -10108,9 +10318,23 @@ function wireBericht(){
 
 function wireBerichtTopRow(){
   document.getElementById("areaToggle").addEventListener("click",(e)=>{
+    // "20 Trades" ist ein eigener Modus neben Live/EOD (kein Bereich): Umschalten per Klick.
+    if(e.target.closest("button[data-mode20]")){
+      STATE.bericht20 = !STATE.bericht20;
+      refreshBerichtTopRow();
+      refreshBerichtBody();
+      return;
+    }
     const btn = e.target.closest("button[data-area]");
     if(!btn) return;
     const a = btn.dataset.area;
+    // Aus dem "20 Trades"-Modus zurück: nur den Modus verlassen, Bereichsauswahl unverändert lassen.
+    if(STATE.bericht20){
+      STATE.bericht20 = false;
+      refreshBerichtTopRow();
+      refreshBerichtBody();
+      return;
+    }
     STATE.berichtAreas[a] = !STATE.berichtAreas[a];
     // Kann die Gegenüberstellung ein-/ausblenden (nur sichtbar wenn Live+EOD aktiv sind) —
     // deshalb Top-Reihe UND Body neu, aber beide bewusst lokal statt eines vollen render().
@@ -10161,6 +10385,7 @@ function wireBerichtFilterPanelBody(){
 
 function wireBerichtBody(){
   wireDriveSyncPanel();
+  wireChallenge20Picker();
 
   document.querySelectorAll("[data-openentrymodel]").forEach(el=>{
     el.addEventListener("click", ()=> openEntryModelDetail(el.dataset.openentrymodel));
@@ -10357,6 +10582,7 @@ function renderCharts(){
   const canvas = document.getElementById("chart_equity");
   if(!canvas) return;
   const wrap = canvas.closest(".chart-wrap");
+  if(STATE.bericht20){ renderChallenge20Chart(canvas, wrap); return; }
   const activeAreas = ["live","eod"].filter(a=>STATE.berichtAreas[a]);
 
   if(!activeAreas.length){
