@@ -18,6 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+<script>try{var t=localStorage.getItem("tj_theme_v1");if(t==="cream"||t==="burgundy"||t==="noir")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <style>
   :root{
     --bg:#080a10;
@@ -78,6 +79,176 @@
       radial-gradient(ellipse 900px 700px at 0% 70%, rgba(232,151,31,.034), transparent 60%),
       var(--bg);
   }
+  /* ---------- Creme-Design (Umschalter oben rechts, siehe applyTheme()) ----------
+     Überschreibt nur die Farb-Tokens + die wenigen fest eingefärbten dunklen Flächen.
+     Aktiv, sobald <html data-theme="cream"> gesetzt ist (wird schon im <head> gesetzt,
+     damit beim Laden kein dunkles Aufblitzen entsteht). Longhands statt background-
+     Kurzform, weil background-attachment:fixed + backdrop-filter die Kurzform in
+     manchen Browsern verwirft. */
+  html[data-theme="cream"]{
+    --bg:#f5efe3;
+    --bg-panel:#fffcf6;
+    --bg-card:#faf5ea;
+    --bg-card-hover:#f3ebdc;
+    --border:#e7ddcb;
+    --border-light:#d8cab2;
+    --text:#2b2620;
+    --text-dim:#6e665a;
+    --text-faint:#9d9383;
+    --green:#12936f;
+    --green-dim:#dcefe6;
+    --red:#d24b4b;
+    --red-dim:#f7e1dd;
+    --amber:#c1830f;
+    --amber-dim:#f5e8cc;
+    --violet:#5a48d8;
+    --violet-dim:#e8e4fa;
+    --cyan:#0b8aa0;
+    --cyan-dim:#dcf0f3;
+    --magenta:#cf3a60;
+    --magenta-dim:#f8dfe6;
+    --neon-grid: radial-gradient(circle, rgba(120,100,70,.16) 1px, transparent 1.4px);
+    color-scheme:light;
+  }
+  html[data-theme="cream"] body{
+    background-image:
+      radial-gradient(ellipse 900px 700px at 8% 15%, rgba(214,178,110,.10), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 92% 80%, rgba(90,72,216,.05), transparent 60%),
+      var(--neon-grid);
+    background-color:var(--bg);
+    background-size:auto, auto, 22px 22px;
+  }
+  html[data-theme="cream"] body.ziele-bg{
+    background-image:
+      radial-gradient(ellipse 1400px 620px at 50% 0px, rgba(240,179,74,.16), transparent 65%),
+      var(--neon-grid);
+    background-size:auto, 22px 22px;
+  }
+  html[data-theme="cream"] body::before{
+    background-image:linear-gradient(120deg, rgba(214,178,110,.06), rgba(90,72,216,.03), rgba(214,178,110,.06));
+  }
+  html[data-theme="cream"] input[type=date]{color-scheme:light;}
+  html[data-theme="cream"] header.topnav{background-color:rgba(250,245,234,.9);}
+  html[data-theme="cream"] .modal-backdrop{background-color:rgba(60,45,20,.35);}
+  html[data-theme="cream"] .panel,
+  html[data-theme="cream"] .stat-card{box-shadow:0 1px 2px rgba(60,45,20,.05), 0 8px 24px -18px rgba(60,45,20,.25);}
+  /* Weiß-auf-Dunkel-Elemente drehen: ausgewählte Chips/Tabs werden dunkel mit hellem Text */
+  html[data-theme="cream"] .chip.selected,
+  html[data-theme="cream"] .subtab.active,
+  html[data-theme="cream"] .market-chip-edit:hover{background:var(--text); border-color:var(--text); color:var(--bg-panel);}
+  html[data-theme="cream"] .area-toggle button.on{color:#fff;}
+  html[data-theme="cream"] .cal-selected{box-shadow:inset 0 0 0 2px var(--text);}
+  html[data-theme="cream"] .diary-field-question,
+  html[data-theme="cream"] .diary-scale-question{color:var(--text);}
+  html[data-theme="cream"] .badge-open{background:var(--amber-dim); border-color:#e6cf9c;}
+  html[data-theme="cream"] .badge-eod-copied{background:#e3eefa; color:#2f6fb8; border-color:#c3d8ef;}
+  html[data-theme="cream"] .sm-seg-out{background:#eee6d8;}
+  html[data-theme="cream"] .sm-seg-asia{background:#e6e1f6;}
+  html[data-theme="cream"] .sm-seg-london{background:#d9eee5;}
+  html[data-theme="cream"] .sm-seg-pause{background:#ece6da;}
+  html[data-theme="cream"] .sm-seg-frankfurt{background:#d8ebee;}
+  html[data-theme="cream"] .sm-seg-ny{background:#dde6f3;}
+  html[data-theme="cream"] .sm-seg-active{box-shadow:inset 0 0 0 1px rgba(60,45,20,.25);}
+  html[data-theme="cream"] .sm-marker,
+  html[data-theme="cream"] .sm-marker::before{background:var(--text); box-shadow:none;}
+  /* ---------- Burgundy (dunkles Weinrot, Rosé-Akzent) ---------- */
+  html[data-theme="burgundy"]{
+    --bg:#1a0b10;
+    --bg-panel:#23111a;
+    --bg-card:#2b161f;
+    --bg-card-hover:#361b27;
+    --border:#43232f;
+    --border-light:#5b2f3f;
+    --text:#f7eaee;
+    --text-dim:#bb97a1;
+    --text-faint:#86646d;
+    --green:#3fcf9f;
+    --green-dim:#153a30;
+    --red:#ff6b80;
+    --red-dim:#45182a;
+    --amber:#f2b563;
+    --amber-dim:#40291a;
+    --violet:#d9577f;
+    --violet-dim:#44182b;
+    --cyan:#f08ea8;
+    --cyan-dim:#431d2b;
+    --magenta:#ff5d8f;
+    --magenta-dim:#46172a;
+    --neon-grid: linear-gradient(rgba(217,87,127,.05) 1px, transparent 1px), linear-gradient(90deg, rgba(217,87,127,.05) 1px, transparent 1px);
+  }
+  html[data-theme="burgundy"] body{
+    background-image:
+      radial-gradient(ellipse 900px 700px at 8% 15%, rgba(217,87,127,.12), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 92% 80%, rgba(242,181,99,.06), transparent 60%),
+      var(--neon-grid);
+    background-color:var(--bg);
+  }
+  html[data-theme="burgundy"] header.topnav{background-color:rgba(26,11,16,.9);}
+  html[data-theme="burgundy"] body::before{background-image:linear-gradient(120deg, rgba(217,87,127,.07), rgba(242,181,99,.04), rgba(217,87,127,.07));}
+  html[data-theme="burgundy"] nav.tabs button.active,
+  html[data-theme="burgundy"] .btn-primary{background:linear-gradient(135deg, #d9577f, #9b2c4c); box-shadow:0 2px 14px rgba(217,87,127,.35);}
+
+  /* ---------- Noir & Gold (tiefes Schwarz, Gold-Akzent) ---------- */
+  html[data-theme="noir"]{
+    --bg:#0a0a0b;
+    --bg-panel:#131313;
+    --bg-card:#191918;
+    --bg-card-hover:#222120;
+    --border:#29261f;
+    --border-light:#3b362a;
+    --text:#f4efe4;
+    --text-dim:#a69e8e;
+    --text-faint:#6f685b;
+    --green:#4cc79b;
+    --green-dim:#15302a;
+    --red:#ee6c6c;
+    --red-dim:#3a1a1a;
+    --amber:#e8b95d;
+    --amber-dim:#3a2d12;
+    --violet:#d4af37;
+    --violet-dim:#2f2712;
+    --cyan:#e9d8a6;
+    --cyan-dim:#2e2a1d;
+    --magenta:#e0805f;
+    --magenta-dim:#3a2016;
+    --neon-grid: linear-gradient(rgba(212,175,55,.04) 1px, transparent 1px), linear-gradient(90deg, rgba(212,175,55,.04) 1px, transparent 1px);
+  }
+  html[data-theme="noir"] body{
+    background-image:
+      radial-gradient(ellipse 1000px 700px at 50% -10%, rgba(212,175,55,.09), transparent 60%),
+      var(--neon-grid);
+    background-color:var(--bg);
+    background-size:auto, 42px 42px, 42px 42px;
+  }
+  html[data-theme="noir"] header.topnav{background-color:rgba(10,10,11,.9);}
+  html[data-theme="noir"] body::before{background-image:linear-gradient(120deg, rgba(212,175,55,.05), rgba(233,216,166,.03), rgba(212,175,55,.05));}
+  html[data-theme="noir"] nav.tabs button.active,
+  html[data-theme="noir"] .btn-primary{background:linear-gradient(135deg, #e6c65a, #b08a24); color:#1a1406; box-shadow:0 2px 14px rgba(212,175,55,.3);}
+  html[data-theme="noir"] .area-toggle button.on{color:#1a1406;}
+
+  /* ---------- Design-Menü oben rechts ---------- */
+  .theme-menu-wrap{position:relative;}
+  .theme-toggle{display:inline-flex; align-items:center; gap:7px;}
+  .theme-swatch{width:13px; height:13px; border-radius:50%; flex-shrink:0; box-shadow:inset 0 0 0 1px rgba(128,128,128,.45);}
+  .theme-swatch-dark{background:linear-gradient(135deg, #10131c 50%, #8b7bff 50%);}
+  .theme-swatch-cream{background:linear-gradient(135deg, #f5efe3 50%, #5a48d8 50%);}
+  .theme-swatch-burgundy{background:linear-gradient(135deg, #2b161f 50%, #d9577f 50%);}
+  .theme-swatch-noir{background:linear-gradient(135deg, #0a0a0b 50%, #d4af37 50%);}
+  .theme-menu{
+    position:absolute; top:calc(100% + 8px); right:0; z-index:80; min-width:190px;
+    background:var(--bg-panel); border:1px solid var(--border-light); border-radius:12px;
+    padding:6px; box-shadow:0 16px 40px -16px rgba(0,0,0,.55);
+  }
+  .theme-menu[hidden]{display:none;}
+  .theme-menu-item{
+    display:flex; align-items:center; gap:10px; width:100%; text-align:left;
+    background:transparent; border:none; color:var(--text); font-size:13px; font-weight:600;
+    padding:9px 10px; border-radius:8px;
+  }
+  .theme-menu-item:hover{background:var(--bg-card-hover);}
+  .theme-menu-item.active{background:var(--bg-card); box-shadow:inset 0 0 0 1px var(--border-light);}
+  .theme-menu-item .theme-swatch{width:16px; height:16px;}
+  .theme-menu-check{margin-left:auto; color:var(--green); font-weight:800;}
   a{color:inherit;}
   button{font-family:inherit;cursor:pointer;}
   input,textarea,select{font-family:inherit;}
@@ -2313,6 +2484,10 @@
   </nav>
   <div class="topnav-right">
     <button class="backup-badge" id="backupBadge" title="Es gibt Änderungen seit dem letzten JSON-Backup. Klicken für den Export-Bereich im Bericht.">⚠ Ungesichert</button>
+    <div class="theme-menu-wrap">
+      <button class="btn btn-ghost btn-sm theme-toggle" id="btnTheme" title="Design wählen" aria-haspopup="true" aria-expanded="false"><span class="theme-swatch" id="btnThemeSwatch"></span><span id="btnThemeLabel">Design</span></button>
+      <div class="theme-menu" id="themeMenu" hidden></div>
+    </div>
     <button class="btn btn-ghost btn-sm" id="btnSettings" title="Kategorien verwalten">⚙ Kategorien</button>
   </div>
 </header>
@@ -2349,7 +2524,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.23a";
+const APP_VERSION = "2026.09.23c";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -3943,6 +4118,71 @@ document.getElementById("goalsNav").addEventListener("click", (e)=>{
 });
 
 document.getElementById("btnSettings").addEventListener("click", openSettingsModal);
+
+/* ---------- Design-Umschalter (Dunkel / Creme) ----------
+   Reine Geräte-Einstellung (localStorage, nicht im Backup/Drive-Sync und bewusst ohne
+   markDataChanged()). Umschalten ohne render(): nur das Attribut am <html> tauscht die
+   CSS-Tokens; einzig die Canvas-Equity-Kurve im Bericht wird neu gezeichnet. */
+const LS_THEME = "tj_theme_v1";
+// Verfügbare Designs — "dark" ist der Standard (kein data-theme-Attribut am <html>).
+const THEMES = [
+  { key:"dark",     label:"Dunkel" },
+  { key:"cream",    label:"Creme" },
+  { key:"burgundy", label:"Burgundy" },
+  { key:"noir",     label:"Noir & Gold" }
+];
+function currentTheme(){
+  const t = document.documentElement.getAttribute("data-theme");
+  return THEMES.some(x=>x.key===t) ? t : "dark";
+}
+function themeMenuHtml(){
+  const cur = currentTheme();
+  return THEMES.map(t=>`<button type="button" class="theme-menu-item ${t.key===cur?"active":""}" data-theme-pick="${t.key}">
+    <span class="theme-swatch theme-swatch-${t.key}"></span>${t.label}${t.key===cur ? `<span class="theme-menu-check">✓</span>` : ""}
+  </button>`).join("");
+}
+function applyTheme(theme){
+  if(theme && theme!=="dark") document.documentElement.setAttribute("data-theme", theme);
+  else document.documentElement.removeAttribute("data-theme");
+  const t = THEMES.find(x=>x.key===currentTheme());
+  const label = document.getElementById("btnThemeLabel");
+  const sw = document.getElementById("btnThemeSwatch");
+  if(label) label.textContent = t.label;
+  if(sw) sw.className = "theme-swatch theme-swatch-" + t.key;
+  const menu = document.getElementById("themeMenu");
+  if(menu) menu.innerHTML = themeMenuHtml();
+}
+function closeThemeMenu(){
+  const menu = document.getElementById("themeMenu");
+  if(menu) menu.hidden = true;
+  document.getElementById("btnTheme").setAttribute("aria-expanded","false");
+}
+applyTheme(currentTheme());
+document.getElementById("btnTheme").addEventListener("click", (e)=>{
+  e.stopPropagation();
+  const menu = document.getElementById("themeMenu");
+  menu.hidden = !menu.hidden;
+  e.currentTarget.setAttribute("aria-expanded", String(!menu.hidden));
+});
+document.getElementById("themeMenu").addEventListener("click", (e)=>{
+  e.stopPropagation();
+  const btn = e.target.closest("[data-theme-pick]");
+  if(!btn) return;
+  applyTheme(btn.dataset.themePick);
+  lsSet(LS_THEME, btn.dataset.themePick);
+  closeThemeMenu();
+  if(STATE.view === "bericht" && typeof renderCharts === "function") renderCharts();
+});
+document.addEventListener("click", (e)=>{ if(!e.target.closest(".theme-menu-wrap")) closeThemeMenu(); });
+document.addEventListener("keydown", (e)=>{ if(e.key === "Escape") closeThemeMenu(); });
+// Farben für Canvas-Zeichnungen (Canvas kennt keine CSS-Variablen)
+function chartColors(){
+  const t = currentTheme();
+  if(t==="cream")    return { grid:"#e6dccb", text:"#8a8072", zero:"#b9ad98" };
+  if(t==="burgundy") return { grid:"#3a1d28", text:"#a8848e", zero:"#6b4250" };
+  if(t==="noir")     return { grid:"#26231d", text:"#958d7c", zero:"#5a5343" };
+  return { grid:"#2a2b34", text:"#8b8d99", zero:"#5c5e6b" };
+}
 
 document.getElementById("backupBadge").addEventListener("click", ()=>{
   STATE.view = "bericht";
@@ -10512,8 +10752,9 @@ function drawEquityChart(canvas, labels, datasets, yUnit){
   const yForVal = v => padT + plotH - ((v - yMin) / (yMax - yMin)) * plotH;
 
   // Horizontale Gitterlinien + Y-Achsenbeschriftung (R-Werte)
-  ctx.strokeStyle = "#2a2b34";
-  ctx.fillStyle = "#8b8d99";
+  const cc = chartColors();
+  ctx.strokeStyle = cc.grid;
+  ctx.fillStyle = cc.text;
   ctx.textBaseline = "middle";
   ctx.textAlign = "right";
   ctx.lineWidth = 1;
@@ -10539,7 +10780,7 @@ function drawEquityChart(canvas, labels, datasets, yUnit){
 
   // Nulllinie hervorheben
   ctx.setLineDash([3, 3]);
-  ctx.strokeStyle = "#5c5e6b";
+  ctx.strokeStyle = cc.zero;
   ctx.beginPath();
   ctx.moveTo(padL, yForVal(0));
   ctx.lineTo(padL + plotW, yForVal(0));
@@ -10572,7 +10813,7 @@ function drawEquityChart(canvas, labels, datasets, yUnit){
     ctx.beginPath();
     ctx.arc(lx + 5, ly, 5, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#8b8d99";
+    ctx.fillStyle = cc.text;
     ctx.fillText(ds.label, lx + 15, ly);
     lx += 15 + ctx.measureText(ds.label).width + 18;
   });
