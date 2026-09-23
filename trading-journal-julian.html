@@ -18,7 +18,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script>try{var t=localStorage.getItem("tj_theme_v1");if(t==="cream"||t==="burgundy"||t==="noir")document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<script>try{var t=localStorage.getItem("tj_theme_v1");if(t==="cream"||t==="burgundy"||t==="noir"||t==="sakura"){document.documentElement.setAttribute("data-theme",t);if(t==="cream"||t==="sakura")document.documentElement.setAttribute("data-light","");}}catch(e){}</script>
 <style>
   :root{
     --bg:#080a10;
@@ -81,7 +81,8 @@
   }
   /* ---------- Creme-Design (Umschalter oben rechts, siehe applyTheme()) ----------
      Überschreibt nur die Farb-Tokens + die wenigen fest eingefärbten dunklen Flächen.
-     Aktiv, sobald <html data-theme="cream"> gesetzt ist (wird schon im <head> gesetzt,
+     Palette aktiv bei <html data-theme="cream">; die allgemeinen Hell-Korrekturen darunter
+     (html[data-light]) gelten für alle hellen Designs (Creme, Sakura). Aktiv, sobald das Attribut gesetzt ist (wird schon im <head> gesetzt,
      damit beim Laden kein dunkles Aufblitzen entsteht). Longhands statt background-
      Kurzform, weil background-attachment:fixed + backdrop-filter die Kurzform in
      manchen Browsern verwirft. */
@@ -127,30 +128,30 @@
   html[data-theme="cream"] body::before{
     background-image:linear-gradient(120deg, rgba(214,178,110,.06), rgba(90,72,216,.03), rgba(214,178,110,.06));
   }
-  html[data-theme="cream"] input[type=date]{color-scheme:light;}
+  html[data-light] input[type=date]{color-scheme:light;}
   html[data-theme="cream"] header.topnav{background-color:rgba(250,245,234,.9);}
-  html[data-theme="cream"] .modal-backdrop{background-color:rgba(60,45,20,.35);}
-  html[data-theme="cream"] .panel,
-  html[data-theme="cream"] .stat-card{box-shadow:0 1px 2px rgba(60,45,20,.05), 0 8px 24px -18px rgba(60,45,20,.25);}
+  html[data-light] .modal-backdrop{background-color:rgba(60,45,20,.35);}
+  html[data-light] .panel,
+  html[data-light] .stat-card{box-shadow:0 1px 2px rgba(60,45,20,.05), 0 8px 24px -18px rgba(60,45,20,.25);}
   /* Weiß-auf-Dunkel-Elemente drehen: ausgewählte Chips/Tabs werden dunkel mit hellem Text */
-  html[data-theme="cream"] .chip.selected,
-  html[data-theme="cream"] .subtab.active,
-  html[data-theme="cream"] .market-chip-edit:hover{background:var(--text); border-color:var(--text); color:var(--bg-panel);}
-  html[data-theme="cream"] .area-toggle button.on{color:#fff;}
-  html[data-theme="cream"] .cal-selected{box-shadow:inset 0 0 0 2px var(--text);}
-  html[data-theme="cream"] .diary-field-question,
-  html[data-theme="cream"] .diary-scale-question{color:var(--text);}
-  html[data-theme="cream"] .badge-open{background:var(--amber-dim); border-color:#e6cf9c;}
-  html[data-theme="cream"] .badge-eod-copied{background:#e3eefa; color:#2f6fb8; border-color:#c3d8ef;}
-  html[data-theme="cream"] .sm-seg-out{background:#eee6d8;}
-  html[data-theme="cream"] .sm-seg-asia{background:#e6e1f6;}
-  html[data-theme="cream"] .sm-seg-london{background:#d9eee5;}
-  html[data-theme="cream"] .sm-seg-pause{background:#ece6da;}
-  html[data-theme="cream"] .sm-seg-frankfurt{background:#d8ebee;}
-  html[data-theme="cream"] .sm-seg-ny{background:#dde6f3;}
-  html[data-theme="cream"] .sm-seg-active{box-shadow:inset 0 0 0 1px rgba(60,45,20,.25);}
-  html[data-theme="cream"] .sm-marker,
-  html[data-theme="cream"] .sm-marker::before{background:var(--text); box-shadow:none;}
+  html[data-light] .chip.selected,
+  html[data-light] .subtab.active,
+  html[data-light] .market-chip-edit:hover{background:var(--text); border-color:var(--text); color:var(--bg-panel);}
+  html[data-light] .area-toggle button.on{color:#fff;}
+  html[data-light] .cal-selected{box-shadow:inset 0 0 0 2px var(--text);}
+  html[data-light] .diary-field-question,
+  html[data-light] .diary-scale-question{color:var(--text);}
+  html[data-light] .badge-open{background:var(--amber-dim); border-color:#e6cf9c;}
+  html[data-light] .badge-eod-copied{background:#e3eefa; color:#2f6fb8; border-color:#c3d8ef;}
+  html[data-light] .sm-seg-out{background:#eee6d8;}
+  html[data-light] .sm-seg-asia{background:#e6e1f6;}
+  html[data-light] .sm-seg-london{background:#d9eee5;}
+  html[data-light] .sm-seg-pause{background:#ece6da;}
+  html[data-light] .sm-seg-frankfurt{background:#d8ebee;}
+  html[data-light] .sm-seg-ny{background:#dde6f3;}
+  html[data-light] .sm-seg-active{box-shadow:inset 0 0 0 1px rgba(60,45,20,.25);}
+  html[data-light] .sm-marker,
+  html[data-light] .sm-marker::before{background:var(--text); box-shadow:none;}
   /* ---------- Burgundy (dunkles Weinrot, Rosé-Akzent) ---------- */
   html[data-theme="burgundy"]{
     --bg:#1a0b10;
@@ -226,6 +227,82 @@
   html[data-theme="noir"] .btn-primary{background:linear-gradient(135deg, #e6c65a, #b08a24); color:#1a1406; box-shadow:0 2px 14px rgba(212,175,55,.3);}
   html[data-theme="noir"] .area-toggle button.on{color:#1a1406;}
 
+  /* ---------- Sakura (Rosa & weiches Weiß, fallende Kirschblüten) ---------- */
+  html[data-theme="sakura"]{
+    --bg:#fcf3f5;
+    --bg-panel:#fffafb;
+    --bg-card:#fcf0f3;
+    --bg-card-hover:#f8e5eb;
+    --border:#f1dbe2;
+    --border-light:#e6c5d0;
+    --text:#3b2931;
+    --text-dim:#806570;
+    --text-faint:#ae949e;
+    --green:#1f9a78;
+    --green-dim:#dcf1e8;
+    --red:#d8466b;
+    --red-dim:#fadfe6;
+    --amber:#c4861a;
+    --amber-dim:#f8ead2;
+    --violet:#df6f99;
+    --violet-dim:#fbe2eb;
+    --cyan:#c96a8e;
+    --cyan-dim:#f8e1ea;
+    --magenta:#e0527f;
+    --magenta-dim:#fadbe5;
+    --neon-grid: radial-gradient(circle, rgba(223,111,153,.13) 1px, transparent 1.4px);
+    color-scheme:light;
+  }
+  html[data-theme="sakura"] body{
+    background-image:
+      radial-gradient(ellipse 900px 700px at 10% 10%, rgba(247,178,203,.28), transparent 60%),
+      radial-gradient(ellipse 900px 700px at 90% 85%, rgba(250,210,222,.35), transparent 60%),
+      var(--neon-grid);
+    background-color:var(--bg);
+    background-size:auto, auto, 24px 24px;
+  }
+  html[data-theme="sakura"] body.ziele-bg{
+    background-image:radial-gradient(ellipse 1400px 620px at 50% 0px, rgba(247,178,203,.3), transparent 65%), var(--neon-grid);
+    background-size:auto, 24px 24px;
+  }
+  html[data-theme="sakura"] body::before{background-image:linear-gradient(120deg, rgba(247,178,203,.10), rgba(255,255,255,.05), rgba(247,178,203,.10));}
+  html[data-theme="sakura"] header.topnav{background-color:rgba(255,248,250,.88);}
+  html[data-theme="sakura"] nav.tabs button.active,
+  html[data-theme="sakura"] .btn-primary{background:linear-gradient(135deg, #f08db2, #d9577f); color:#fff; box-shadow:0 2px 14px rgba(223,111,153,.35);}
+  html[data-theme="sakura"] .panel,
+  html[data-theme="sakura"] .stat-card{box-shadow:0 1px 2px rgba(120,40,70,.05), 0 8px 24px -18px rgba(160,60,100,.3);}
+  html[data-theme="sakura"] .sm-seg-out{background:#f6e7ec;}
+  html[data-theme="sakura"] .sm-seg-asia{background:#efe3f6;}
+  html[data-theme="sakura"] .sm-seg-london{background:#e1f1ea;}
+  html[data-theme="sakura"] .sm-seg-pause{background:#f5eaee;}
+  html[data-theme="sakura"] .sm-seg-frankfurt{background:#fbe6d9;}
+  html[data-theme="sakura"] .sm-seg-ny{background:#f9dce6;}
+
+  /* Fallende Kirschblüten — nur im Sakura-Design (Container wird per JS erzeugt/entfernt,
+     siehe syncSakuraPetals()). Hinter allen Inhalten, klickt nie etwas ab, nur transform/
+     opacity animiert (GPU-schonend). Bei "Bewegung reduzieren" im System ausgeblendet. */
+  .sakura-layer{position:fixed; inset:0; z-index:-1; pointer-events:none; overflow:hidden;}
+  .sakura-petal{
+    position:absolute; top:-40px; left:var(--x);
+    width:var(--s); height:calc(var(--s) * .78);
+    background:radial-gradient(ellipse at 30% 30%, #fff3f7 0%, #fbc5d8 45%, #f39bbd 100%);
+    border-radius:150% 0 150% 0;
+    opacity:0;
+    animation:sakuraFall var(--d) linear var(--delay) infinite;
+    filter:drop-shadow(0 1px 1px rgba(200,90,130,.18));
+  }
+  .sakura-petal:nth-child(3n){border-radius:130% 10% 130% 10%; background:radial-gradient(ellipse at 35% 35%, #fff8fa 0%, #f8d0de 50%, #eea3c0 100%);}
+  @keyframes sakuraFall{
+    0%  {opacity:0;  transform:translate3d(0,0,0) rotate(0deg) rotateX(0deg);}
+    8%  {opacity:.9;}
+    25% {transform:translate3d(var(--sway),26vh,0) rotate(90deg) rotateX(60deg);}
+    50% {transform:translate3d(calc(var(--sway) * -.6),54vh,0) rotate(180deg) rotateX(0deg);}
+    75% {transform:translate3d(var(--sway),80vh,0) rotate(270deg) rotateX(60deg);}
+    92% {opacity:.85;}
+    100%{opacity:0;  transform:translate3d(calc(var(--sway) * .4),108vh,0) rotate(360deg) rotateX(0deg);}
+  }
+  @media (prefers-reduced-motion: reduce){ .sakura-layer{display:none;} }
+
   /* ---------- Design-Menü oben rechts ---------- */
   .theme-menu-wrap{position:relative;}
   .theme-toggle{display:inline-flex; align-items:center; gap:7px;}
@@ -234,6 +311,7 @@
   .theme-swatch-cream{background:linear-gradient(135deg, #f5efe3 50%, #5a48d8 50%);}
   .theme-swatch-burgundy{background:linear-gradient(135deg, #2b161f 50%, #d9577f 50%);}
   .theme-swatch-noir{background:linear-gradient(135deg, #0a0a0b 50%, #d4af37 50%);}
+  .theme-swatch-sakura{background:linear-gradient(135deg, #fffafb 50%, #f08db2 50%);}
   .theme-menu{
     position:absolute; top:calc(100% + 8px); right:0; z-index:80; min-width:190px;
     background:var(--bg-panel); border:1px solid var(--border-light); border-radius:12px;
@@ -2524,7 +2602,7 @@
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.23c";
+const APP_VERSION = "2026.09.23d";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -4127,9 +4205,10 @@ const LS_THEME = "tj_theme_v1";
 // Verfügbare Designs — "dark" ist der Standard (kein data-theme-Attribut am <html>).
 const THEMES = [
   { key:"dark",     label:"Dunkel" },
-  { key:"cream",    label:"Creme" },
+  { key:"cream",    label:"Creme", light:true },
   { key:"burgundy", label:"Burgundy" },
-  { key:"noir",     label:"Noir & Gold" }
+  { key:"noir",     label:"Noir & Gold" },
+  { key:"sakura",   label:"Sakura", light:true }
 ];
 function currentTheme(){
   const t = document.documentElement.getAttribute("data-theme");
@@ -4145,12 +4224,36 @@ function applyTheme(theme){
   if(theme && theme!=="dark") document.documentElement.setAttribute("data-theme", theme);
   else document.documentElement.removeAttribute("data-theme");
   const t = THEMES.find(x=>x.key===currentTheme());
+  // Helle Designs teilen sich die allgemeinen Hell-Korrekturen (html[data-light] im CSS)
+  if(t.light) document.documentElement.setAttribute("data-light", "");
+  else document.documentElement.removeAttribute("data-light");
+  syncSakuraPetals(t.key === "sakura");
   const label = document.getElementById("btnThemeLabel");
   const sw = document.getElementById("btnThemeSwatch");
   if(label) label.textContent = t.label;
   if(sw) sw.className = "theme-swatch theme-swatch-" + t.key;
   const menu = document.getElementById("themeMenu");
   if(menu) menu.innerHTML = themeMenuHtml();
+}
+// Kirschblüten-Ebene: wird nur im Sakura-Design erzeugt und beim Wechsel komplett entfernt
+// (keine laufende Animation im Hintergrund der anderen Designs). Zufallswerte je Blatt über
+// CSS-Variablen: Position, Größe, Fallzeit, Startverzögerung (negativ = sofort verteilt), Seitwärtsdrift.
+function syncSakuraPetals(on){
+  let layer = document.getElementById("sakuraLayer");
+  if(!on){ if(layer) layer.remove(); return; }
+  if(layer) return;
+  layer = document.createElement("div");
+  layer.id = "sakuraLayer";
+  layer.className = "sakura-layer";
+  layer.setAttribute("aria-hidden", "true");
+  const count = window.innerWidth < 700 ? 14 : 26;
+  let html = "";
+  for(let i=0; i<count; i++){
+    const d = 11 + Math.random()*11;
+    html += `<span class="sakura-petal" style="--x:${(Math.random()*100).toFixed(1)}%; --s:${(9 + Math.random()*9).toFixed(1)}px; --d:${d.toFixed(1)}s; --delay:${(-Math.random()*d).toFixed(1)}s; --sway:${(Math.random()*160 - 80).toFixed(0)}px;"></span>`;
+  }
+  layer.innerHTML = html;
+  document.body.appendChild(layer);
 }
 function closeThemeMenu(){
   const menu = document.getElementById("themeMenu");
@@ -4181,6 +4284,7 @@ function chartColors(){
   if(t==="cream")    return { grid:"#e6dccb", text:"#8a8072", zero:"#b9ad98" };
   if(t==="burgundy") return { grid:"#3a1d28", text:"#a8848e", zero:"#6b4250" };
   if(t==="noir")     return { grid:"#26231d", text:"#958d7c", zero:"#5a5343" };
+  if(t==="sakura")   return { grid:"#f1dbe2", text:"#9a7f89", zero:"#d8b3c1" };
   return { grid:"#2a2b34", text:"#8b8d99", zero:"#5c5e6b" };
 }
 
