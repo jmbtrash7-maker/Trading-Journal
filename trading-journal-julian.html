@@ -28,8 +28,10 @@
 <script src="https://accounts.google.com/gsi/client" async defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=VT323&family=Shippori+Mincho:wght@600;700&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem("tj_theme_v1");if(["cream","sakura","neon","cosmic","glass","aurora","terminal","ocean","zen","alchemy","synthwave","topo","blueprint","matrix","biolum"].indexOf(t)>-1)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<script>/* Layout-Stil (Form/Dichte/Schrift) – unabhängig vom Farb-Design, siehe LAYOUTS */try{var l=localStorage.getItem("tj_layout_v1");if(["bento","swiss","sharp","dense","floating"].indexOf(l)>-1)document.documentElement.setAttribute("data-layout",l);}catch(e){}</script>
 <style>
   :root{
     --bg:#080a10;
@@ -3763,6 +3765,34 @@ html[data-theme="neon"] .panel,html[data-theme="neon"] .stat-card{border-top-col
 .settings-theme-preview{height:42px;border-radius:8px;margin-bottom:9px;display:grid;grid-template-columns:1.25fr .75fr;grid-template-rows:1fr 1fr;gap:3px;padding:5px;overflow:hidden;}
 .settings-theme-preview i{border-radius:4px;}
 .settings-theme-preview i:first-child{grid-row:1/-1;}
+/* Layout-Stil-Auswahl: Vorschau zeigt Form, Farben kommen aus dem aktiven Design */
+.settings-layout-grid{grid-template-columns:repeat(3,1fr);}
+.settings-layout-combo{margin-bottom:9px;display:flex;flex-wrap:wrap;align-items:baseline;gap:6px;padding:9px 11px;border:1px dashed var(--ui-border-strong);border-radius:10px;font-size:10px;color:var(--ui-text-muted);}
+.settings-layout-combo span{margin-right:4px;color:var(--ui-text-faint);}
+.settings-layout-combo strong{color:var(--ui-text);font-size:11px;}
+.settings-layout-combo em{font-style:normal;color:var(--ui-accent);font-weight:700;}
+.settings-layout-card:focus-visible{outline:2px solid var(--ui-accent);outline-offset:2px;}
+.settings-layout-preview{height:46px;margin-bottom:9px;padding:5px;border-radius:8px;background:color-mix(in srgb,var(--ui-text) 5%,transparent);display:grid;gap:3px;overflow:hidden;}
+.settings-layout-preview i,.settings-layout-preview b{display:block;background:var(--ui-surface);border:1px solid var(--ui-border);}
+.lp-original{grid-template-columns:1.25fr .75fr;grid-template-rows:1fr 1fr;}
+.lp-original i{border-radius:5px;}.lp-original i:first-child{grid-row:1/-1;background:color-mix(in srgb,var(--ui-accent) 30%,var(--ui-surface));}
+.lp-bento{grid-template-columns:repeat(3,1fr);grid-template-rows:1fr 1fr;gap:4px;}
+.lp-bento i{border-radius:5px;border-color:color-mix(in srgb,var(--ui-text) 18%,transparent);}
+.lp-bento i:nth-child(1){grid-column:1/3;background:color-mix(in srgb,var(--ui-accent) 28%,var(--ui-surface));}
+.lp-bento i:nth-child(2){grid-row:1/3;grid-column:3;}
+.lp-swiss{grid-template-columns:1.4fr 1fr;grid-template-rows:1.3fr 1fr;gap:0;background:transparent;}
+.lp-swiss i{background:transparent;border:0;border-radius:0;border-bottom:1px solid var(--ui-text-faint);}
+.lp-swiss i:nth-child(odd){border-right:1px solid var(--ui-text-faint);}
+.lp-swiss i:first-child{background:linear-gradient(var(--ui-text),var(--ui-text)) 4px 50%/60% 9px no-repeat;}
+.lp-sharp{grid-template-columns:repeat(3,1fr);}
+.lp-sharp i{border-radius:0;border-color:var(--ui-text-muted);}
+.lp-sharp i:first-child{background:color-mix(in srgb,var(--ui-accent) 25%,var(--ui-surface));}
+.lp-dense{grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,1fr);gap:1px;padding:3px;}
+.lp-dense i{border-radius:2px;background:linear-gradient(90deg,var(--ui-text-faint) 0 45%,transparent 45%) 3px 50%/70% 2px no-repeat,var(--ui-surface);}
+.lp-floating{place-items:stretch;padding:6px;}
+.lp-floating>i{border-radius:12px;border:0;display:grid;grid-template-columns:1fr 1fr;gap:4px;padding:5px;box-shadow:0 6px 14px -6px rgba(0,0,0,.45);}
+.lp-floating b{border-radius:7px;border:0;background:color-mix(in srgb,var(--ui-text) 8%,var(--ui-surface));}
+.lp-floating b:first-child{background:color-mix(in srgb,var(--ui-accent) 30%,var(--ui-surface));}
 .settings-theme-card>span{font:850 7px/1 var(--ui-font-mono);letter-spacing:.08em;color:var(--ui-text-faint);}
 .settings-theme-card strong{display:block;margin-top:4px;font-size:11px;color:var(--ui-text);}
 .settings-theme-card b{display:block;margin-top:2px;font-size:8.7px;color:var(--ui-accent);}
@@ -9040,7 +9070,7 @@ body[data-jmb-view="start"] .core-start-hero #liveClock{
 }
 body[data-jmb-view="start"] .core-primary-workspace{
   margin-top:0;
-  align-items:stretch;
+  align-items:start;
 }
 body[data-jmb-view="start"] .top-with-weeksidebar-main{
   min-width:0;
@@ -9384,14 +9414,11 @@ header.topnav{
   border-color:color-mix(in srgb,var(--ui-border) 56%,transparent);
   opacity:1;
 }
-/* Aktiver Sekundär-Reiter (auch „Mindset“ bei Become a Trader/Bücher/Ziele): dasselbe
-   Auswahl-Farbpaar wie die Kernreiter (Black & Gold = Gold), nur in der kleineren Größe. */
 #mainNav.nav-single-row-subtle .nav-secondary.active,
 #mainNav.nav-single-row-subtle .nav-sub-btn.active{
-  color:var(--ds-nav-active-text);
-  background:var(--ds-nav-active);
-  border-color:transparent;
-  box-shadow:0 10px 20px -15px color-mix(in srgb,var(--ui-accent) 70%,transparent);
+  color:var(--ui-text);
+  background:color-mix(in srgb,var(--ui-surface-subtle) 62%,transparent);
+  border-color:color-mix(in srgb,var(--ui-border-strong) 70%,transparent);
   opacity:1;
 }
 
@@ -12648,13 +12675,12 @@ body[data-jmb-view="start"] .start-week-context{
 }
 body[data-jmb-view="start"] .start-week-context:hover{opacity:1;}
 body[data-jmb-view="start"] .start-week-context .section-title{margin-top:0;}
-body[data-jmb-view="start"] .start-week-context .podium-wrap{flex:1; padding-top:18px;}
-body[data-jmb-view="start"] .start-week-context .podium-col{width:156px;}
-body[data-jmb-view="start"] .start-week-context .podium-card{padding:14px 10px;}
-body[data-jmb-view="start"] .start-week-context .podium-medal{font-size:24px;}
-body[data-jmb-view="start"] .start-week-context .podium-h1{height:92px;}
-body[data-jmb-view="start"] .start-week-context .podium-h2{height:66px;}
-body[data-jmb-view="start"] .start-week-context .podium-h3{height:46px;}
+body[data-jmb-view="start"] .start-week-context .podium-col{width:132px;}
+body[data-jmb-view="start"] .start-week-context .podium-card{padding:10px 8px;}
+body[data-jmb-view="start"] .start-week-context .podium-medal{font-size:20px;}
+body[data-jmb-view="start"] .start-week-context .podium-h1{height:58px;}
+body[data-jmb-view="start"] .start-week-context .podium-h2{height:40px;}
+body[data-jmb-view="start"] .start-week-context .podium-h3{height:28px;}
 body[data-jmb-view="start"] .start-week-context .week-sidebar{width:210px;}
 body[data-jmb-view="start"] .start-week-context .week-sidebar .week-card{padding:9px 11px;}
 body[data-jmb-view="start"] .start-week-context .week-sidebar .week-badge{width:31px;height:31px;font-size:13px;}
@@ -15224,7 +15250,7 @@ html.theme-sunrise::view-transition-new(root){
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.25-seitenwechsel-original";
+const APP_VERSION = "2026.09.25-tastenkuerzel";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -16813,6 +16839,16 @@ const JULIAN_DESIGN_SYSTEM = Object.freeze({
     blueprint:Object.freeze({label:"Blueprint",identity:"Technical Draft",feel:"konstruiert · exakt · kühl",motif:"Bauplan-Linien",heading:"JetBrains Mono"}),
     matrix:Object.freeze({label:"Matrix",identity:"Code Rain",feel:"technisch · dunkel · fokussiert",motif:"Code-Regen / Grid",heading:"JetBrains Mono"}),
     biolum:Object.freeze({label:"Bio-Luminescence",identity:"Living Light",feel:"organisch · leuchtend · tief",motif:"Plankton / Wellen",heading:"Manrope"})
+  }),
+  // Zweite Design-Achse (seit 25.09.2026): Layout-Stil = Form, Dichte, Schrift.
+  // Farbe kommt weiterhin aus themeIdentity; beide Achsen sind frei kombinierbar.
+  layoutIdentity:Object.freeze({
+    original:Object.freeze({label:"Original",identity:"Journal-DNA",feel:"vertraut · ausgewogen",shape:"Form und Schrift des gewählten Farb-Designs",type:"Theme-Schrift"}),
+    bento:Object.freeze({label:"Bento Grid",identity:"Modular Board",feel:"aufgeräumt · modular · übersichtlich",shape:"Raster aus unterschiedlich großen Boxen, 14px Radius, feine Ränder",type:"Inter · große Kennzahlen"}),
+    swiss:Object.freeze({label:"Swiss",identity:"International Style",feel:"reduziert · architektonisch · puristisch",shape:"Keine Container – nur feine Linien und Weißraum",type:"Inter · starke Größenkontraste"}),
+    sharp:Object.freeze({label:"Sharp",identity:"Hard Edge",feel:"präzise · funktional · kompromisslos",shape:"90°-Ecken, 1px-Rahmen, keine Schatten, kein Blur",type:"Roboto · Zahlen in JetBrains Mono"}),
+    dense:Object.freeze({label:"Terminal Dense",identity:"Data Terminal",feel:"effizient · datenzentriert · dicht",shape:"Minimale Abstände, 3px Radius, Linien-Container",type:"JetBrains Mono · 12–14px"}),
+    floating:Object.freeze({label:"Floating Cards",identity:"Layered Depth",feel:"weich · haptisch · angenehm",shape:"Verschachtelte Karten, 20px/12px Radius, weiche Schatten",type:"Outfit"})
   }),
   globalOwners:Object.freeze([
     "page-head","section-title","panel","stat-card","trade-card","btn","icon-btn","chip",
@@ -20832,19 +20868,139 @@ function onTopNewsClick(e){
 JournalEventLifecycle.bind("AppShell",document.getElementById("btnNewsWorkbench"),"click","news-open",onTopNewsClick);
 
 
+/* ---------- Tastenkürzel (frei belegbar, seit 25.09.2026) ----------
+   Owner: Tastenkürzel-Modul. Standardbelegung = JULIAN_KEYBOARD_SHORTCUTS,
+   eigene Belegung liegt darüber in LS_SHORTCUTS (Geräte-Einstellung wie das
+   Design: localStorage, NICHT im Backup/Drive, ohne markDataChanged()).
+   Gespeichert wird die PHYSISCHE Taste (e.code), nicht das Zeichen (e.key):
+   so klappt es mit deutschem Layout und auf dem Mac (Option+1 liefert dort
+   als e.key "¡" – mit der alten e.key-Prüfung liefen die Kürzel am Mac nie). */
+const LS_SHORTCUTS = "tj_shortcuts_v1";
+const SHORTCUT_IS_MAC = /Mac|iPhone|iPad/i.test(navigator.platform||navigator.userAgent||"");
 const JULIAN_KEYBOARD_SHORTCUTS = Object.freeze([
-  Object.freeze({keys:"Alt + 1",action:"Start",view:"start"}),
-  Object.freeze({keys:"Alt + 2",action:"Live",view:"live"}),
-  Object.freeze({keys:"Alt + 3",action:"EOD",view:"eod"}),
-  Object.freeze({keys:"Alt + 4",action:"Mental",view:"diary"}),
-  Object.freeze({keys:"Alt + 5",action:"Bericht",view:"bericht"}),
-  Object.freeze({keys:"Alt + 6",action:"Erkenntnisse",view:"erkenntnisse"}),
-  Object.freeze({keys:"Alt + 7",action:"Strategie",view:"strategie"}),
-  Object.freeze({keys:"Alt + 8",action:"Ziele",view:"ziele"}),
-  Object.freeze({keys:"Alt + 0",action:"Einstellungen",settings:true}),
-  Object.freeze({keys:"Esc",action:"Aktuelles Fenster schließen",system:true}),
-  Object.freeze({keys:"Tab / Shift + Tab",action:"Fokus im geöffneten Fenster bewegen",system:true})
+  Object.freeze({id:"view-start",       action:"Start",         view:"start",        def:Object.freeze({code:"Digit1",alt:true})}),
+  Object.freeze({id:"view-live",        action:"Live",          view:"live",         def:Object.freeze({code:"Digit2",alt:true})}),
+  Object.freeze({id:"view-eod",         action:"EOD",           view:"eod",          def:Object.freeze({code:"Digit3",alt:true})}),
+  Object.freeze({id:"view-diary",       action:"Mental",        view:"diary",        def:Object.freeze({code:"Digit4",alt:true})}),
+  Object.freeze({id:"view-bericht",     action:"Bericht",       view:"bericht",      def:Object.freeze({code:"Digit5",alt:true})}),
+  Object.freeze({id:"view-erkenntnisse",action:"Erkenntnisse",  view:"erkenntnisse", def:Object.freeze({code:"Digit6",alt:true})}),
+  Object.freeze({id:"view-strategie",   action:"Strategie",     view:"strategie",    def:Object.freeze({code:"Digit7",alt:true})}),
+  Object.freeze({id:"view-ziele",       action:"Ziele",         view:"ziele",        def:Object.freeze({code:"Digit8",alt:true})}),
+  Object.freeze({id:"settings",         action:"Einstellungen", settings:true,       def:Object.freeze({code:"Digit0",alt:true})})
 ]);
+// Fest verdrahtet (Fenster-Logik hängt daran) – nur zur Anzeige.
+const JULIAN_SYSTEM_SHORTCUTS = Object.freeze([
+  Object.freeze({keys:"Esc",action:"Aktuelles Fenster schließen"}),
+  Object.freeze({keys:"Tab / Shift + Tab",action:"Fokus im geöffneten Fenster bewegen"})
+]);
+// Tasten, die der Browser/die Bedienung selbst braucht → nicht belegbar.
+const SHORTCUT_BLOCKED_CODES = Object.freeze(["Escape","Tab","Enter","NumpadEnter","Space","ArrowUp","ArrowDown","ArrowLeft","ArrowRight","CapsLock","ContextMenu","MetaLeft","MetaRight"]);
+const SHORTCUT_BLOCKED_COMBOS = Object.freeze(["ctrl+KeyW","ctrl+KeyT","ctrl+KeyN","ctrl+KeyR","ctrl+shift+KeyT","ctrl+shift+KeyN","ctrl+Tab","ctrl+shift+Tab","alt+F4","F5","ctrl+F5","F11","F12","ctrl+shift+KeyI","meta+KeyW","meta+KeyT","meta+KeyN","meta+KeyR","meta+KeyQ"]);
+const SHORTCUT_MODIFIER_CODES = Object.freeze(["AltLeft","AltRight","ControlLeft","ControlRight","ShiftLeft","ShiftRight","MetaLeft","MetaRight","AltGraph"]);
+
+// Einheitliche Form einer Belegung: {code, alt, ctrl, shift, meta} oder null (= frei).
+function shortcutNormalize(b){
+  if(!b || typeof b.code!=="string" || !b.code) return null;
+  return {code:b.code, alt:!!b.alt, ctrl:!!b.ctrl, shift:!!b.shift, meta:!!b.meta};
+}
+function shortcutFromEvent(e){
+  return shortcutNormalize({code:e.code, alt:e.altKey, ctrl:e.ctrlKey, shift:e.shiftKey, meta:e.metaKey});
+}
+// Vergleichsschlüssel, z. B. "alt+Digit1" / "ctrl+shift+KeyK" / "F2"
+function shortcutComboKey(b){
+  b=shortcutNormalize(b); if(!b) return "";
+  return [b.ctrl&&"ctrl",b.alt&&"alt",b.shift&&"shift",b.meta&&"meta",b.code].filter(Boolean).join("+");
+}
+function shortcutSame(a,b){ return !!a && !!b && shortcutComboKey(a)===shortcutComboKey(b); }
+// Grund, warum eine Belegung nicht erlaubt ist – oder "" wenn sie passt.
+function shortcutBlockedReason(b){
+  b=shortcutNormalize(b); if(!b) return "";
+  if(SHORTCUT_MODIFIER_CODES.includes(b.code)) return "Bitte zusätzlich eine normale Taste drücken.";
+  if(SHORTCUT_BLOCKED_CODES.includes(b.code)) return "Diese Taste braucht die Bedienung selbst (Fenster, Fokus, Scrollen).";
+  if(SHORTCUT_BLOCKED_COMBOS.includes(shortcutComboKey(b))) return "Diese Kombination belegt der Browser selbst.";
+  return "";
+}
+// Anzeige: physische Taste → lesbares Label (deutsches Layout für Sonderzeichen-Tasten)
+function shortcutKeyLabel(code){
+  if(/^Key[A-Z]$/.test(code)) return code.slice(3);
+  if(/^Digit\d$/.test(code)) return code.slice(5);
+  if(/^Numpad\d$/.test(code)) return "Num "+code.slice(6);
+  if(/^F\d{1,2}$/.test(code)) return code;
+  const map={Minus:"ß",Equal:"´",BracketLeft:"Ü",BracketRight:"+",Semicolon:"Ö",Quote:"Ä",Backslash:"#",Comma:",",Period:".",Slash:"-",Backquote:"^",IntlBackslash:"<",
+    Backspace:"⌫",Delete:"Entf",Insert:"Einfg",Home:"Pos1",End:"Ende",PageUp:"Bild ↑",PageDown:"Bild ↓",
+    NumpadAdd:"Num +",NumpadSubtract:"Num −",NumpadMultiply:"Num ×",NumpadDivide:"Num ÷",NumpadDecimal:"Num ,"};
+  return map[code]||code;
+}
+function shortcutLabel(b){
+  b=shortcutNormalize(b); if(!b) return "— frei —";
+  const mods=SHORTCUT_IS_MAC
+    ? [b.ctrl&&"⌃",b.alt&&"⌥",b.shift&&"⇧",b.meta&&"⌘"]
+    : [b.ctrl&&"Strg",b.alt&&"Alt",b.shift&&"Shift",b.meta&&"Win"];
+  return [...mods.filter(Boolean),shortcutKeyLabel(b.code)].join(" + ");
+}
+
+// Gespeicherte eigene Belegung: {actionId: binding|null}. Fehlt ein Eintrag → Standard.
+function shortcutOverrides(){
+  // JournalStorage speichert nur Strings → selbst (de)serialisieren, kaputte Daten = Standard
+  let raw=null;
+  try{ raw=JSON.parse(JournalStorage.get(LS_SHORTCUTS,"{}")); }catch(e){ raw=null; }
+  return raw && typeof raw==="object" && !Array.isArray(raw) ? raw : {};
+}
+function shortcutBindingFor(id){
+  const def=JULIAN_KEYBOARD_SHORTCUTS.find(x=>x.id===id); if(!def) return null;
+  const ov=shortcutOverrides();
+  return Object.prototype.hasOwnProperty.call(ov,id) ? shortcutNormalize(ov[id]) : shortcutNormalize(def.def);
+}
+function shortcutIsCustom(id){
+  const def=JULIAN_KEYBOARD_SHORTCUTS.find(x=>x.id===id);
+  return !!def && shortcutComboKey(shortcutBindingFor(id))!==shortcutComboKey(def.def);
+}
+// Aktuelle Belegung aller Aktionen (für Handler und Anzeige)
+function shortcutCurrentList(){
+  return JULIAN_KEYBOARD_SHORTCUTS.map(x=>({...x, binding:shortcutBindingFor(x.id)}));
+}
+function shortcutSaveOverrides(ov){
+  // Nur Abweichungen vom Standard speichern → neue Standards greifen später automatisch.
+  const clean={};
+  for(const x of JULIAN_KEYBOARD_SHORTCUTS){
+    if(!Object.prototype.hasOwnProperty.call(ov,x.id)) continue;
+    const b=shortcutNormalize(ov[x.id]);
+    if(shortcutComboKey(b)!==shortcutComboKey(x.def)) clean[x.id]=b; // null = bewusst frei
+  }
+  JournalStorage.set(LS_SHORTCUTS,JSON.stringify(clean));
+}
+/* Belegung setzen (Game-Prinzip): ist die Kombination schon vergeben, tauschen
+   beide Aktionen ihre Tasten. Rückgabe: {ok, reason?, swappedWith?} */
+function shortcutAssign(id,binding){
+  if(!JULIAN_KEYBOARD_SHORTCUTS.some(x=>x.id===id)) return {ok:false,reason:"Unbekannte Aktion."};
+  const b=shortcutNormalize(binding);
+  const reason=shortcutBlockedReason(b); if(reason) return {ok:false,reason};
+  const ov={...shortcutOverrides()};
+  const before=shortcutBindingFor(id);
+  let swappedWith=null;
+  if(b){
+    const other=shortcutCurrentList().find(x=>x.id!==id && shortcutSame(x.binding,b));
+    if(other){ ov[other.id]=before; swappedWith=other; }
+  }
+  ov[id]=b;
+  shortcutSaveOverrides(ov);
+  return {ok:true,swappedWith};
+}
+function shortcutReset(id){
+  const ov={...shortcutOverrides()};
+  const def=JULIAN_KEYBOARD_SHORTCUTS.find(x=>x.id===id); if(!def) return;
+  // Standard-Taste evtl. gerade woanders belegt → dort freigeben (keine Doppelbelegung)
+  const holder=shortcutCurrentList().find(x=>x.id!==id && shortcutSame(x.binding,def.def));
+  delete ov[id];
+  if(holder){
+    // Halter bekommt seine eigene Standard-Taste zurück, wenn die gerade frei ist – sonst frei
+    const hDef=JULIAN_KEYBOARD_SHORTCUTS.find(x=>x.id===holder.id).def;
+    const taken=JULIAN_KEYBOARD_SHORTCUTS.some(x=>x.id!==holder.id && shortcutSame(x.id===id?def.def:shortcutBindingFor(x.id),hDef));
+    ov[holder.id]=taken?null:hDef;
+  }
+  shortcutSaveOverrides(ov);
+}
+function shortcutResetAll(){ JournalStorage.remove(LS_SHORTCUTS); }
 
 function shortcutTypingTarget(target){
   return !!(target && target.closest && target.closest('input, textarea, select, [contenteditable="true"], .rte-editable'));
@@ -20854,22 +21010,16 @@ function onJournalShortcutKeydown(e){
     becomeTraderNav?.classList.remove("open");
     becomeTraderToggle?.setAttribute("aria-expanded","false");
   }
+  if(e.repeat) return;
   if(shortcutTypingTarget(e.target)) return;
   if(WindowUI.activeBackdrop()) return;
-  if(!e.altKey || e.ctrlKey || e.metaKey) return;
-
-  const key=String(e.key||"");
-  if(key==="0"){
-    e.preventDefault();
-    openSettingsModal();
-    return;
-  }
-
-  const shortcut=JULIAN_KEYBOARD_SHORTCUTS.find(x=>x.view && x.keys===`Alt + ${key}`);
-  if(shortcut){
-    e.preventDefault();
-    navigateToView(shortcut.view);
-  }
+  const pressed=shortcutFromEvent(e);
+  if(!pressed || SHORTCUT_MODIFIER_CODES.includes(pressed.code)) return;
+  const hit=shortcutCurrentList().find(x=>shortcutSame(x.binding,pressed));
+  if(!hit) return;
+  e.preventDefault();
+  if(hit.settings){ openSettingsModal(); return; }
+  if(hit.view) navigateToView(hit.view);
 }
 JournalEventLifecycle.bind("NavigationShortcuts",document,"keydown","global-shortcuts",onJournalShortcutKeydown);
 
@@ -21174,7 +21324,39 @@ JournalEventLifecycle.bind("ThemeFx",document,"pointerdown","zen-ink",(e)=>{
   setTimeout(()=>d.remove(), 800);
 }, true);
 
+/* ---------- Layout-Stil (zweite Design-Achse) ----------
+   Owner: Design-Umschalter. Reine Geräte-Einstellung wie LS_THEME: localStorage,
+   NICHT im Backup/Drive-Sync, bewusst ohne markDataChanged(). Setzt nur das
+   Attribut data-layout am <html>; "original" = kein Attribut = exakt der bisherige
+   Zustand. Die Formen selbst kommen aus der CSS-Schicht html[data-layout=...].
+   Farbe (data-theme) und Layout (data-layout) sind unabhängig kombinierbar. */
+const LS_LAYOUT = "tj_layout_v1";
+const LAYOUTS = [
+  { key:"original", label:"Original",       sub:"Journal-DNA" },
+  { key:"bento",    label:"Bento Grid",     sub:"Modular Board" },
+  { key:"swiss",    label:"Swiss",          sub:"International Style" },
+  { key:"sharp",    label:"Sharp",          sub:"Hard Edge" },
+  { key:"dense",    label:"Terminal Dense", sub:"Data Terminal" },
+  { key:"floating", label:"Floating Cards", sub:"Layered Depth" }
+];
+function currentLayout(){
+  const l = document.documentElement.getAttribute("data-layout");
+  return LAYOUTS.some(x=>x.key===l) ? l : "original";
+}
+function applyLayout(layout){
+  if(layout && layout!=="original" && LAYOUTS.some(x=>x.key===layout)) document.documentElement.setAttribute("data-layout",layout);
+  else document.documentElement.removeAttribute("data-layout");
+}
+// Speichern + Anwenden in einem Schritt (Aufruf aus der Darstellungs-Auswahl, Block 2).
+function setLayout(layout){
+  const key = LAYOUTS.some(x=>x.key===layout) ? layout : "original";
+  JournalStorage.set(LS_LAYOUT,key);
+  applyLayout(key);
+  return key;
+}
+
 applyTheme(currentTheme());
+applyLayout((()=>{ const l=JournalStorage.get(LS_LAYOUT,"original"); return LAYOUTS.some(x=>x.key===l)?l:"original"; })());
 
 // Farben für Canvas-Zeichnungen (Canvas kennt keine CSS-Variablen)
 function chartColors(){
@@ -21348,6 +21530,7 @@ function updateBackupBadge(){
 function openSettingsModal(){
   settingsActiveTab="general";
   settingsThemePickerOpen=false;
+  settingsLayoutPickerOpen=false;
   try{
     renderSettingsModal();
   }catch(err){
@@ -21433,6 +21616,7 @@ const settingsThemeGroupsOpen = new Set();
 // Design-Auswahl ist erst nach Klick auf "Design wählen" offen; dann ist der
 // Hintergrund klar (kein Milchglas), damit man das aktuelle Design wirklich sieht.
 let settingsThemePickerOpen = false;
+let settingsLayoutPickerOpen = false; // Layout-Stil-Auswahl: gleiche "Freie Sicht"-Mechanik wie Design wählen
 
 
 
@@ -21582,6 +21766,55 @@ function settingsGeneralHtml(){
   </div>`;
 }
 
+/* Layout-Stil-Auswahl (Darstellung → 02). Liest LAYOUTS + JULIAN_DESIGN_SYSTEM.layoutIdentity.
+   Die Mini-Vorschau zeigt nur die FORM des Stils und färbt sich mit den Tokens des
+   aktiven Farb-Designs – so sieht man die Kombination schon vor dem Klick. */
+function settingsLayoutPreviewHtml(key){
+  if(key==="floating") return `<div class="settings-layout-preview lp-floating" aria-hidden="true"><i><b></b><b></b></i></div>`;
+  const n={original:3,bento:4,swiss:4,sharp:3,dense:6}[key]||3;
+  return `<div class="settings-layout-preview lp-${key}" aria-hidden="true">${"<i></i>".repeat(n)}</div>`;
+}
+function settingsLayoutPickerHtml(currentThemeKey){
+  const active=currentLayout();
+  const themeLabel=(JULIAN_DESIGN_SYSTEM.themeIdentity[currentThemeKey]||{}).label||currentThemeKey;
+  const layoutLabel=(JULIAN_DESIGN_SYSTEM.layoutIdentity[active]||{}).label||active;
+  const combo=`<div class="settings-layout-combo"><span>Aktive Kombination</span><strong>${escHtml(themeLabel)}</strong><em>×</em><strong>${escHtml(layoutLabel)}</strong></div>`;
+  if(!settingsLayoutPickerOpen){
+    // Eingeklappt wie "Design wählen": nur der aktive Stil + Knopf
+    const id=JULIAN_DESIGN_SYSTEM.layoutIdentity[active]||{};
+    return `${combo}<div class="settings-theme-overview">
+      <article class="settings-theme-card settings-layout-card active settings-theme-current">
+        ${settingsLayoutPreviewHtml(active)}
+        <span>AKTIV</span>
+        <strong>${escHtml(id.label||active)}</strong>
+        <b>${escHtml(id.identity||"")}</b>
+        <p>${escHtml(id.feel||"")}</p>
+        <small>${escHtml(id.shape||"")} · ${escHtml(id.type||"")}</small>
+      </article>
+      <button type="button" class="btn btn-primary settings-theme-picker-open" data-layout-picker="open"><span class="btn-symbol" aria-hidden="true">▦</span><span>Layout wählen</span></button>
+    </div>`;
+  }
+  return `<div class="settings-theme-picker-bar">
+      <p>Freie Sicht: Der Hintergrund ist jetzt klar – ein Klick auf einen Stil wendet ihn sofort auf das Journal an.</p>
+      <button type="button" class="btn btn-primary" data-layout-picker="close"><span class="btn-symbol" aria-hidden="true">✓</span><span>Auswahl fertig</span></button>
+    </div>
+    ${combo}
+    <div class="settings-theme-grid settings-layout-grid">
+      ${LAYOUTS.map(l=>{
+        const id=JULIAN_DESIGN_SYSTEM.layoutIdentity[l.key]||{};
+        const on=active===l.key;
+        return `<article class="settings-theme-card settings-layout-card${on?" active":""}" data-settings-layout="${l.key}" role="button" tabindex="0" aria-pressed="${on}">
+          ${settingsLayoutPreviewHtml(l.key)}
+          <span>${on?"AKTIV":"LAYOUT"}</span>
+          <strong>${escHtml(id.label||l.label)}</strong>
+          <b>${escHtml(id.identity||l.sub)}</b>
+          <p>${escHtml(id.feel||"")}</p>
+          <small>${escHtml(id.shape||"")} · ${escHtml(id.type||"")}</small>
+        </article>`;
+      }).join("")}
+    </div>`;
+}
+
 function settingsAppearanceHtml(){
   const current=currentTheme();
   return `<div class="settings-appearance">
@@ -21626,12 +21859,15 @@ function settingsAppearanceHtml(){
       <button type="button" class="btn btn-primary settings-theme-picker-open" data-theme-picker="open"><span class="btn-symbol" aria-hidden="true">✦</span><span>Design wählen</span></button>
     </div>`}
 
-    <div class="settings-section-head"><span>02</span><div><strong>Tastenkürzel</strong><small>Direkt zwischen den wichtigsten Bereichen springen.</small></div></div>
+    <div class="settings-section-head"><span>02</span><div><strong>Layout-Stil</strong><small>Form, Dichte und Schrift – frei kombinierbar mit jedem Farb-Design.</small></div></div>
+    ${settingsLayoutPickerHtml(current)}
+
+    <div class="settings-section-head"><span>03</span><div><strong>Tastenkürzel</strong><small>Direkt zwischen den wichtigsten Bereichen springen.</small></div></div>
     <div class="settings-shortcut-grid">
-      ${JULIAN_KEYBOARD_SHORTCUTS.map(x=>`<div class="settings-shortcut-row"><kbd>${escHtml(x.keys)}</kbd><span>${escHtml(x.action)}</span></div>`).join("")}
+      ${[...shortcutCurrentList().map(x=>({keys:shortcutLabel(x.binding),action:x.action})),...JULIAN_SYSTEM_SHORTCUTS].map(x=>`<div class="settings-shortcut-row"><kbd>${escHtml(x.keys)}</kbd><span>${escHtml(x.action)}</span></div>`).join("")}
     </div>
 
-    <div class="settings-section-head"><span>03</span><div><strong>Mobile</strong><small>Die Smartphone-Oberfläche direkt aus den Einstellungen öffnen.</small></div></div>
+    <div class="settings-section-head"><span>04</span><div><strong>Mobile</strong><small>Die Smartphone-Oberfläche direkt aus den Einstellungen öffnen.</small></div></div>
     <div class="settings-mobile-launch">
       <div>
         <span class="settings-kicker">JMB MOBILE</span>
@@ -21913,7 +22149,7 @@ function renderSettingsModal(){
   const body=document.querySelector("#settingsBackdrop .settings-drawer-body");
   const pane=body?.querySelector("[data-settings-pane]");
   // Klare Sicht während der Design-Auswahl (Milchglas blendet weich aus/ein).
-  document.getElementById("settingsBackdrop")?.classList.toggle("settings-theme-picking", settingsThemePickerOpen && settingsActiveTab==="appearance");
+  document.getElementById("settingsBackdrop")?.classList.toggle("settings-theme-picking", (settingsThemePickerOpen||settingsLayoutPickerOpen) && settingsActiveTab==="appearance");
   if(openAside && prevPane===settingsActiveTab){
     if(body) body.scrollTop=prevScroll;           // gleicher Reiter (z. B. Design gewählt): Position halten
   }else if(openAside && pane){
@@ -21928,12 +22164,21 @@ function wireSettingsModal(){
   document.querySelectorAll("[data-theme-picker]").forEach(btn=>{
     btn.addEventListener("click",()=>{
       settingsThemePickerOpen=btn.dataset.themePicker==="open";
+      if(settingsThemePickerOpen) settingsLayoutPickerOpen=false; // immer nur eine Auswahl offen
+      renderSettingsModal();
+    });
+  });
+  document.querySelectorAll("[data-layout-picker]").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      settingsLayoutPickerOpen=btn.dataset.layoutPicker==="open";
+      if(settingsLayoutPickerOpen) settingsThemePickerOpen=false;
       renderSettingsModal();
     });
   });
   document.querySelectorAll("[data-settings-tab]").forEach(btn=>{
     btn.addEventListener("click", ()=>{
       settingsThemePickerOpen=false;
+      settingsLayoutPickerOpen=false;
       settingsActiveTab=btn.dataset.settingsTab||"general";
       renderSettingsModal();
     });
@@ -21957,6 +22202,18 @@ function wireSettingsModal(){
       const g=Number(group.dataset.themeGroup);
       if(group.open) settingsThemeGroupsOpen.add(g); else settingsThemeGroupsOpen.delete(g);
     });
+  });
+  document.querySelectorAll("[data-settings-layout]").forEach(card=>{
+    const pick=()=>{
+      const layout=setLayout(card.dataset.settingsLayout);
+      settingsActiveTab="appearance";
+      renderSettingsModal();
+      // Canvas-Charts kennen kein CSS → nach Formwechsel neu zeichnen (Schrift/Abstände).
+      if(STATE.view==="bericht"&&typeof renderCharts==="function") renderCharts();
+      try{ toast(`Layout-Stil: ${(JULIAN_DESIGN_SYSTEM.layoutIdentity[layout]||{}).label||layout}`); }catch(e){}
+    };
+    card.addEventListener("click",pick);
+    card.addEventListener("keydown",e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); pick(); } });
   });
   document.querySelectorAll("[data-settings-theme]").forEach(card=>{
     card.addEventListener("click",()=>{
@@ -23467,12 +23724,13 @@ function renderStart(){
     <div class="start-week-context top-with-weeksidebar core-primary-workspace">
       <div class="top-with-weeksidebar-main">
         ${weekPodiumHtml()}
-        ${ftmoChallengeEtaHtml()}
       </div>
       <div class="week-sidebar">
         ${weekSidebarHtml()}
       </div>
     </div>
+
+    ${ftmoChallengeEtaHtml()}
 
     <div style="margin-top:14px; font-size:11px; color:var(--ui-text-faint);">Version ${APP_VERSION} · Copyright by Clemens - dem Boss</div>
   `;
@@ -32272,6 +32530,253 @@ bootJournalApp();
 })();
 </script>
 
+
+<style id="jmb-layout-styles">
+/* =====================================================================
+   LAYOUT-STILE · zweite Design-Achse (Block 3 · Grundschicht, 25.09.2026)
+   Aktiv nur mit html[data-layout]; ohne Attribut ("Original") greift hier
+   NICHTS. Farbe/Hintergrund/FX bleiben beim Farb-Design (data-theme),
+   Form/Dichte/Schrift kommen von hier. Steht bewusst als letzter Style-Block
+   im Dokument, damit er Theme-Regeln gleicher Spezifität überschreibt.
+   Mobile-Vorschau (#mJMobilePreviewHost) ist bewusst ausgenommen.
+   ===================================================================== */
+
+/* ---------- Gemeinsam für alle Layout-Stile ---------- */
+html[data-layout] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea){border-radius:var(--ui-radius-control)!important;}
+html[data-layout] .stat-card .value,
+html[data-layout] .rp-num,
+html[data-layout] .mini-stat-value{font-variant-numeric:tabular-nums;}
+
+/* ================= 1 · BENTO GRID ================= */
+html[data-layout="bento"],html[data-layout="bento"] body{
+  --font:"Inter",ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+  --sans:var(--font); --display:var(--font); --ui-font-body:var(--font);
+  --ds-heading-font:var(--font); --ds-kicker-font:var(--font); --ds-heading-weight:700;
+  --radius:16px; --radius-sm:14px;
+  --ui-radius-panel:16px; --ui-radius-card:14px; --ui-radius-control:10px; --ui-radius-button:10px;
+  --ui-section-gap:16px; --ui-panel-pad-x:18px; --ui-panel-pad-y:18px; --ui-card-pad-x:18px; --ui-card-pad-y:16px;
+  --ds-panel-shadow:none; --ds-panel-shadow-hover:none; --panel-shadow:none;
+}
+html[data-layout="bento"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card){
+  border:1px solid color-mix(in srgb,var(--ui-text) 11%,transparent)!important;
+  border-radius:16px!important; box-shadow:none!important;
+}
+html[data-layout="bento"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card) :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card){border-radius:12px!important;}
+html[data-layout="bento"] .stat-grid{gap:16px!important; grid-auto-flow:row dense;}
+@media(min-width:900px){
+  /* Bento-Rhythmus: erste Kennzahl breit, dadurch unterschiedlich große Module */
+  html[data-layout="bento"] .stat-grid>.stat-card:first-child{grid-column:span 2;}
+}
+html[data-layout="bento"] .stat-card .value{font-family:var(--font)!important; font-size:40px!important; font-weight:800!important; letter-spacing:-.025em; line-height:1.05;}
+html[data-layout="bento"] :is(.stat-card .label,.section-title,.mini-stat-label){font-size:10px!important; text-transform:uppercase; letter-spacing:.06em!important; font-weight:600!important;}
+html[data-layout="bento"] .btn{border-radius:10px!important;}
+html[data-layout="bento"] :is(.chip,.subtab){border-radius:999px!important;}
+html[data-layout="bento"] .modal{border-radius:18px!important;}
+
+/* ================= 2 · SWISS / INTERNATIONAL ================= */
+html[data-layout="swiss"],html[data-layout="swiss"] body{
+  --font:"Inter","Helvetica Neue",Helvetica,Arial,sans-serif;
+  --sans:var(--font); --display:var(--font); --ui-font-body:var(--font);
+  --ds-heading-font:var(--font); --ds-kicker-font:var(--font); --ds-heading-weight:800;
+  --radius:0px; --radius-sm:0px;
+  --ui-radius-panel:0px; --ui-radius-card:0px; --ui-radius-control:0px; --ui-radius-button:0px; --ui-radius-pill:0px;
+  --ui-section-gap:36px; --ui-panel-pad-x:4px; --ui-panel-pad-y:28px; --ui-card-pad-x:22px; --ui-card-pad-y:22px;
+  --ds-panel-shadow:none; --ds-panel-shadow-hover:none; --panel-shadow:none;
+  --lx-rule:color-mix(in srgb,var(--ui-text) 28%,transparent);
+}
+/* Keine Container: Flächen, Rahmen, Schatten und Blur fallen weg – nur Linien */
+html[data-layout="swiss"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card){
+  background:transparent!important; box-shadow:none!important; border-radius:0!important;
+  border:0!important; border-bottom:1px solid var(--lx-rule)!important;
+  backdrop-filter:none!important; -webkit-backdrop-filter:none!important;
+}
+html[data-layout="swiss"] .stat-grid{gap:0!important; border-top:1px solid var(--lx-rule);}
+html[data-layout="swiss"] .stat-grid>.stat-card{border-right:1px solid var(--lx-rule)!important;}
+html[data-layout="swiss"] .stat-grid>.stat-card:last-child{border-right:0!important;}
+html[data-layout="swiss"] .stat-card .value{font-family:var(--font)!important; font-size:52px!important; font-weight:700!important; letter-spacing:-.04em; line-height:1;}
+html[data-layout="swiss"] :is(.stat-card .label,.section-title,.mini-stat-label){font-size:9px!important; text-transform:uppercase; letter-spacing:.18em!important; font-weight:500!important;}
+html[data-layout="swiss"] :is(.page-head h1,.page-head .page-title){font-size:clamp(30px,4vw,46px)!important; font-weight:800!important; letter-spacing:-.035em!important; line-height:1!important;}
+html[data-layout="swiss"] :is(.btn,.chip,.subtab,.icon-btn){border-radius:0!important; box-shadow:none!important;}
+/* Modal braucht eine Fläche zum Lesen – aber streng: 0 Radius, 1px Linie */
+html[data-layout="swiss"] .modal{border-radius:0!important; border:1px solid var(--ui-text)!important; box-shadow:none!important;}
+html[data-layout="swiss"] header.topnav{box-shadow:none!important; border-bottom:1px solid var(--lx-rule)!important;}
+
+/* ================= 3 · SHARP MINIMALIST ================= */
+html[data-layout="sharp"],html[data-layout="sharp"] body{
+  --font:"Roboto",Arial,"Helvetica Neue",sans-serif;
+  --sans:var(--font); --display:var(--font); --ui-font-body:var(--font);
+  --ds-heading-font:var(--font); --ds-kicker-font:var(--font); --ds-heading-weight:700;
+  --mono:"JetBrains Mono","SF Mono",Consolas,monospace; --ui-font-mono:var(--mono);
+  --radius:0px; --radius-sm:0px;
+  --ui-radius-panel:0px; --ui-radius-card:0px; --ui-radius-control:0px; --ui-radius-button:0px; --ui-radius-pill:0px;
+  --ui-section-gap:16px; --ui-panel-pad-x:14px; --ui-panel-pad-y:12px; --ui-card-pad-x:12px; --ui-card-pad-y:10px;
+  --ui-stack-tight:4px; --ui-stack:8px; --ui-stack-loose:12px;
+  --ds-panel-shadow:none; --ds-panel-shadow-hover:none; --panel-shadow:none;
+}
+html[data-layout="sharp"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card),html[data-layout="sharp"] .modal{
+  border-radius:0!important; border:1px solid var(--ui-border-strong)!important; box-shadow:none!important;
+  backdrop-filter:none!important; -webkit-backdrop-filter:none!important;
+}
+html[data-layout="sharp"] :is(.btn,.chip,.subtab,.icon-btn,.badge){border-radius:0!important; box-shadow:none!important;}
+html[data-layout="sharp"] :is(header.topnav,.modal-backdrop){backdrop-filter:none!important; -webkit-backdrop-filter:none!important; box-shadow:none!important;}
+html[data-layout="sharp"] .stat-grid{gap:8px!important;}
+html[data-layout="sharp"] .stat-card .value{font-family:var(--mono)!important; font-size:26px!important; font-weight:700!important;}
+html[data-layout="sharp"] :is(.stat-card .label,.section-title){letter-spacing:.06em!important;}
+
+/* ================= 4 · HIGH-DENSITY TERMINAL ================= */
+html[data-layout="dense"],html[data-layout="dense"] body{
+  --mono:"JetBrains Mono","SF Mono","Fira Code",Consolas,monospace; --ui-font-mono:var(--mono);
+  --font:var(--mono); --sans:var(--mono); --display:var(--mono); --ui-font-body:var(--mono);
+  --ds-heading-font:var(--mono); --ds-kicker-font:var(--mono); --ds-heading-weight:700;
+  --radius:3px; --radius-sm:3px;
+  --ui-radius-panel:3px; --ui-radius-card:3px; --ui-radius-control:2px; --ui-radius-button:3px; --ui-radius-pill:3px;
+  --ui-type-micro:8px; --ui-type-caption:9px; --ui-type-secondary:10px; --ui-type-body:11.5px;
+  --ui-type-strong:12px; --ui-type-section:13px; --ui-type-title:15px; --ui-type-hero:18px;
+  --ui-space-1:2px; --ui-space-2:3px; --ui-space-3:4px; --ui-space-4:6px; --ui-space-5:8px; --ui-space-6:10px; --ui-space-7:12px;
+  --ui-section-gap:10px; --ui-panel-pad-x:10px; --ui-panel-pad-y:8px; --ui-card-pad-x:8px; --ui-card-pad-y:6px;
+  --ui-stack-tight:3px; --ui-stack:5px; --ui-stack-loose:8px;
+  --ds-panel-shadow:none; --ds-panel-shadow-hover:none; --panel-shadow:none;
+}
+html[data-layout="dense"] body{font-size:12.5px;}
+html[data-layout="dense"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card){border-radius:3px!important; border:1px solid var(--ui-border)!important; box-shadow:none!important;}
+html[data-layout="dense"] .stat-grid{gap:4px!important; margin-bottom:10px!important; grid-template-columns:repeat(auto-fit,minmax(150px,1fr))!important;}
+html[data-layout="dense"] .stat-card{padding:7px 9px!important;}
+html[data-layout="dense"] .stat-card .value{font-size:18px!important; font-weight:700!important;}
+html[data-layout="dense"] .stat-card .label{font-size:9.5px!important; margin-bottom:3px!important;}
+html[data-layout="dense"] .stat-card .sub{font-size:10.5px!important; margin-top:2px!important;}
+html[data-layout="dense"] .btn{padding:5px 10px!important; font-size:12px!important; border-radius:3px!important;}
+html[data-layout="dense"] :is(.chip,.subtab){padding:3px 8px!important; font-size:11.5px!important; border-radius:2px!important;}
+html[data-layout="dense"] :is(input:not([type=checkbox]):not([type=radio]):not([type=range]):not([type=color]),select,textarea){padding-top:4px!important; padding-bottom:4px!important; font-size:12px!important;}
+html[data-layout="dense"] :is(th,td){padding:4px 6px!important; font-size:12px!important;}
+html[data-layout="dense"] .page-head{margin-bottom:10px!important;}
+html[data-layout="dense"] :is(.page-head h1,.page-head .page-title){font-size:17px!important; letter-spacing:0!important;}
+html[data-layout="dense"] .modal{border-radius:3px!important; padding:14px!important;}
+
+/* ================= 5 · LAYERED FLOATING CARDS ================= */
+html[data-layout="floating"],html[data-layout="floating"] body{
+  --font:"Outfit","Plus Jakarta Sans","Nunito",ui-sans-serif,system-ui,sans-serif;
+  --sans:var(--font); --display:var(--font); --ui-font-body:var(--font);
+  --ds-heading-font:var(--font); --ds-kicker-font:var(--font); --ds-heading-weight:600;
+  --radius:20px; --radius-sm:12px;
+  --ui-radius-panel:20px; --ui-radius-card:12px; --ui-radius-control:12px; --ui-radius-button:12px;
+  --ui-section-gap:22px; --ui-panel-pad-x:20px; --ui-panel-pad-y:18px;
+  --lx-float:0 1px 2px rgba(0,0,0,.10),0 22px 44px -26px rgba(0,0,0,.60);
+  --lx-float-inner:0 1px 1px rgba(0,0,0,.08),0 8px 18px -12px rgba(0,0,0,.50);
+  --ds-panel-shadow:var(--lx-float); --panel-shadow:var(--lx-float);
+}
+html[data-layout="floating"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card){
+  border-radius:20px!important;
+  border:1px solid color-mix(in srgb,var(--ui-text) 7%,transparent)!important;
+  box-shadow:var(--lx-float)!important;
+}
+/* Verschachtelung: innere Bausteine kleiner gerundet, leicht abgesetzt, weniger Tiefe */
+html[data-layout="floating"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card) :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card),html[data-layout="floating"] .stat-grid>.stat-card{
+  border-radius:12px!important; box-shadow:var(--lx-float-inner)!important;
+  background:color-mix(in srgb,var(--ui-text) 4%,var(--ui-surface))!important;
+}
+html[data-layout="floating"] .stat-grid{gap:14px!important;}
+html[data-layout="floating"] .stat-card .value{font-family:var(--font)!important; font-weight:600!important;}
+html[data-layout="floating"] .btn{border-radius:12px!important;}
+html[data-layout="floating"] :is(.chip,.subtab){border-radius:999px!important;}
+html[data-layout="floating"] .modal{border-radius:24px!important; box-shadow:0 30px 70px -30px rgba(0,0,0,.7)!important;}
+
+
+/* ---------- Block 4 · Feinschliff: weitere Container aus allen Tabs ----------
+   Ermittelt per Audit (alle 9 Ansichten): Seitenköpfe, Tages-Check, Tagesziel,
+   Live-News, Strategie-Checkliste, Bücher, Ziele-Vision + kleine Bausteine. */
+html[data-layout="bento"]{--ds-page-radius:16px;}
+html[data-layout="swiss"],html[data-layout="sharp"]{--ds-page-radius:0px;}
+html[data-layout="dense"]{--ds-page-radius:3px;}
+html[data-layout="floating"]{--ds-page-radius:20px;}
+
+html[data-layout="bento"] :is(.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell){border-radius:16px!important; border-color:color-mix(in srgb,var(--ui-text) 11%,transparent)!important; box-shadow:none!important;}
+html[data-layout="swiss"] :is(.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell){background:transparent!important; box-shadow:none!important; border-radius:0!important; border:0!important; border-bottom:1px solid var(--lx-rule)!important; backdrop-filter:none!important;}
+html[data-layout="sharp"] :is(.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell){border-radius:0!important; border:1px solid var(--ui-border-strong)!important; box-shadow:none!important; backdrop-filter:none!important;}
+html[data-layout="dense"] :is(.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell){border-radius:3px!important; border:1px solid var(--ui-border)!important; box-shadow:none!important;}
+html[data-layout="floating"] :is(.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell){border-radius:20px!important; border:1px solid color-mix(in srgb,var(--ui-text) 7%,transparent)!important; box-shadow:var(--lx-float)!important;}
+
+/* Kleine Bausteine: in Swiss/Sharp eckig, in Dense minimal gerundet */
+:is(html[data-layout="swiss"],html[data-layout="sharp"],html[data-layout="dense"]) :is(.tabs,nav.tabs button,.subtab-row,.cal-cell,.cheat-flow-step,.cheat-crit,.risk-row,.podium-bar,.session-meter,.trade-gallery-toggle-btn){border-radius:var(--ui-radius-control)!important;}
+:is(html[data-layout="swiss"],html[data-layout="sharp"]) :is(.tabs,nav.tabs button,.subtab-row,.cal-cell,.cheat-flow-step,.cheat-crit,.risk-row,.podium-bar,.session-meter,.trade-gallery-toggle-btn){box-shadow:none!important;}
+
+/* Start-Hero: Bild/Verlauf bleibt Theme-Identität, nur die Form folgt dem Stil */
+html[data-layout="bento"] .start-hero{border-radius:16px!important;}
+:is(html[data-layout="swiss"],html[data-layout="sharp"]) .start-hero{border-radius:0!important; box-shadow:none!important;}
+html[data-layout="swiss"] .start-hero .page-head{border-bottom:0!important;}
+html[data-layout="dense"] .start-hero{border-radius:3px!important; padding:10px 14px!important; margin-bottom:10px!important; box-shadow:none!important;}
+html[data-layout="floating"] .start-hero{border-radius:24px!important; box-shadow:var(--lx-float)!important;}
+
+/* Swiss: Begrüßung im Hero nicht auf Seitentitel-Größe aufblasen */
+html[data-layout="swiss"] .start-hero .page-head h1{font-size:clamp(20px,2.2vw,28px)!important; letter-spacing:-.02em!important;}
+
+/* Floating auf dunklen Designs: Tiefe über Lichtkante + kräftigeren Schatten */
+html[data-layout="floating"]{
+  --lx-float:inset 0 1px 0 rgba(255,255,255,.06),0 2px 4px rgba(0,0,0,.18),0 26px 56px -24px rgba(0,0,0,.85);
+  --lx-float-inner:inset 0 1px 0 rgba(255,255,255,.05),0 10px 22px -12px rgba(0,0,0,.7);
+}
+/* Helle Designs brauchen weichere Schatten, sonst wirkt es schmutzig */
+html[data-layout="floating"]:is([data-theme="cream"],[data-theme="sakura"],[data-theme="zen"],[data-theme="topo"]){
+  --lx-float:0 1px 2px rgba(60,40,20,.06),0 20px 44px -26px rgba(60,40,20,.35);
+  --lx-float-inner:0 1px 1px rgba(60,40,20,.05),0 8px 18px -12px rgba(60,40,20,.28);
+}
+
+/* Swiss-Lesbarkeit: statt "durchsichtig" eine Fläche in exakt der Seitenfarbe.
+   Wirkt auf ruhigen Designs unsichtbar (kein Kasten), verdeckt aber Theme-FX
+   wie Sakura-Baum, Sterne oder Nordlicht hinter Text. */
+html[data-layout="swiss"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card,.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell){background:color-mix(in srgb,var(--bg) 90%,transparent)!important;}
+html[data-layout="swiss"] :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card,.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell) :is(.panel,.stat-card,.trade-card,.book-card,.rp-card,.strategy-panel,.equity-card,.week-card,.ziele-goal-card,.podium-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.settings-owner-card,.settings-module-card,.settings-diagnostic-card,.page-head,.daily-checklist-card,.daily-goal-panel,.live-news-col,.cheat-checklist-box,.books-empty,.ziele-vision-cell,.ziele-vision-text-cell){background:transparent!important;}
+
+/* Zweiter Audit-Durchlauf: Tags, Zähler, Toggles, Datumsauswahl, Strategie-Tags */
+:is(html[data-layout="swiss"],html[data-layout="sharp"],html[data-layout="dense"]) :is(.backup-board-toggle,.tag,.btn-icon-del,.cal-week-total,.week-sidebar-toggle,.sm-bar,.trade-challenge-counter,.dp-trigger,.entry-checklist-launch,.cheat-sheet-tag,.cheat-crit-goal,.cheat-tag,.area-toggle,.area-toggle button){border-radius:var(--ui-radius-control)!important;}
+/* Schwebender Tages-Check (außerhalb der Startseite) liegt über Inhalten –
+   er braucht in Swiss/Sharp eine geschlossene, deckende Fläche. */
+:is(html[data-layout="swiss"],html[data-layout="sharp"]) body:not([data-jmb-view="start"]) .daily-checklist-card{
+  background:var(--bg)!important; border:1px solid var(--ui-text-faint)!important;
+}
+
+/* Dense: Trade-Zeilen wirklich verdichten (Mindesthöhe kommt sonst aus --ds-row-min) */
+html[data-layout="dense"],html[data-layout="dense"] body{--ds-row-min:0px;}
+html[data-layout="dense"] .trade-list{gap:3px!important;}
+html[data-layout="dense"] .trade-card{min-height:0!important;}
+html[data-layout="dense"] .trade-card :is(.btn,.icon-btn,.btn-icon-del){padding:3px 7px!important; min-height:0!important;}
+
+/* Block 5 · Mobile: großzügige Innenabstände von Bento/Floating auf Phones
+   zurücknehmen (sonst ragt z. B. die Bericht-Tabelle 3px über den Rand) */
+@media(max-width:600px){
+  html[data-layout="bento"],html[data-layout="bento"] body,
+  html[data-layout="floating"],html[data-layout="floating"] body{--ui-panel-pad-x:14px; --ui-card-pad-x:13px;}
+  html[data-layout="swiss"] .stat-card .value{font-size:38px!important;}
+}
+
+/* Block 5 · Trade-Modal: Formular-Abschnitte, Akkordeons und Bereichs-Badge */
+html[data-layout="bento"] :is(.form-section,.form-accordion){border-radius:14px!important;}
+:is(html[data-layout="swiss"],html[data-layout="sharp"]) :is(.form-section,.form-accordion,.modal-area-badge){border-radius:0!important; box-shadow:none!important;}
+html[data-layout="swiss"] :is(.form-section,.form-accordion){background:transparent!important; border:0!important; border-top:1px solid var(--lx-rule)!important;}
+html[data-layout="dense"] :is(.form-section,.form-accordion,.modal-area-badge){border-radius:3px!important;}
+html[data-layout="dense"] .form-section{padding:8px 10px!important;}
+html[data-layout="floating"] :is(.form-section,.form-accordion){border-radius:16px!important; box-shadow:var(--lx-float-inner)!important;}
+
+/* ---------- QA-Durchgang (Harmonie mit dem Original) ----------
+   Befunde aus dem automatischen Vergleich gegen "Original": */
+/* Hero-Kopfzeile ist im Original ein randloses, eckiges Band ohne Fläche –
+   die Container-Regeln der Stile dürfen dort nicht greifen (sonst schneidet
+   die runde Ecke "Heute" und das Datum an, bzw. Swiss legt eine Fläche drüber). */
+html[data-layout] .start-hero .page-head{border-radius:0!important; border:0!important; box-shadow:none!important; background:transparent!important;}
+/* Einzeilige Bausteine bleiben einzeilig wie im Original */
+html[data-layout] :is(.backup-board-toggle,.backup-board-toggle *){white-space:nowrap!important;}
+html[data-layout] .trade-card .tag{white-space:nowrap!important;}
+html[data-layout="dense"] .trade-card .tag{font-size:10.5px!important; padding:2px 5px!important;}
+html[data-layout] .trade-card .tag{font-size:11px!important; padding:2px 6px!important;}
+html[data-layout="dense"] .trade-card .tag{font-size:10.5px!important; padding:2px 5px!important;}
+html[data-layout="dense"] .rp-wd-n{font-size:9px!important; letter-spacing:-.02em;}
+
+/* Harmonie: ALLE Bedienelemente folgen dem Control-Radius des Stils
+   (Bento 10 · Floating 12 · Dense 2 · Swiss/Sharp 0) – vorher mischten sich
+   hier die Original-Radien 8/9/10/15 mit den neuen Formen. */
+html[data-layout] :is(.nav-core,.nav-secondary,.nav-sub-btn,.news-workbench-launch,.backup-board-toggle,.cal-cell,.cal-week-total,.btn-icon-del,.podium-bar,.week-sidebar-toggle,.dp-trigger,.session-meter,.sm-bar,.trade-challenge-counter,.cheat-flow-step,.risk-row,.area-toggle,.area-toggle button,.subtab-row,nav.tabs button){border-radius:var(--ui-radius-control)!important;}
+html[data-layout] .tabs{border-radius:var(--ui-radius-panel)!important;}
+:is(html[data-layout="swiss"],html[data-layout="sharp"],html[data-layout="dense"]) .badge{border-radius:var(--ui-radius-control)!important;}
+</style>
 </body>
 </html>
 
