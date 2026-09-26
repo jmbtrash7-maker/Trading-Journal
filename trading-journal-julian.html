@@ -15250,7 +15250,7 @@ html.theme-sunrise::view-transition-new(root){
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.25-tastenkuerzel";
+const APP_VERSION = "2026.09.26-filter-toggle-fix";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -28545,8 +28545,29 @@ function equityCalendarData(trades, days){
 
 function wireBericht(){
   wireBerichtTopRow();
+  wireBerichtFilterPanelHeader();
   wireBerichtFilterPanelBody();
   wireBerichtBody();
+}
+
+// Kopfzeile des Filterbereichs (Zurücksetzen / Ein-/Ausblenden) liegt AUSSERHALB von
+// #filterPanelBody und wird nur beim vollen Render neu erzeugt – daher hier genau einmal
+// verdrahten. Früher hing das in wireBerichtFilterPanelBody(): jeder Teil-Refresh hat einen
+// weiteren Listener angehängt, der zweite Klick schaltete doppelt → Filter ließen sich nicht
+// mehr aufklappen.
+function wireBerichtFilterPanelHeader(){
+  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
+  if(clearFiltersBtn) clearFiltersBtn.addEventListener("click",()=>{
+    STATE.berichtFilters = {}; STATE.berichtDateFrom=""; STATE.berichtDateTo="";
+    refreshBerichtFilterPanelBody();
+    refreshBerichtBody();
+  });
+  const toggleFiltersBtn = document.getElementById("toggleFiltersBtn");
+  if(toggleFiltersBtn) toggleFiltersBtn.addEventListener("click",(e)=>{
+    STATE.berichtFiltersExpanded = !STATE.berichtFiltersExpanded;
+    e.currentTarget.innerHTML = `👁 ${STATE.berichtFiltersExpanded ? "Filter ausblenden" : "Filter einblenden"}`;
+    refreshBerichtFilterPanelBody();
+  });
 }
 
 function wireBerichtTopRow(){
@@ -28603,17 +28624,6 @@ function wireBerichtFilterPanelBody(){
   });
 
   initDateRangePicker();
-  const clearFiltersBtn = document.getElementById("clearFiltersBtn");
-  if(clearFiltersBtn) clearFiltersBtn.addEventListener("click",()=>{
-    STATE.berichtFilters = {}; STATE.berichtDateFrom=""; STATE.berichtDateTo="";
-    refreshBerichtFilterPanelBody();
-    refreshBerichtBody();
-  });
-  document.getElementById("toggleFiltersBtn").addEventListener("click",(e)=>{
-    STATE.berichtFiltersExpanded = !STATE.berichtFiltersExpanded;
-    e.currentTarget.innerHTML = `👁 ${STATE.berichtFiltersExpanded ? "Filter ausblenden" : "Filter einblenden"}`;
-    refreshBerichtFilterPanelBody();
-  });
 }
 
 function wireBerichtBody(){
