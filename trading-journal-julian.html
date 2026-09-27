@@ -9075,6 +9075,17 @@ body[data-jmb-view="start"] .core-primary-workspace{
 body[data-jmb-view="start"] .top-with-weeksidebar-main{
   min-width:0;
 }
+/* Linke Spalte (Top 3 + FTMO-Prognose) auf volle Höhe der Wochen-Ergebnisse ziehen:
+   Podium wächst mit, FTMO sitzt unten → Unterkante bündig mit der rechten Spalte. */
+body[data-jmb-view="start"] .start-week-context{
+  align-items:stretch;
+}
+body[data-jmb-view="start"] .start-week-context .podium-panel{
+  flex:1 1 auto;
+}
+body[data-jmb-view="start"] .start-week-context .ftmo-eta-panel{
+  flex:0 0 auto;
+}
 body[data-jmb-view="start"] .week-sidebar{
   opacity:.92;
 }
@@ -9085,6 +9096,7 @@ body[data-jmb-view="start"] [class*="overall-overview"]{
 }
 body[data-jmb-view="start"] .ftmo-eta-panel{
   margin-top:18px;
+  margin-bottom:0;
   opacity:.88;
 }
 
@@ -11830,6 +11842,7 @@ body[data-jmb-view="start"] .podium-panel:hover{
   border-color:transparent;
   box-shadow:none;
 }
+
 body[data-jmb-view="start"] .podium-hint{
   border-top:1px solid color-mix(in srgb,var(--ui-border) 72%,transparent);
   padding-top:10px;
@@ -12675,12 +12688,26 @@ body[data-jmb-view="start"] .start-week-context{
 }
 body[data-jmb-view="start"] .start-week-context:hover{opacity:1;}
 body[data-jmb-view="start"] .start-week-context .section-title{margin-top:0;}
-body[data-jmb-view="start"] .start-week-context .podium-col{width:132px;}
-body[data-jmb-view="start"] .start-week-context .podium-card{padding:10px 8px;}
-body[data-jmb-view="start"] .start-week-context .podium-medal{font-size:20px;}
-body[data-jmb-view="start"] .start-week-context .podium-h1{height:58px;}
-body[data-jmb-view="start"] .start-week-context .podium-h2{height:40px;}
-body[data-jmb-view="start"] .start-week-context .podium-h3{height:28px;}
+/* Top 3 der Woche etwas größer (vorher 132px / 58-40-28px): nutzt die Höhe neben den
+   Wochen-Ergebnissen, FTMO-Prognose sitzt darunter bündig. */
+body[data-jmb-view="start"] .start-week-context .podium-wrap{gap:18px;}
+body[data-jmb-view="start"] .start-week-context .podium-col{width:180px;}
+body[data-jmb-view="start"] .start-week-context .podium-card{padding:14px 10px;}
+body[data-jmb-view="start"] .start-week-context .podium-medal{font-size:28px;}
+body[data-jmb-view="start"] .start-week-context .podium-market{font-size:15px;}
+body[data-jmb-view="start"] .start-week-context .podium-r{font-size:19px;}
+body[data-jmb-view="start"] .start-week-context .podium-h1{height:96px;}
+body[data-jmb-view="start"] .start-week-context .podium-h2{height:66px;}
+body[data-jmb-view="start"] .start-week-context .podium-h3{height:46px;}
+@media (max-width:640px){
+  body[data-jmb-view="start"] .start-week-context .podium-wrap{gap:8px;}
+  body[data-jmb-view="start"] .start-week-context .podium-col{width:31%;}
+  body[data-jmb-view="start"] .start-week-context .podium-market{font-size:12px;}
+  body[data-jmb-view="start"] .start-week-context .podium-r{font-size:14px;}
+  body[data-jmb-view="start"] .start-week-context .podium-h1{height:64px;}
+  body[data-jmb-view="start"] .start-week-context .podium-h2{height:44px;}
+  body[data-jmb-view="start"] .start-week-context .podium-h3{height:30px;}
+}
 body[data-jmb-view="start"] .start-week-context .week-sidebar{width:210px;}
 body[data-jmb-view="start"] .start-week-context .week-sidebar .week-card{padding:9px 11px;}
 body[data-jmb-view="start"] .start-week-context .week-sidebar .week-badge{width:31px;height:31px;font-size:13px;}
@@ -15250,7 +15277,7 @@ html.theme-sunrise::view-transition-new(root){
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.26-filter-toggle-fix";
+const APP_VERSION = "2026.09.27-ftmo-buendig";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -23724,13 +23751,12 @@ function renderStart(){
     <div class="start-week-context top-with-weeksidebar core-primary-workspace">
       <div class="top-with-weeksidebar-main">
         ${weekPodiumHtml()}
+        ${ftmoChallengeEtaHtml()}
       </div>
       <div class="week-sidebar">
         ${weekSidebarHtml()}
       </div>
     </div>
-
-    ${ftmoChallengeEtaHtml()}
 
     <div style="margin-top:14px; font-size:11px; color:var(--ui-text-faint);">Version ${APP_VERSION} · Copyright by Clemens - dem Boss</div>
   `;
