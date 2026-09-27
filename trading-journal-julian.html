@@ -32124,9 +32124,17 @@ bootJournalApp();
 (()=>{
   const MODE_KEY="jmb_mobile_mode_v1";
   const SIZE_KEY="jmb_mobile_size_v1";
+  // Mobile-Shell bleibt eigenständig, nutzt aber im Normalbetrieb die kanonische Storage-Fassade.
+  // Der direkte localStorage-Pfad ist nur ein defensiver Fallback, falls der Core vorher nicht verfügbar ist.
   const safeStorage=Object.freeze({
-    get(key,fallback=""){try{return window.localStorage?.getItem(key)??fallback}catch(_){return fallback}},
-    set(key,value){try{window.localStorage?.setItem(key,String(value));return true}catch(_){return false}}
+    get(key,fallback=""){
+      if(typeof JournalStorage!=="undefined") return JournalStorage.get(key,fallback);
+      try{return window.localStorage?.getItem(key)??fallback}catch(_){return fallback}
+    },
+    set(key,value){
+      if(typeof JournalStorage!=="undefined") return JournalStorage.set(key,String(value));
+      try{window.localStorage?.setItem(key,String(value));return true}catch(_){return false}
+    }
   });
   const profiles=Object.freeze({
     "375":{w:375,h:812,label:"375 × 812"},
@@ -32870,7 +32878,6 @@ html[data-layout] :is(.backup-board-toggle,.backup-board-toggle *){white-space:n
 html[data-layout] .trade-card .tag{white-space:nowrap!important;}
 html[data-layout="dense"] .trade-card .tag{font-size:10.5px!important; padding:2px 5px!important;}
 html[data-layout] .trade-card .tag{font-size:11px!important; padding:2px 6px!important;}
-html[data-layout="dense"] .trade-card .tag{font-size:10.5px!important; padding:2px 5px!important;}
 html[data-layout="dense"] .rp-wd-n{font-size:9px!important; letter-spacing:-.02em;}
 
 /* Harmonie: ALLE Bedienelemente folgen dem Control-Radius des Stils
