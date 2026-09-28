@@ -698,6 +698,7 @@
   }
   .chip:hover{border-color:var(--ui-text-faint); color:var(--ui-text);}
   .chip.selected{background:var(--ui-contrast); color:#0a0a0d; border-color:var(--ui-contrast); font-weight:700;}
+  .trade-modal-slot{display:contents;}
   .chip.selected.result-TP{background:var(--ui-positive); border-color:var(--ui-positive); color:#06281c;}
   .chip.selected.result-SL{background:var(--ui-negative); border-color:var(--ui-negative); color:#2b0a0a;}
   .chip.selected.result-BE{background:var(--ui-warning); border-color:var(--ui-warning); color:#2b2205;}
@@ -15336,7 +15337,7 @@ html.theme-sunrise::view-transition-new(root){
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.27-design-rich-trades-elite";
+const APP_VERSION = "2026.09.28-tradefenster-flackerfrei";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -24507,7 +24508,12 @@ function wireAnalyseModal(){
       const g = group.dataset.chipgroup;
       const val = btn.dataset.value;
       STATE.analyseDraft[g] = (STATE.analyseDraft[g]===val) ? null : val;
-      renderAnalyseModal();
+      // Nur die Markierung dieser Gruppe umschalten – kein Neuaufbau des Fensters
+      // (renderAnalyseModal() hier ließ das Fenster bei jedem Klick kurz aufblitzen und
+      // setzte Scroll/Fokus zurück). Eingaben in den Textfeldern bleiben unberührt.
+      group.querySelectorAll("button[data-value]").forEach(b=>{
+        b.classList.toggle("selected", b.dataset.value === STATE.analyseDraft[g]);
+      });
     });
   });
 
@@ -26808,9 +26814,8 @@ function renderModal(){
   // jeder Formulareingabe kurz auf ("Flackern").
   const acc = STATE.modalAccordion || (STATE.modalAccordion = {setup:false, reflexion:false, screenshots:false});
 
-  const setupFilled = !!(d.kriterien || (d.invalidierung||[]).length || d.genommen===false ||
-    Object.values(d.customCategories||{}).some(v=>Array.isArray(v)?v.length:!!v));
-  const shotCount = SHOT_CATEGORIES.reduce((sum,c)=> sum + (((d.screenshots&&d.screenshots[c.key])||[]).length), 0);
+  const setupFilled = tradeSetupFilled(d);
+  const shotCount = tradeShotCount(d);
 
   root.innerHTML = `
   <div class="modal-backdrop${animClass}" id="modalBackdrop">
@@ -26875,7 +26880,7 @@ function renderModal(){
       <div class="form-accordion${acc.setup?" open":""}" data-accordion="setup">
         <button type="button" class="form-accordion-header" data-accordiontoggle="setup">
           <span class="form-accordion-title">Setup-Check</span>
-          <span class="form-accordion-hint${setupFilled?" filled":""}">${setupFilled?"ausgefüllt":"optional · offen"}</span>
+          <span class="form-accordion-hint${setupFilled?" filled":""}" id="tradeSetupHint">${setupFilled?"ausgefüllt":"optional · offen"}</span>
           <span class="form-accordion-chevron">›</span>
         </button>
         <div class="form-accordion-body">
@@ -26885,11 +26890,7 @@ function renderModal(){
               ${chipGroupHtml("kriterien", ["Erfüllt","Nicht erfüllt"], d.kriterien)}
             </div>
 
-            ${d.kriterien === "Nicht erfüllt" ? `
-            <div class="field-group">
-              <label class="fg-label">Wieso nicht erfüllt?</label>
-              <textarea id="f_kriterienBegruendung" placeholder="Welche Kriterien haben gefehlt und warum?">${escHtml(d.kriterienBegruendung||"")}</textarea>
-            </div>` : ""}
+            <div class="trade-modal-slot" id="tradeKriterienSlot">${tradeKriterienSlotHtml(d)}</div>
 
             <div class="field-group">
               <label class="fg-label">${categoryLabel("invalidierung","Invalidierungskriterien")}</label>
@@ -26908,11 +26909,7 @@ function renderModal(){
               ${chipGroupHtml("genommen", ["Ja","Nein"], d.genommen===true?"Ja":(d.genommen===false?"Nein":null))}
             </div>` : ""}
 
-            ${(d.area==="eod" && d.genommen===false) ? `
-            <div class="field-group">
-              <label class="fg-label">Warum nicht genommen?</label>
-              <textarea id="f_grundNichtGenommen" placeholder="z.B. zu spät gesehen, kein sauberes B/C, News im Weg…">${escHtml(d.grundNichtGenommen||"")}</textarea>
-            </div>` : ""}
+            <div class="trade-modal-slot" id="tradeGrundSlot">${tradeGrundSlotHtml(d)}</div>
           </div>
         </div>
       </div>
@@ -26923,7 +26920,7 @@ function renderModal(){
           <label class="fg-label">SL / TP / BE</label>
           ${chipGroupHtml("ergebnis", cfg.results, d.ergebnis, {resultStyle:true})}
         </div>
-        ${ergebnisSectionHtml(d, area)}
+        <div class="trade-modal-slot" id="tradeErgebnisSlot">${ergebnisSectionHtml(d, area)}</div>
       </div>
 
       <div class="form-accordion${acc.reflexion?" open":""}" data-accordion="reflexion">
@@ -26953,11 +26950,57 @@ function renderModal(){
       <div class="form-accordion${acc.screenshots?" open":""}" data-accordion="screenshots">
         <button type="button" class="form-accordion-header" data-accordiontoggle="screenshots">
           <span class="form-accordion-title">Screenshots</span>
-          <span class="form-accordion-hint${shotCount?" filled":""}">${shotCount?shotCount+" Bild"+(shotCount===1?"":"er"):"optional"}</span>
+          <span class="form-accordion-hint${shotCount?" filled":""}" id="tradeShotHint">${shotCount?shotCount+" Bild"+(shotCount===1?"":"er"):"optional"}</span>
           <span class="form-accordion-chevron">›</span>
         </button>
         <div class="form-accordion-body">
-          <div class="form-accordion-body-inner">
+          <div class="form-accordion-body-inner" id="tradeShotsBody">${tradeShotsBodyHtml(d)}
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-ghost" id="modalCancelBtn"><span class="btn-symbol" aria-hidden="true">×</span><span>Abbrechen</span></button>
+        <button class="btn btn-primary" id="modalSaveBtn">${isEdit?"Speichern":"Trade speichern"}</button>
+      </div>
+    </div>
+  </div>`;
+
+  const newBackdrop = document.getElementById("modalBackdrop");
+  if(newBackdrop) newBackdrop.scrollTop = prevScroll;
+
+  wireModal();
+}
+
+// Aktualisiert live das automatisch berechnete Risiko(%)-Feld, ohne das komplette Modal
+// neu zu rendern (verhindert, dass der Cursor beim Tippen aus dem Eingabefeld springt).
+// Gilt gleichermaßen für TP und SL im Live-Reiter: R-Ergebnis und Euro-Betrag sind
+// manuell, das Risiko(%) wird daraus zurückgerechnet.
+function updateRRDisplayField(){
+  const riskField = document.getElementById("f_risiko");
+  if(riskField) riskField.value = computeRiskPercentDisplay(STATE.draft);
+}
+
+/* ---------- Trade-Fenster: Teilbereiche (lokal aktualisierbar, ohne renderModal) ----------
+   Chip-Klicks, Klapp-Bereiche und Screenshots bauen seit 28.09.2026 nicht mehr das ganze
+   Fenster neu (das ließ es bei jedem Klick aufblitzen), sondern tauschen nur den Bereich,
+   dessen Form sich tatsächlich ändert. */
+function tradeKriterienSlotHtml(d){
+  return d.kriterien === "Nicht erfüllt" ? `
+            <div class="field-group">
+              <label class="fg-label">Wieso nicht erfüllt?</label>
+              <textarea id="f_kriterienBegruendung" placeholder="Welche Kriterien haben gefehlt und warum?">${escHtml(d.kriterienBegruendung||"")}</textarea>
+            </div>` : "";
+}
+function tradeGrundSlotHtml(d){
+  return (d.area==="eod" && d.genommen===false) ? `
+            <div class="field-group">
+              <label class="fg-label">Warum nicht genommen?</label>
+              <textarea id="f_grundNichtGenommen" placeholder="z.B. zu spät gesehen, kein sauberes B/C, News im Weg…">${escHtml(d.grundNichtGenommen||"")}</textarea>
+            </div>` : "";
+}
+function tradeShotsBodyHtml(d){
+  return `
             ${SHOT_CATEGORIES.map(c=>{
               const arr = (d.screenshots && d.screenshots[c.key]) || [];
               return `
@@ -26989,31 +27032,121 @@ function renderModal(){
                 `).join("")}
               </div>` : ""}
             </div>`;
-            }).join("")}
-          </div>
-        </div>
-      </div>
-
-      <div class="modal-footer">
-        <button class="btn btn-ghost" id="modalCancelBtn"><span class="btn-symbol" aria-hidden="true">×</span><span>Abbrechen</span></button>
-        <button class="btn btn-primary" id="modalSaveBtn">${isEdit?"Speichern":"Trade speichern"}</button>
-      </div>
-    </div>
-  </div>`;
-
-  const newBackdrop = document.getElementById("modalBackdrop");
-  if(newBackdrop) newBackdrop.scrollTop = prevScroll;
-
-  wireModal();
+            }).join("")}`;
 }
-
-// Aktualisiert live das automatisch berechnete Risiko(%)-Feld, ohne das komplette Modal
-// neu zu rendern (verhindert, dass der Cursor beim Tippen aus dem Eingabefeld springt).
-// Gilt gleichermaßen für TP und SL im Live-Reiter: R-Ergebnis und Euro-Betrag sind
-// manuell, das Risiko(%) wird daraus zurückgerechnet.
-function updateRRDisplayField(){
-  const riskField = document.getElementById("f_risiko");
-  if(riskField) riskField.value = computeRiskPercentDisplay(STATE.draft);
+function tradeSetupFilled(d){
+  return !!(d.kriterien || (d.invalidierung||[]).length || d.genommen===false ||
+    Object.values(d.customCategories||{}).some(v=>Array.isArray(v)?v.length:!!v));
+}
+function tradeShotCount(d){
+  return SHOT_CATEGORIES.reduce((sum,c)=> sum + (((d.screenshots&&d.screenshots[c.key])||[]).length), 0);
+}
+function updateTradeModalHints(){
+  const d=STATE.draft; if(!d) return;
+  const setupHint=document.getElementById("tradeSetupHint");
+  if(setupHint){ const f=tradeSetupFilled(d); setupHint.classList.toggle("filled",f); setupHint.textContent=f?"ausgefüllt":"optional · offen"; }
+  const shotHint=document.getElementById("tradeShotHint");
+  if(shotHint){ const n=tradeShotCount(d); shotHint.classList.toggle("filled",!!n); shotHint.textContent=n?n+" Bild"+(n===1?"":"er"):"optional"; }
+}
+// Markierung einer Chip-Gruppe aus STATE.draft übernehmen (Einzel-/Mehrfachauswahl,
+// Ergebnis-Farben TP/SL/BE, eigene Kategorien, "Setup genommen?").
+function syncTradeChipGroup(g){
+  const d=STATE.draft; if(!d) return;
+  const group=document.querySelector(`#modalBackdrop [data-chipgroup="${CSS.escape(g)}"]`);
+  if(!group) return;
+  let current;
+  if(g==="genommen") current = d.genommen===true?"Ja":(d.genommen===false?"Nein":null);
+  else if(g.startsWith("custom_")) current = (d.customCategories||{})[g.slice(7)];
+  else current = d[g];
+  group.querySelectorAll("button[data-value]").forEach(b=>{
+    const v=b.dataset.value;
+    const on = Array.isArray(current) ? current.includes(v) : current===v;
+    b.classList.toggle("selected", on);
+    if(g==="ergebnis"){ ["TP","SL","BE"].forEach(r=>b.classList.remove("result-"+r)); if(on) b.classList.add("result-"+v); }
+  });
+}
+function replaceTradeSlot(id, html){
+  const slot=document.getElementById(id);
+  if(!slot) return false;
+  slot.innerHTML=html;
+  wireTradeSlotInputs(slot);
+  return true;
+}
+// Eingabefelder, die in austauschbaren Bereichen liegen, direkt ins Draft schreiben.
+function wireTradeSlotInputs(scope){
+  const on=(id,fn)=>{ const el=scope.querySelector("#"+id); if(el && !el.disabled && !el.dataset.tradeWired){ el.dataset.tradeWired="1"; el.addEventListener("input",fn); } };
+  on("f_kriterienBegruendung", e=>{ STATE.draft.kriterienBegruendung = e.target.value; });
+  on("f_grundNichtGenommen",   e=>{ STATE.draft.grundNichtGenommen = e.target.value; });
+  on("f_r",      e=>{ STATE.draft._rMagnitudeInput = e.target.value; updateRRDisplayField(); });
+  on("f_risiko", e=>{ STATE.draft._risikoInput = e.target.value; updateRRDisplayField(); });
+  on("f_eur",    e=>{ STATE.draft._eurInput = e.target.value; updateRRDisplayField(); });
+}
+// Screenshot-Bereich neu zeichnen (nach Hinzufügen/Entfernen). Fällt auf renderModal
+// zurück, falls das Fenster nicht offen ist.
+function refreshTradeShots(){
+  const body=document.getElementById("tradeShotsBody");
+  if(!body || !STATE.draft){ if(STATE.draft) renderModal(); return; }
+  body.innerHTML=tradeShotsBodyHtml(STATE.draft);
+  wireTradeShots(body);
+  updateTradeModalHints();
+}
+// Screenshot-Bereich verdrahten; liefert das erste Eingabeziel (für den Fokus beim Öffnen).
+function wireTradeShots(scope){
+  let firstDropzoneEl = null;
+  SHOT_CATEGORIES.forEach(c=>{
+    const input = scope.querySelector("#f_shot_"+c.key);
+    if(input){
+      input.addEventListener("change", (e)=>{
+        const files = Array.from(e.target.files || []);
+        if(files.length) handleImageFiles(files, c.key);
+        input.value = ""; // erlaubt erneutes Auswählen derselben Datei später
+      });
+    }
+    const dropzone = scope.querySelector("#shotDropzone_"+c.key);
+    if(dropzone){
+      if(!firstDropzoneEl) firstDropzoneEl = dropzone;
+      dropzone.addEventListener("click", (e)=>{
+        if(e.target.closest(".shot-filelabel")) return;
+        STATE.draft._activeShotCategory = c.key;
+        dropzone.focus({preventScroll:true});
+      });
+      dropzone.addEventListener("focus", ()=>{ STATE.draft._activeShotCategory = c.key; });
+      dropzone.addEventListener("dragover", (e)=>{ e.preventDefault(); dropzone.classList.add("dragover"); STATE.draft._activeShotCategory = c.key; });
+      dropzone.addEventListener("dragleave", ()=> dropzone.classList.remove("dragover"));
+      dropzone.addEventListener("drop", (e)=>{
+        e.preventDefault();
+        dropzone.classList.remove("dragover");
+        const files = Array.from(e.dataTransfer.files || []).filter(f=>f.type.startsWith("image/"));
+        if(files.length) handleImageFiles(files, c.key);
+      });
+    }
+    const linkInput = scope.querySelector("#f_shotlink_"+c.key);
+    const linkBtn = scope.querySelector(`[data-addshotlink="${c.key}"]`);
+    const submitLink = ()=>{ if(linkInput) addScreenshotUrl(linkInput.value, c.key); };
+    if(linkInput){
+      if(!firstDropzoneEl) firstDropzoneEl = linkInput;
+      linkInput.addEventListener("focus", ()=>{ STATE.draft._activeShotCategory = c.key; });
+      linkInput.addEventListener("keydown", (e)=>{ if(e.key === "Enter"){ e.preventDefault(); submitLink(); } });
+    }
+    if(linkBtn) linkBtn.addEventListener("click", submitLink);
+  });
+  scope.querySelectorAll("[data-remove-shot]").forEach(btn=>{
+    btn.addEventListener("click", (e)=>{
+      e.stopPropagation();
+      const cat = btn.dataset.removeShotCat;
+      const i = parseInt(btn.dataset.removeShot, 10);
+      STATE.draft.screenshots[cat].splice(i, 1);
+      refreshTradeShots();
+    });
+  });
+  scope.querySelectorAll("[data-editshotref]").forEach(img=>{
+    img.addEventListener("click", ()=>{
+      const [cat, idxStr] = img.dataset.editshotref.split(":");
+      const arr = (STATE.draft.screenshots && STATE.draft.screenshots[cat]) || [];
+      openLightbox(arr[parseInt(idxStr, 10)]);
+    });
+  });
+  return firstDropzoneEl;
 }
 
 function wireModal(){
@@ -27029,7 +27162,9 @@ function wireModal(){
     header.addEventListener("click", ()=>{
       const key = header.dataset.accordiontoggle;
       STATE.modalAccordion[key] = !STATE.modalAccordion[key];
-      renderModal();
+      // nur auf-/zuklappen – kein Neuaufbau des Fensters
+      const acc = header.closest("[data-accordion]");
+      if(acc) acc.classList.toggle("open", !!STATE.modalAccordion[key]); else renderModal();
     });
   });
 
@@ -27044,7 +27179,9 @@ function wireModal(){
       const d = STATE.draft;
       if(g==="genommen"){
         d.genommen = (val==="Ja");
-        renderModal();
+        syncTradeChipGroup("genommen");
+        replaceTradeSlot("tradeGrundSlot", tradeGrundSlotHtml(d));
+        updateTradeModalHints();
         return;
       }
       // Frei erstellte Kategorien nutzen das Präfix "custom_" im Gruppennamen und werden
@@ -27087,60 +27224,20 @@ function wireModal(){
           d._eurInput = "";
         }
       }
-      renderModal();
+      // Lokal nachziehen statt renderModal(): Markierung, ggf. abhängiger Bereich, Hinweise.
+      syncTradeChipGroup(g);
+      if(g === "kriterien") replaceTradeSlot("tradeKriterienSlot", tradeKriterienSlotHtml(d));
+      if(g === "ergebnis")  replaceTradeSlot("tradeErgebnisSlot", ergebnisSectionHtml(d, STATE.editingArea));
+      updateTradeModalHints();
     });
   });
 
   // Drei Dropzones (HTF/LTF/Zusätzlich). Bei Klick/Fokus/Dragover einer Zone merkt sich
   // das Draft, welche Kategorie gerade "aktiv" ist — dahin geht dann auch ein Strg+V-Paste,
   // weil das Paste-Event global auf document hängt und sonst nicht wüsste, welche Zone gemeint ist.
-  let firstDropzoneEl = null;
-  SHOT_CATEGORIES.forEach(c=>{
-    const input = document.getElementById("f_shot_"+c.key);
-    if(input){
-      input.addEventListener("change", (e)=>{
-        const files = Array.from(e.target.files || []);
-        if(files.length) handleImageFiles(files, c.key);
-        input.value = ""; // erlaubt erneutes Auswählen derselben Datei später
-      });
-    }
+  const shotsBody = document.getElementById("tradeShotsBody");
+  const firstDropzoneEl = shotsBody ? wireTradeShots(shotsBody) : null;
 
-    const dropzone = document.getElementById("shotDropzone_"+c.key);
-    if(dropzone){
-      if(!firstDropzoneEl) firstDropzoneEl = dropzone;
-      dropzone.addEventListener("click", (e)=>{
-        if(e.target.closest(".shot-filelabel")) return;
-        STATE.draft._activeShotCategory = c.key;
-        dropzone.focus({preventScroll:true});
-      });
-      dropzone.addEventListener("focus", ()=>{ STATE.draft._activeShotCategory = c.key; });
-      dropzone.addEventListener("dragover", (e)=>{ e.preventDefault(); dropzone.classList.add("dragover"); STATE.draft._activeShotCategory = c.key; });
-      dropzone.addEventListener("dragleave", ()=> dropzone.classList.remove("dragover"));
-      dropzone.addEventListener("drop", (e)=>{
-        e.preventDefault();
-        dropzone.classList.remove("dragover");
-        const files = Array.from(e.dataTransfer.files || []).filter(f=>f.type.startsWith("image/"));
-        if(files.length) handleImageFiles(files, c.key);
-      });
-    }
-
-    // Bild-Link-Eingabe: per Enter oder Klick auf "Hinzufügen" übernehmen. Unabhängig davon,
-    // ob es für diese Kategorie überhaupt eine Dropzone gibt (bei HTF/LTF gibt es nur den Link).
-    const linkInput = document.getElementById("f_shotlink_"+c.key);
-    const linkBtn = document.querySelector(`[data-addshotlink="${c.key}"]`);
-    const submitLink = ()=>{
-      if(!linkInput) return;
-      addScreenshotUrl(linkInput.value, c.key);
-    };
-    if(linkInput){
-      if(!firstDropzoneEl) firstDropzoneEl = linkInput; // z.B. HTF: erstes Feld ohne Dropzone
-      linkInput.addEventListener("focus", ()=>{ STATE.draft._activeShotCategory = c.key; });
-      linkInput.addEventListener("keydown", (e)=>{
-        if(e.key === "Enter"){ e.preventDefault(); submitLink(); }
-      });
-    }
-    if(linkBtn) linkBtn.addEventListener("click", submitLink);
-  });
   // Nur beim allerersten Öffnen des Formulars die erste Dropzone (HTF) fokussieren
   // (nicht bei jedem Re-Render durch Chip-Klicks — das verursachte den Sprung ans Formularende).
   if(STATE.modalFreshOpen){
@@ -27154,26 +27251,6 @@ function wireModal(){
   // Einfügen per Strg+V funktioniert überall im Modal (das Paste-Event bubbelt zu document),
   // landet in der zuletzt aktiven Kategorie (siehe oben).
   document.addEventListener("paste", handlePasteEvent);
-
-  document.querySelectorAll("[data-remove-shot]").forEach(btn=>{
-    btn.addEventListener("click", (e)=>{
-      e.stopPropagation();
-      const cat = btn.dataset.removeShotCat;
-      const i = parseInt(btn.dataset.removeShot, 10);
-      STATE.draft.screenshots[cat].splice(i, 1);
-      renderModal();
-    });
-  });
-
-  // Klick auf ein Vorschaubild vergrößert es (gleiche Lightbox wie in der Ansicht),
-  // unabhängig vom "Entfernen"-Button daneben.
-  document.querySelectorAll("[data-editshotref]").forEach(img=>{
-    img.addEventListener("click", ()=>{
-      const [cat, idxStr] = img.dataset.editshotref.split(":");
-      const arr = (STATE.draft.screenshots && STATE.draft.screenshots[cat]) || [];
-      openLightbox(arr[parseInt(idxStr, 10)]);
-    });
-  });
 
   // Datum, Notizen und R-Betrag sofort ins Draft-Objekt übernehmen, statt erst beim
   // Speichern zu lesen — sonst gingen Eingaben beim nächsten Chip-Klick (voller Re-Render) verloren.
@@ -27190,34 +27267,10 @@ function wireModal(){
   const verbesserungInput = document.getElementById("f_verbesserung");
   if(verbesserungInput) verbesserungInput.addEventListener("input", (e)=>{ STATE.draft.verbesserung = e.target.value; });
 
-  const kriterienBegruendungInput = document.getElementById("f_kriterienBegruendung");
-  if(kriterienBegruendungInput) kriterienBegruendungInput.addEventListener("input", (e)=>{ STATE.draft.kriterienBegruendung = e.target.value; });
-
-  const grundInput = document.getElementById("f_grundNichtGenommen");
-  if(grundInput) grundInput.addEventListener("input", (e)=>{ STATE.draft.grundNichtGenommen = e.target.value; });
-
-  // f_r ist im EOD-Reiter und im Live-Reiter (TP & SL) manuell editierbar — überall wird
-  // das R-Ergebnis direkt eingetragen. Im Live-Reiter löst eine Änderung zusätzlich eine
-  // Neuberechnung des Risiko(%)-Feldes aus.
-  const rInputEl = document.getElementById("f_r");
-  if(rInputEl && !rInputEl.disabled) rInputEl.addEventListener("input", (e)=>{
-    STATE.draft._rMagnitudeInput = e.target.value;
-    updateRRDisplayField();
-  });
-
-  // f_risiko ist im Live-Reiter (TP & SL) immer das deaktivierte, automatisch berechnete
-  // Feld und braucht daher keine eigene Eingabe-Bindung (der Guard bleibt trotzdem als
-  // Absicherung stehen, falls es künftig irgendwo wieder editierbar würde).
-  const risikoInput = document.getElementById("f_risiko");
-  if(risikoInput && !risikoInput.disabled) risikoInput.addEventListener("input", (e)=>{
-    STATE.draft._risikoInput = e.target.value;
-    updateRRDisplayField();
-  });
-  // f_eur ist im EOD-Reiter nicht vorhanden, im Live-Reiter (TP & SL) manuell editierbar.
-  const eurInput = document.getElementById("f_eur");
-  if(eurInput && !eurInput.disabled) eurInput.addEventListener("input", (e)=>{
-    STATE.draft._eurInput = e.target.value;
-    updateRRDisplayField();
+  // Begründung, "Warum nicht genommen?" und R/€/Risiko liegen in austauschbaren Bereichen
+  // (siehe replaceTradeSlot) – Bindung daher zentral über wireTradeSlotInputs.
+  ["tradeKriterienSlot","tradeGrundSlot","tradeErgebnisSlot"].forEach(id=>{
+    const slot=document.getElementById(id); if(slot) wireTradeSlotInputs(slot);
   });
 
   document.getElementById("modalSaveBtn").addEventListener("click", saveDraft);
@@ -27269,7 +27322,7 @@ function addScreenshotUrl(url, category){
   if(!Array.isArray(STATE.draft.screenshots[cat])) STATE.draft.screenshots[cat] = [];
   STATE.draft.screenshots[cat].push(val);
   STATE.draft._activeShotCategory = cat;
-  renderModal();
+  refreshTradeShots();
 }
 
 async function handleImageFiles(files, category){
@@ -27281,7 +27334,7 @@ async function handleImageFiles(files, category){
       const stored = await MediaManager.ingestImageFile(file,{kind:`trade-${cat}`});
       STATE.draft.screenshots[cat].push(stored.ref);
     }
-    renderModal();
+    refreshTradeShots();
   }catch(err){
     console.error("Trade-Bild konnte nicht gespeichert werden:",err);
     toast(`Bild konnte nicht gespeichert werden: ${err && err.message ? err.message : "unbekannter Fehler"}`);
@@ -32124,17 +32177,9 @@ bootJournalApp();
 (()=>{
   const MODE_KEY="jmb_mobile_mode_v1";
   const SIZE_KEY="jmb_mobile_size_v1";
-  // Mobile-Shell bleibt eigenständig, nutzt aber im Normalbetrieb die kanonische Storage-Fassade.
-  // Der direkte localStorage-Pfad ist nur ein defensiver Fallback, falls der Core vorher nicht verfügbar ist.
   const safeStorage=Object.freeze({
-    get(key,fallback=""){
-      if(typeof JournalStorage!=="undefined") return JournalStorage.get(key,fallback);
-      try{return window.localStorage?.getItem(key)??fallback}catch(_){return fallback}
-    },
-    set(key,value){
-      if(typeof JournalStorage!=="undefined") return JournalStorage.set(key,String(value));
-      try{window.localStorage?.setItem(key,String(value));return true}catch(_){return false}
-    }
+    get(key,fallback=""){try{return window.localStorage?.getItem(key)??fallback}catch(_){return fallback}},
+    set(key,value){try{window.localStorage?.setItem(key,String(value));return true}catch(_){return false}}
   });
   const profiles=Object.freeze({
     "375":{w:375,h:812,label:"375 × 812"},
@@ -32878,6 +32923,7 @@ html[data-layout] :is(.backup-board-toggle,.backup-board-toggle *){white-space:n
 html[data-layout] .trade-card .tag{white-space:nowrap!important;}
 html[data-layout="dense"] .trade-card .tag{font-size:10.5px!important; padding:2px 5px!important;}
 html[data-layout] .trade-card .tag{font-size:11px!important; padding:2px 6px!important;}
+html[data-layout="dense"] .trade-card .tag{font-size:10.5px!important; padding:2px 5px!important;}
 html[data-layout="dense"] .rp-wd-n{font-size:9px!important; letter-spacing:-.02em;}
 
 /* Harmonie: ALLE Bedienelemente folgen dem Control-Radius des Stils
