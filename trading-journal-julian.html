@@ -30,8 +30,9 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=VT323&family=Shippori+Mincho:wght@600;700&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
-<script>try{var t=localStorage.getItem("tj_theme_v1");if(["cream","sakura","neon","cosmic","glass","aurora","terminal","ocean","zen","alchemy","synthwave","topo","blueprint","matrix","biolum","rte"].indexOf(t)>-1)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
+<script>try{var t=localStorage.getItem("tj_theme_v1");if(["cream","sakura","neon","cosmic","glass","aurora","terminal","ocean","zen","alchemy","synthwave","topo","blueprint","matrix","biolum","rte","apple","apple-dark"].indexOf(t)>-1)document.documentElement.setAttribute("data-theme",t);}catch(e){}</script>
 <script>/* Layout-Stil (Form/Dichte/Schrift) – unabhängig vom Farb-Design, siehe LAYOUTS */try{var l=localStorage.getItem("tj_layout_v1");if(["bento","swiss","sharp","dense","floating"].indexOf(l)>-1)document.documentElement.setAttribute("data-layout",l);}catch(e){}</script>
+<script>/* Bewegung & Übergänge (Einstellungen → Darstellung) – Standard an, siehe JournalMotion */try{var m=localStorage.getItem("tj_motion_v1");document.documentElement.setAttribute("data-motion",m==="off"?"off":"on");}catch(e){document.documentElement.setAttribute("data-motion","on");}</script>
 <style>
   :root{
     --bg:#080a10;
@@ -14352,6 +14353,11 @@ html[data-theme="biolum"]{--ds-nav-active:linear-gradient(135deg,#9ffff0,#3ff5e0
 .settings-theme-card.theme-glass .settings-theme-preview{background:#090b11}.settings-theme-card.theme-glass .settings-theme-preview i{background:#171b25;border-color:color-mix(in srgb,#171b25 70%,#fff 30%)}.settings-theme-card.theme-glass .settings-theme-preview i:first-child{background:linear-gradient(135deg, rgba(255,255,255,.95) 0%, #d4def5 45%, #9aabd6 100%)}
 .settings-theme-card.theme-biolum .settings-theme-preview{background:#010207}.settings-theme-card.theme-biolum .settings-theme-preview i{background:#08101d;border-color:color-mix(in srgb,#08101d 70%,#fff 30%)}.settings-theme-card.theme-biolum .settings-theme-preview i:first-child{background:linear-gradient(135deg, #9ffff0 0%, #3ff5e0 45%, #7a4dff 100%)}
 .settings-theme-card.theme-alchemy .settings-theme-preview{background:#101012}.settings-theme-card.theme-alchemy .settings-theme-preview i{background:#1e1e22;border-color:color-mix(in srgb,#1e1e22 70%,#fff 30%)}.settings-theme-card.theme-alchemy .settings-theme-preview i:first-child{background:linear-gradient(135deg, #d6fbff 0%, #7cf0ff 45%, #9d7bff 100%)}
+/* Apple Hell / Apple Dunkel: Farbfeld + Mini-Vorschau in der Design-Auswahl */
+.theme-swatch-apple{background:linear-gradient(135deg, #f5f5f7 50%, #0071e3 50%);}
+.theme-swatch-apple-dark{background:linear-gradient(135deg, #000 50%, #2997ff 50%);}
+.settings-theme-card.theme-apple .settings-theme-preview{background:#f5f5f7}.settings-theme-card.theme-apple .settings-theme-preview i{background:#fff;border-color:rgba(0,0,0,.06);box-shadow:0 1px 2px rgba(0,0,0,.05)}.settings-theme-card.theme-apple .settings-theme-preview i:first-child{background:linear-gradient(135deg,#1d1d1f 0%,#3a3a3c 100%);border-color:transparent}
+.settings-theme-card.theme-apple-dark .settings-theme-preview{background:#000}.settings-theme-card.theme-apple-dark .settings-theme-preview i{background:#1c1c1e;border-color:rgba(255,255,255,.06)}.settings-theme-card.theme-apple-dark .settings-theme-preview i:first-child{background:linear-gradient(135deg,#2997ff 0%,#0071e3 100%);border-color:transparent}
 /* Design-Auswahl: Hintergrund ohne Milchglas, damit das aktuelle Design klar zu sehen ist */
 #settingsBackdrop.settings-drawer-backdrop{transition:background-color .38s ease,backdrop-filter .38s ease,-webkit-backdrop-filter .38s ease;}
 #settingsBackdrop.settings-drawer-backdrop.settings-theme-picking{background:transparent !important;background-color:transparent !important;backdrop-filter:none !important;-webkit-backdrop-filter:none !important;}
@@ -15146,6 +15152,1136 @@ html.theme-sunrise::view-transition-new(root){
     #fxAlchemy .circ, #fxAlchemy .runes{animation:none !important;}
     #fxAlchemy .flows{display:none;}
   }
+
+/* =====================================================================
+   APPLE · Hell ("apple") + Dunkel ("apple-dark")      seit 28.09.2026
+   Stil von Apples macOS-/iOS-Apps (Apple.com, iOS-Einstellungen, Aktien-App):
+   ruhige Flächen ohne Rahmen, Milchglas-Header, Segmented Control mit
+   gleitendem Schieber, Pillen-Buttons, SF-Schrift, kaum sichtbare Schatten.
+   Nur Darstellung – Daten, Speicherung, Sync und Funktionen bleiben unberührt.
+   Der Hell/Dunkel-Schalter im Header (#btnAppleTheme) wechselt zwischen den
+   beiden Keys. Bewegung (Reveal, Count-up, Schieber-Gleiten …) kommt aus der
+   designübergreifenden Schicht "jmb-motion" und ist dort an/aus-schaltbar.
+   Layout-Stile (data-layout) stehen weiter hinten im Dokument und dürfen die
+   Form (Radien, Dichte, Schrift) wie bei jedem anderen Design übersteuern.
+   ===================================================================== */
+
+/* ---------- 1) Design-Tokens · Hell ---------- */
+html[data-theme="apple"]{
+  /* Theme-API: daraus leiten sich --ui-* und --ds-* automatisch ab */
+  --bg:#f5f5f7; --bg-panel:#ffffff; --bg-card:#f5f5f7; --bg-card-hover:#e8e8ed;
+  --border:#e5e5ea; --border-light:#d2d2d7;
+  --text:#1d1d1f; --text-dim:#6e6e73; --text-faint:#86868b;
+  --green:#1a7f37; --green-dim:rgba(52,199,89,.14);
+  --red:#d70015; --red-dim:rgba(255,59,48,.1);
+  --amber:#b25000; --amber-dim:rgba(255,159,10,.14);
+  --violet:#0066cc; --violet-dim:rgba(0,113,227,.1);
+  --cyan:#0071e3; --cyan-dim:rgba(0,113,227,.08);
+  --magenta:#af52de; --magenta-dim:rgba(175,82,222,.1);
+  --white:#ffffff;
+  --radius:18px; --radius-sm:12px;
+  --neon-grid:none;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;
+  --mono:var(--font); /* Kennzahlen: Tabellenziffern statt Monospace */
+  /* Apple-Tokens (Namen wie im Apple-Prompt) */
+  --fill:rgba(118,118,128,.12); --fill-strong:rgba(118,118,128,.2);
+  --glass:rgba(255,255,255,.72); --glass-strong:rgba(255,255,255,.86);
+  --glass-border:rgba(0,0,0,.08);
+  --separator:rgba(60,60,67,.14);
+  --accent:#0066cc; --accent-fill:#0071e3; --accent-dim:rgba(0,113,227,.18);
+  --amber-fill:#ff9f0a;
+  --inverse-bg:#1d1d1f; --inverse-text:#ffffff;
+  --thumb:#ffffff; --thumb-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);
+  --backdrop:rgba(0,0,0,.28);
+  --focus:#0071e3;
+  --radius-lg:28px; --radius-xs:8px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.04),0 1px 1px rgba(0,0,0,.02);
+  --shadow-md:0 4px 14px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);
+  --shadow-lg:0 24px 60px rgba(0,0,0,.14),0 6px 18px rgba(0,0,0,.06);
+  --ease:cubic-bezier(0.28,0.11,0.32,1);
+  --spring:cubic-bezier(0.34,1.56,0.64,1);
+  --ambient-a:rgba(0,113,227,.10); --ambient-b:rgba(175,82,222,.08);
+  /* Brücke in die bestehenden Semantik-Tokens (gleiche Namen wie alle Designs) */
+  --ui-text-muted:var(--text-dim); --ui-text-faint:var(--text-faint);
+  --ui-border:var(--separator); --ui-border-strong:rgba(60,60,67,.22);
+  --ui-accent:var(--accent); --ui-accent-soft:var(--violet-dim);
+  --ui-radius-panel:18px; --ui-radius-card:12px; --ui-radius-control:10px; --ui-radius-button:999px;
+  --ui-panel-shadow:var(--shadow-sm); --ui-panel-shadow-hover:var(--shadow-md);
+  --ui-modal-backdrop:var(--backdrop);
+  --ui-focus-ring:0 0 0 4px var(--accent-dim);
+  --ui-focus-border:var(--accent);
+  --ui-feedback-lift:0px;
+  --ds-heading-font:var(--display); --ds-heading-weight:700; --ds-kicker-font:var(--font);
+  --ds-page-radius:18px;
+  --ds-accent-line:transparent;
+  --ds-accent-soft:transparent;
+  --ds-panel-bg:var(--bg-panel);
+  --ds-panel-shadow:var(--shadow-sm); --ds-panel-shadow-hover:var(--shadow-md);
+  --ds-focus:0 0 0 4px var(--accent-dim);
+  --ds-header-watermark:""; --ds-header-watermark-opacity:0;
+  --ds-nav-active:var(--thumb); --ds-nav-active-text:var(--text);
+  --ds-nav-idle:var(--text);
+  --ds-divider:var(--separator);
+  --ds-hover-border:transparent;
+  --ds-hover-bg:var(--bg-panel);
+  --ds-press-shadow:none;
+  --ds-goals-bg:var(--inverse-bg); --ds-goals-color:var(--inverse-text); --ds-goals-border:transparent; --ds-goals-shadow:var(--shadow-sm);
+  --ui-action-secondary-bg:var(--fill); --ui-action-secondary-border:transparent; --ui-action-secondary-text:var(--text);
+  --jmb-he-line:var(--separator); --jmb-he-line-strong:rgba(60,60,67,.22);
+  --jmb-final-line:var(--separator); --jmb-final-surface:var(--bg-card);
+  --jmb-color-neutral-surface:var(--bg-card);
+  color-scheme:light;
+}
+
+/* ---------- 1b) Design-Tokens · Dunkel ---------- */
+html[data-theme="apple-dark"]{
+  --bg:#000000; --bg-panel:#1c1c1e; --bg-card:#2c2c2e; --bg-card-hover:#3a3a3c;
+  --border:#38383a; --border-light:#48484a;
+  --text:#f5f5f7; --text-dim:#a1a1a6; --text-faint:#8e8e93;
+  --green:#30d158; --green-dim:rgba(48,209,88,.16);
+  --red:#ff6961; --red-dim:rgba(255,69,58,.16);
+  --amber:#ffb340; --amber-dim:rgba(255,159,10,.18);
+  --violet:#2997ff; --violet-dim:rgba(41,151,255,.16);
+  --cyan:#64d2ff; --cyan-dim:rgba(100,210,255,.14);
+  --magenta:#bf5af2; --magenta-dim:rgba(191,90,242,.16);
+  --white:#ffffff;
+  --radius:18px; --radius-sm:12px;
+  --neon-grid:none;
+  --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Inter","Helvetica Neue",Arial,sans-serif;
+  --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Inter","Helvetica Neue",Arial,sans-serif;
+  --mono:var(--font);
+  --fill:rgba(118,118,128,.24); --fill-strong:rgba(118,118,128,.36);
+  --glass:rgba(22,22,23,.72); --glass-strong:rgba(28,28,30,.88);
+  --glass-border:rgba(255,255,255,.08);
+  --separator:rgba(84,84,88,.6);
+  --accent:#2997ff; --accent-fill:#0071e3; --accent-dim:rgba(41,151,255,.26);
+  --amber-fill:#ffb340;
+  --inverse-bg:#f5f5f7; --inverse-text:#1d1d1f;
+  --thumb:#636366; --thumb-shadow:0 3px 8px rgba(0,0,0,.3),0 3px 1px rgba(0,0,0,.12);
+  --backdrop:rgba(0,0,0,.5);
+  --focus:#2997ff;
+  --radius-lg:28px; --radius-xs:8px;
+  --shadow-sm:0 1px 2px rgba(0,0,0,.5),0 1px 1px rgba(0,0,0,.3);
+  --shadow-md:0 8px 24px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);
+  --shadow-lg:0 30px 80px rgba(0,0,0,.7),0 10px 26px rgba(0,0,0,.5);
+  --ease:cubic-bezier(0.28,0.11,0.32,1);
+  --spring:cubic-bezier(0.34,1.56,0.64,1);
+  --ambient-a:rgba(41,151,255,.14); --ambient-b:rgba(191,90,242,.11);
+  --ui-text-muted:var(--text-dim); --ui-text-faint:var(--text-faint);
+  --ui-border:rgba(84,84,88,.48); --ui-border-strong:rgba(118,118,128,.5);
+  --ui-accent:var(--accent); --ui-accent-soft:var(--violet-dim);
+  --ui-radius-panel:18px; --ui-radius-card:12px; --ui-radius-control:10px; --ui-radius-button:999px;
+  --ui-panel-shadow:none; --ui-panel-shadow-hover:var(--shadow-md);
+  --ui-modal-backdrop:var(--backdrop);
+  --ui-focus-ring:0 0 0 4px var(--accent-dim);
+  --ui-focus-border:var(--accent);
+  --ui-feedback-lift:0px;
+  --ds-heading-font:var(--display); --ds-heading-weight:700; --ds-kicker-font:var(--font);
+  --ds-page-radius:18px;
+  --ds-accent-line:transparent;
+  --ds-accent-soft:transparent;
+  --ds-panel-bg:var(--bg-panel);
+  --ds-panel-shadow:none; --ds-panel-shadow-hover:var(--shadow-md);
+  --ds-focus:0 0 0 4px var(--accent-dim);
+  --ds-header-watermark:""; --ds-header-watermark-opacity:0;
+  --ds-nav-active:var(--thumb); --ds-nav-active-text:var(--text);
+  --ds-nav-idle:var(--text);
+  --ds-divider:var(--separator);
+  --ds-hover-border:transparent;
+  --ds-hover-bg:var(--bg-panel);
+  --ds-press-shadow:none;
+  --ds-goals-bg:var(--inverse-bg); --ds-goals-color:var(--inverse-text); --ds-goals-border:transparent; --ds-goals-shadow:none;
+  --ui-action-secondary-bg:var(--fill); --ui-action-secondary-border:transparent; --ui-action-secondary-text:var(--text);
+  --jmb-he-line:rgba(84,84,88,.48); --jmb-he-line-strong:rgba(118,118,128,.5);
+  --jmb-final-line:rgba(84,84,88,.48); --jmb-final-surface:var(--bg-card);
+  --jmb-color-neutral-surface:var(--bg-card);
+  color-scheme:dark;
+}
+
+/* ---------- 2) Seite, Typografie, Umgebungslicht ---------- */
+html[data-theme^="apple"] body{
+  background:var(--bg);
+  background-image:none;
+  font-family:var(--font);
+  font-size:15px;
+  line-height:1.47;
+  letter-spacing:-.01em;
+  font-variant-numeric:tabular-nums;
+  -webkit-font-smoothing:antialiased;
+  -moz-osx-font-smoothing:grayscale;
+  color:var(--text);
+  transition:none;
+}
+html[data-theme^="apple"] body.ziele-bg{background:var(--bg);}
+/* Umgebungslicht: zwei weiche Farbfelder (Blau/Violett) hinter der App. Nutzt die
+   vorhandene body::before-Ebene (sonst "Smoky Drift"); driftet nur mit Bewegung an. */
+html[data-theme^="apple"] body::before,
+html[data-theme^="apple"] body.no-smoky-bg::before{
+  display:block;
+  content:""; position:fixed; inset:-12%; z-index:-1; pointer-events:none;
+  background:
+    radial-gradient(38% 42% at 18% 12%, var(--ambient-a), transparent 70%),
+    radial-gradient(34% 40% at 86% 78%, var(--ambient-b), transparent 70%);
+  background-size:100% 100%;
+  animation:none;
+  will-change:transform;
+}
+html[data-theme^="apple"] ::selection{background:var(--accent-dim);}
+html[data-theme^="apple"] :is(h1,h2,h3,.modal h2,.modal h3){font-family:var(--display); letter-spacing:-.022em;}
+html[data-theme^="apple"] :is(.value,.rp-num,.rp-hero-value,.mini-stat-value,.trade-r,.week-sidebar-total-value,.cal-day-r,.td-summary-result){font-variant-numeric:tabular-nums;}
+html[data-theme^="apple"] a{color:var(--accent);}
+html[data-theme^="apple"] :focus-visible{outline:3px solid color-mix(in srgb,var(--focus) 65%,transparent); outline-offset:2px;}
+/* Skip-Link: erscheint nur bei Tastatur-Fokus (in anderen Designs gar nicht vorhanden) */
+.skip-link{display:none;}
+html[data-theme^="apple"] .skip-link{
+  display:block; position:fixed; left:12px; top:-64px; z-index:1000;
+  padding:10px 18px; border-radius:999px;
+  background:var(--inverse-bg); color:var(--inverse-text);
+  font:600 14px/1.2 var(--font); text-decoration:none;
+  box-shadow:var(--shadow-lg);
+  transition:top .35s var(--ease);
+}
+html[data-theme^="apple"] .skip-link:focus{top:calc(10px + env(safe-area-inset-top));}
+html[data-theme^="apple"] #app:focus{outline:none;}
+html[data-theme^="apple"]{scrollbar-color:var(--fill-strong) transparent; scrollbar-width:thin;}
+html[data-theme^="apple"] ::-webkit-scrollbar{width:10px; height:10px;}
+html[data-theme^="apple"] ::-webkit-scrollbar-track{background:transparent;}
+html[data-theme^="apple"] ::-webkit-scrollbar-thumb{background:var(--fill-strong); border-radius:999px; border:3px solid transparent; background-clip:content-box;}
+html[data-theme^="apple"] input[type=date],
+html[data-theme^="apple"] input[type=time]{color-scheme:inherit;}
+
+/* ---------- 3) Header: Milchglas auf ::before, damit der Header selbst keinen
+   backdrop-filter trägt (sonst hängen fixierte Kinder wie die Tab-Leiste darin fest) ---------- */
+html[data-theme^="apple"] #stickyNavWrap{
+  padding-top:0;
+  backdrop-filter:none; -webkit-backdrop-filter:none;
+  background:transparent;
+}
+html[data-theme^="apple"] header.topnav{
+  position:relative; z-index:0;
+  background:transparent !important;
+  backdrop-filter:none !important; -webkit-backdrop-filter:none !important;
+  border-bottom:0 !important;
+  box-shadow:none !important;
+  padding:calc(10px + env(safe-area-inset-top)) 22px 10px calc(22px + env(safe-area-inset-left));
+  transition:transform .5s var(--ease);
+}
+html[data-theme^="apple"] header.topnav::before{
+  content:""; position:absolute; inset:0; z-index:-1; pointer-events:none;
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  box-shadow:0 1px 0 transparent;
+  transition:background-color .35s var(--ease), box-shadow .35s var(--ease);
+}
+html[data-theme^="apple"] header.topnav.is-compact::before{
+  background:var(--glass-strong);
+  box-shadow:0 1px 0 var(--separator),0 1px 20px rgba(0,0,0,.05);
+}
+html[data-theme^="apple"] .brand,
+html[data-theme^="apple"] .topnav-left .brand{
+  font-family:var(--display);
+  font-size:17px; font-weight:700; letter-spacing:-.022em;
+  opacity:1; filter:none; text-shadow:none;
+  background:none; -webkit-background-clip:border-box; background-clip:border-box;
+  color:var(--text);
+  transition:transform .5s var(--ease);
+  transform-origin:left center;
+}
+@media (min-width:641px){
+  /* Kompakt beim Scrollen: Header gleitet 8 px hoch, Inhalt 4 px zurück, Logo etwas kleiner */
+  html[data-theme^="apple"][data-motion="on"] header.topnav.is-compact{transform:translateY(-8px);}
+  html[data-theme^="apple"][data-motion="on"] header.topnav.is-compact > *{transform:translateY(4px);}
+  html[data-theme^="apple"][data-motion="on"] header.topnav.is-compact .brand{transform:scale(.94);}
+  html[data-theme^="apple"] header.topnav > *{transition:transform .5s var(--ease);}
+  html[data-theme^="apple"] header.topnav::before{top:-8px;}
+}
+
+/* ---------- 4) Hauptnavigation Desktop: iOS-Segmented-Control ---------- */
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle,
+html[data-theme^="apple"] nav.tabs{
+  position:relative;
+  gap:2px;
+  padding:3px;
+  border:0;
+  border-radius:11px;
+  background:var(--fill);
+  box-shadow:none;
+}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle :is(.nav-core,.nav-secondary,.nav-sub-btn){
+  position:relative; z-index:1;
+  min-height:30px;
+  padding:5px 13px;
+  border:0;
+  border-radius:8px;
+  background:transparent;
+  color:var(--text);
+  font:500 13.5px/1.2 var(--font);
+  letter-spacing:-.01em;
+  opacity:1;
+  box-shadow:none;
+  transform:none;
+  transition:color .2s var(--ease), opacity .2s var(--ease), transform .35s var(--spring);
+}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle :is(.nav-secondary,.nav-sub-btn){color:var(--text-dim);}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-sub-btn::before{content:none;}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-sub-btn::after{content:""; position:static; display:inline-block; left:auto; bottom:auto; width:6px; height:6px; margin:0 0 0 6px; background:none; border:0; border-right:1.5px solid currentColor; border-bottom:1.5px solid currentColor; border-radius:0; transform:translateY(-2px) rotate(45deg); opacity:.6;}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle :is(.nav-core,.nav-secondary,.nav-sub-btn):hover{
+  background:transparent; border-color:transparent; transform:none; color:var(--text);
+}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle :is(.nav-core,.nav-secondary,.nav-sub-btn).active{
+  background:transparent;
+  color:var(--text);
+  font-weight:600;
+  box-shadow:none;
+}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-divider-subtle{
+  width:1px; height:16px; margin:0 3px;
+  background:var(--separator);
+}
+html[data-theme^="apple"] #mainNav button[aria-current="page"]:not(.nav-sub-btn)::after{content:none; display:none;}
+/* Gleitender Schieber (JS setzt Position/Größe, siehe JournalMotion/AppleNav) */
+.tabs-indicator{display:none;}
+html[data-theme^="apple"] #mainNav .tabs-indicator{
+  display:block;
+  position:absolute; z-index:0; left:0; top:0; width:0; height:0;
+  border-radius:8px;
+  background:var(--thumb);
+  box-shadow:var(--thumb-shadow);
+  pointer-events:none;
+  opacity:0;
+  transform-origin:left center;
+  transition:opacity .2s var(--ease);
+}
+html[data-theme^="apple"] #mainNav .tabs-indicator.is-ready{opacity:1;}
+html[data-theme^="apple"] #mainNav .tabs-indicator.is-sliding{transition:transform .5s var(--spring), opacity .2s var(--ease);}
+html[data-layout] #mainNav .tabs-indicator{border-radius:var(--ui-radius-control);}
+/* Dropdown "Mindset": Milchglas-Popover */
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown-menu-inner{
+  padding:6px;
+  border:.5px solid var(--glass-border);
+  border-radius:14px;
+  background:var(--glass-strong);
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+  backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:var(--shadow-lg);
+}
+html[data-theme^="apple"] .nav-dropdown-menu::before{display:none;}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown-item{
+  min-height:34px; padding:8px 12px;
+  border-radius:9px;
+  text-align:left;
+  font:500 13.5px/1.2 var(--font);
+  color:var(--text);
+  background:transparent;
+}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown-item:hover{background:var(--fill); color:var(--text);}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown-item.active{background:var(--accent-fill); color:#fff;}
+html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown-menu{min-width:190px;}
+
+/* ---------- 5) Header-Aktionen (Backup, News, Einstellungen, Hell/Dunkel) ---------- */
+html[data-theme^="apple"] .topnav-utility-cluster{border-left:0 !important; gap:4px;}
+html[data-theme^="apple"] :is(.news-workbench-launch,#btnSettings,.apple-theme-toggle).utility-icon-button,
+html[data-theme^="apple"] .backup-board-wrap .backup-board-toggle{
+  min-height:32px;
+  border:0 !important;
+  border-radius:999px !important;
+  background:transparent !important;
+  color:var(--text) !important;
+  box-shadow:none !important;
+  transition:background-color .2s var(--ease), color .2s var(--ease), transform .35s var(--spring);
+}
+html[data-theme^="apple"] :is(.news-workbench-launch,#btnSettings,.apple-theme-toggle).utility-icon-button{width:34px; height:34px; min-width:34px; padding:0 !important; justify-content:center;}
+html[data-theme^="apple"] :is(.news-workbench-launch,#btnSettings,.apple-theme-toggle).utility-icon-button:hover,
+html[data-theme^="apple"] .backup-board-wrap .backup-board-toggle:hover{background:var(--fill) !important;}
+html[data-theme^="apple"] .utility-icon-button svg{stroke:currentColor;}
+html[data-theme^="apple"] .backup-board-wrap .backup-board-toggle{padding:4px 12px !important; font:500 13px/1 var(--font) !important; gap:7px;}
+html[data-theme^="apple"] .backup-board-wrap .backup-board-symbol{display:none;}
+html[data-theme^="apple"] .backup-board-wrap .backup-board-level{font:600 11px/1 var(--font); letter-spacing:.02em; color:var(--text-dim); text-transform:none;}
+html[data-theme^="apple"] .backup-board-wrap .backup-board-dot{background:var(--green); box-shadow:none;}
+html[data-theme^="apple"] .backup-board-wrap[data-level="open"] .backup-board-dot{background:var(--amber-fill);}
+html[data-theme^="apple"] .backup-board-wrap:is([data-level="warning"],[data-level="critical"]) .backup-board-dot{background:var(--red);}
+/* Hell/Dunkel-Umschalter: Sonne und Mond liegen übereinander, das inaktive Symbol
+   ist gedreht, verkleinert und ausgeblendet. Nur im Apple-Design sichtbar. */
+.apple-theme-toggle{display:none !important;}
+html[data-theme^="apple"] .apple-theme-toggle{display:inline-flex !important; position:relative; align-items:center;}
+html[data-theme^="apple"] .apple-theme-toggle svg{position:absolute; left:50%; top:50%; width:18px; height:18px; margin:-9px 0 0 -9px; fill:none; stroke:currentColor; stroke-width:1.7; stroke-linecap:round; stroke-linejoin:round; transition:transform .5s var(--spring), opacity .3s var(--ease);}
+html[data-theme="apple"] .apple-theme-toggle .att-sun{opacity:0; transform:rotate(-90deg) scale(.5);}
+html[data-theme="apple"] .apple-theme-toggle .att-moon{opacity:1; transform:none;}
+html[data-theme="apple-dark"] .apple-theme-toggle .att-sun{opacity:1; transform:none;}
+html[data-theme="apple-dark"] .apple-theme-toggle .att-moon{opacity:0; transform:rotate(90deg) scale(.5);}
+html[data-theme^="apple"] .apple-theme-toggle .utility-label{position:absolute; width:1px; height:1px; overflow:hidden; clip:rect(0 0 0 0);}
+
+/* Backup-Board-Popover */
+html[data-theme^="apple"] .backup-board-panel{
+  border:.5px solid var(--glass-border) !important;
+  border-radius:18px !important;
+  background:var(--glass-strong) !important;
+  -webkit-backdrop-filter:blur(40px) saturate(180%);
+  backdrop-filter:blur(40px) saturate(180%);
+  box-shadow:var(--shadow-lg) !important;
+}
+html[data-theme^="apple"] .backup-board-panel::before{display:none;}
+html[data-theme^="apple"] .backup-board-panel button{border-radius:999px;}
+html[data-theme^="apple"] .backup-hub-save-main{border:0 !important; border-radius:14px !important; background:var(--accent-fill) !important; color:#fff !important; box-shadow:none !important;}
+html[data-theme^="apple"] .backup-hub-save-main small{color:rgba(255,255,255,.8) !important;}
+html[data-theme^="apple"] .backup-hub-save-icon{background:rgba(255,255,255,.18) !important; color:#fff !important; border:0 !important;}
+html[data-theme^="apple"] .backup-hub-drive-primary{background:var(--accent-fill) !important; color:#fff !important; border:0 !important;}
+html[data-theme^="apple"] :is(.backup-hub-inline-actions,.backup-hub-bottom,.backup-hub-drive-actions) button:not(.backup-hub-drive-primary){background:var(--fill) !important; border:0 !important; color:var(--text) !important;}
+html[data-theme^="apple"] .backup-hub-import-link{color:var(--accent) !important;}
+
+/* ---------- 6) Seitenköpfe, Eyebrows, Abschnittstitel ---------- */
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .page-head,
+html[data-theme^="apple"] .page-head{
+  padding:6px 2px 4px;
+  border:0; border-radius:0;
+  background:transparent;
+  box-shadow:none;
+  overflow:visible;
+}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .page-head::before,
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .page-head::after{display:none;}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .page-head h1,
+html[data-theme^="apple"] .page-head h1,
+html[data-theme^="apple"] .core-area-head h1{
+  font-family:var(--display);
+  font-size:clamp(30px,3.4vw,44px);
+  font-weight:700;
+  line-height:1.07;
+  letter-spacing:-.03em;
+  color:var(--text);
+  text-shadow:none;
+}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .page-head p,
+html[data-theme^="apple"] .page-head p,
+html[data-theme^="apple"] .core-area-head p{font-size:15px; line-height:1.47; color:var(--text-dim);}
+html[data-theme^="apple"] .core-area-head{border-bottom:0; padding-bottom:6px;}
+html[data-theme^="apple"] .core-view-kicker,
+html[data-theme^="apple"] body[data-jmb-view] .core-view-kicker{
+  font:600 12px/1.2 var(--font);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+  text-shadow:none;
+}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .section-title,
+html[data-theme^="apple"] .section-title,
+html[data-theme^="apple"] .filter-panel-title{
+  font:600 12px/1.3 var(--font);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+  text-shadow:none;
+}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .section-title::before,
+html[data-theme^="apple"] .section-title::before{display:none;}
+html[data-theme^="apple"] .section-title-sub{color:var(--text-faint); font-weight:500; text-transform:none; letter-spacing:-.01em;}
+
+/* ---------- 7) Karten, Panels, Kennzahl-Kacheln ---------- */
+html[data-theme^="apple"] :is(.panel,.stat-card,.trade-card,.week-card,.podium-card,.rp-card,.equity-card,.book-card,.strategy-panel,.ziele-goal-card,.cal-panel,.ftmo-eta-panel,.trade-gallery-card,.td-chart-box,.compare-ring-item,.chart-wrap,.daily-goal-panel,.daily-checklist-card,.live-news-col,.session-meter,.operational-calendar-block,.entry-card,.cheat-phase,.entry-breakdown-card,.analyse-card){
+  background:var(--bg-panel);
+  background-image:none;
+  border:1px solid transparent;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-sm);
+}
+html[data-theme^="apple"] :is(.panel,.stat-card,.week-card,.rp-card,.equity-card,.book-card,.strategy-panel,.ziele-goal-card,.cal-panel,.ftmo-eta-panel,.compare-ring-item,.chart-wrap):hover{border-color:transparent; box-shadow:var(--shadow-sm);}
+html[data-theme^="apple"] :is(.panel,.stat-card){padding:22px 24px;}
+/* Flächen innerhalb von Karten: gefüllt statt umrandet */
+html[data-theme^="apple"] :is(.cheat-flow-step,.cheat-crit){border-color:transparent; background:var(--bg-card); box-shadow:none;}
+html[data-theme^="apple"] .trade-gallery-toggle-btn{animation:none; border:0; border-radius:14px; background:var(--fill); background-image:none; color:var(--text); font:600 14px/1.2 var(--font);}
+html[data-theme^="apple"] .trade-gallery-toggle-btn:hover{background:var(--fill-strong); color:var(--text); transform:none;}
+html[data-theme^="apple"] .entry-checklist-launch{border:0; border-radius:999px; background:var(--fill); background-image:none; color:var(--text);}
+html[data-theme^="apple"] :is(.panel,.rp-card,.modal) :is(.rp-card,.stat-card,.compare-ring-item,.chart-wrap){background:var(--bg-card); box-shadow:none;}
+html[data-theme^="apple"] .stat-card .label,
+html[data-theme^="apple"] :is(.rp-label,.mini-stat-label){
+  font:600 12px/1.3 var(--font);
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:var(--text-dim);
+}
+html[data-theme^="apple"] .stat-card .value{
+  font-family:var(--display);
+  font-size:32px;
+  font-weight:700;
+  letter-spacing:-.03em;
+  line-height:1.1;
+  color:var(--text);
+  text-shadow:none;
+}
+html[data-theme^="apple"] .stat-card .value.pos,
+html[data-theme^="apple"] :is(.pos,.rp-num.pos){color:var(--green); text-shadow:none;}
+html[data-theme^="apple"] .stat-card .value.neg,
+html[data-theme^="apple"] :is(.neg,.rp-num.neg){color:var(--red); text-shadow:none;}
+html[data-theme^="apple"] .stat-card .sub{color:var(--text-dim); font-size:13px;}
+html[data-theme^="apple"] :is(.rp-num,.rp-hero-value){font-family:var(--display); font-weight:700; letter-spacing:-.03em;}
+html[data-theme^="apple"] .trade-card{border-color:transparent;}
+html[data-theme^="apple"] .trade-card:hover{background:var(--bg-panel); border-color:transparent; box-shadow:var(--shadow-md);}
+html[data-theme^="apple"] .week-card::before{display:none;}
+html[data-theme^="apple"] .week-card.week-current{box-shadow:inset 0 0 0 2px var(--accent-fill), var(--shadow-sm); border-color:transparent;}
+html[data-theme^="apple"] .week-card.week-current .week-badge{background:var(--accent-fill); color:#fff; border-color:transparent;}
+html[data-theme^="apple"] .week-live-dot{background:var(--green); box-shadow:0 0 0 3px var(--green-dim);}
+
+/* ---------- 8) Buttons, Chips, Segmente, Badges ---------- */
+html[data-theme^="apple"] .btn{
+  padding:9px 18px;
+  border:1px solid transparent;
+  border-radius:999px;
+  background:var(--fill);
+  color:var(--text);
+  font:500 14px/1.2 var(--font);
+  letter-spacing:-.01em;
+  box-shadow:none;
+  text-shadow:none;
+  transition:background-color .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), opacity .2s var(--ease), transform .35s var(--spring);
+}
+html[data-theme^="apple"] .btn:hover{background:var(--fill-strong); border-color:transparent; color:var(--text); filter:none; transform:none; box-shadow:none;}
+html[data-theme^="apple"] .btn-sm{padding:6px 14px; font-size:13px;}
+html[data-theme^="apple"] .btn-primary,
+html[data-theme^="apple"] .btn.btn-primary{background:var(--accent-fill); color:#fff; border-color:transparent; box-shadow:none;}
+html[data-theme^="apple"] .btn-primary:hover,
+html[data-theme^="apple"] .btn.btn-primary:hover{background:color-mix(in srgb,var(--accent-fill) 88%,#000); color:#fff;}
+html[data-theme^="apple"] :is(#btnAddTrade,#diaryCreateEntryBtn,#diarySaveTodayBtn,#btnAddBuch,#btnAddBuchEmpty,#btnAddInsight,#newsModalSaveBtn,#analyseModalSaveBtn,#diaryModalSaveBtn,#modalSaveBtn,#buchNoteSaveBtn,#buchSaveBtn,#insightSaveBtn,#settingsBackupNowBtn){box-shadow:none;}
+html[data-theme^="apple"] :is(#settingsDoneBtn,#dailyGoalModalDoneBtn,#analyseFieldsDoneBtn,#entryModalDoneBtn,#settingsMobilePreviewBtn,#buchViewEditBtn,#buchNoteEditBtn):hover{background:var(--fill-strong) !important; border-color:transparent !important;}
+html[data-theme^="apple"] .btn-danger,
+html[data-theme^="apple"] .btn.btn-danger{background:var(--red-dim); color:var(--red); border-color:transparent;}
+html[data-theme^="apple"] .btn-danger:hover{background:color-mix(in srgb,var(--red) 20%,transparent); color:var(--red);}
+html[data-theme^="apple"] .btn-ghost,
+html[data-theme^="apple"] .btn.btn-ghost:not(.btn-primary){background:transparent; border-color:var(--ui-border-strong); color:var(--text);}
+html[data-theme^="apple"] .btn-ghost:hover{background:var(--fill); border-color:var(--ui-border-strong);}
+html[data-theme^="apple"] .btn:disabled,
+html[data-theme^="apple"] .btn:disabled:hover{opacity:.4; background:var(--fill); border-color:transparent;}
+html[data-theme^="apple"] .btn-icon-del{background:var(--red-dim); color:var(--red); border:0; border-radius:999px;}
+html[data-theme^="apple"] .btn-icon-del:hover{background:var(--red); color:#fff;}
+html[data-theme^="apple"] .icon-btn{border-radius:999px; color:var(--text-dim); transition:background-color .2s var(--ease), color .2s var(--ease), transform .35s var(--spring);}
+html[data-theme^="apple"] .icon-btn:hover{background:var(--fill); color:var(--text);}
+
+html[data-theme^="apple"] .chip{
+  border:1px solid var(--ui-border-strong);
+  border-radius:999px;
+  background:transparent;
+  color:var(--text);
+  font:500 13.5px/1.2 var(--font);
+  transition:background-color .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), transform .35s var(--spring);
+}
+html[data-theme^="apple"] .chip:hover{border-color:var(--text-faint); color:var(--text); background:var(--fill);}
+html[data-theme^="apple"] .chip.selected,
+html[data-theme^="apple"] .chip.active{background:var(--inverse-bg); color:var(--inverse-text); border-color:var(--inverse-bg); font-weight:600; box-shadow:none;}
+html[data-theme^="apple"] .chip.selected.result-TP{background:var(--green); border-color:var(--green); color:#fff;}
+html[data-theme^="apple"] .chip.selected.result-SL{background:var(--red); border-color:var(--red); color:#fff;}
+html[data-theme^="apple"] .chip.selected.result-BE{background:var(--text-dim); border-color:var(--text-dim); color:var(--bg-panel);}
+html[data-theme^="apple"] .market-chip-edit:hover{background:var(--inverse-bg); color:var(--inverse-text);}
+
+/* Unter-Reiter als Segmented Control */
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .subtab-row,
+html[data-theme^="apple"] .subtab-row{
+  gap:2px; padding:3px;
+  border:0; border-radius:11px;
+  background:var(--fill);
+  box-shadow:none;
+}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .subtab,
+html[data-theme^="apple"] .subtab{
+  min-height:28px;
+  padding:5px 14px;
+  border:0; border-radius:8px;
+  background:transparent;
+  color:var(--text);
+  font:500 13px/1.2 var(--font);
+  box-shadow:none;
+  transition:background-color .2s var(--ease), color .2s var(--ease), transform .35s var(--spring);
+}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .subtab:hover,
+html[data-theme^="apple"] .subtab:hover{background:transparent; color:var(--text); opacity:.75;}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .subtab.active,
+html[data-theme^="apple"] .subtab.active,
+html[data-theme^="apple"] .subtab[aria-selected="true"]{
+  background:var(--thumb);
+  color:var(--text);
+  font-weight:600;
+  box-shadow:var(--thumb-shadow);
+  opacity:1;
+}
+html[data-theme^="apple"] .area-toggle{background:var(--fill); border:0; border-radius:11px; padding:3px;}
+html[data-theme^="apple"] .area-toggle button{border:0; border-radius:8px; background:transparent; color:var(--text); font:500 13px/1.2 var(--font);}
+html[data-theme^="apple"] .area-toggle button.on{background:var(--thumb); color:var(--text); box-shadow:var(--thumb-shadow);}
+
+html[data-theme^="apple"] .badge{border-radius:999px; font:600 11.5px/1.2 var(--font); letter-spacing:0; box-shadow:none;}
+html[data-theme^="apple"] .tag{border:0; border-radius:999px; background:var(--fill); color:var(--text); font:500 12px/1.3 var(--font);}
+html[data-theme^="apple"] .badge-open{background:var(--amber-dim); color:var(--amber); border-color:transparent;}
+html[data-theme^="apple"] .badge-eod-copied{background:var(--violet-dim); color:var(--accent); border-color:transparent;}
+
+/* ---------- 9) Formulare ---------- */
+html[data-theme^="apple"] :is(.field-group input[type=text],.field-group input[type=date],.field-group input[type=time],.field-group input[type=number],.field-group textarea,.field-group select,.shot-link-row input[type=text],.diary-textarea,.rte-editable,.dp-trigger,#accountSwitchSelect,.modal input[type=text],.modal input[type=number],.modal select,.modal textarea){
+  background:var(--fill);
+  border:1px solid transparent;
+  border-radius:10px;
+  color:var(--text);
+  font-family:var(--font);
+  box-shadow:none;
+  transition:border-color .2s var(--ease), box-shadow .2s var(--ease), background-color .2s var(--ease);
+}
+html[data-theme^="apple"] :is(.field-group input,.field-group textarea,.field-group select,.diary-textarea,.rte-editable,.dp-trigger,#accountSwitchSelect,.modal input,.modal select,.modal textarea):focus{
+  outline:none;
+  border-color:var(--accent);
+  box-shadow:0 0 0 4px var(--accent-dim);
+  background:var(--bg-panel);
+}
+html[data-theme^="apple"] #app :is(input[type=text],input[type=search],input[type=number],input[type=date],input[type=time],input:not([type]),select,textarea):not(.ios-switch){
+  background-color:var(--fill);
+  border:1px solid transparent;
+  border-radius:10px;
+  color:var(--text);
+  box-shadow:none;
+}
+html[data-theme^="apple"] #app :is(input[type=text],input[type=search],input[type=number],input:not([type])):not(.ios-switch){padding:8px 12px;}
+html[data-theme^="apple"] #app :is(input,select,textarea):not(.ios-switch):not([type=checkbox]):not([type=radio]):not([type=range]):focus{outline:none; border-color:var(--accent); box-shadow:0 0 0 4px var(--accent-dim); background-color:var(--bg-panel);}
+html[data-theme^="apple"] .cal-cell{border-color:transparent; background:var(--bg-card); border-radius:12px;}
+html[data-theme^="apple"] .cal-cell:hover{border-color:transparent; background:var(--bg-card-hover);}
+html[data-theme^="apple"] .field-group label.fg-label{font:600 12px/1.3 var(--font); letter-spacing:.04em; color:var(--text-dim);}
+html[data-theme^="apple"] ::placeholder{color:var(--text-faint); opacity:1;}
+html[data-theme^="apple"] input[type=radio]{accent-color:var(--accent-fill);}
+/* Einzelne Schalter (Analyse "H1-Zonen", Bewegungs-Schalter) als iOS-Schalter */
+html[data-theme^="apple"] :is(#analyseH1Check,.ios-switch){
+  -webkit-appearance:none; appearance:none;
+  position:relative; flex:0 0 auto;
+  width:44px; height:26px; margin:0;
+  border-radius:999px;
+  background:var(--fill-strong);
+  cursor:pointer;
+  transition:background-color .25s var(--ease);
+}
+html[data-theme^="apple"] :is(#analyseH1Check,.ios-switch)::after{
+  content:""; position:absolute; top:2px; left:2px;
+  width:22px; height:22px; border-radius:50%;
+  background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06);
+  transition:transform .4s var(--spring);
+}
+html[data-theme^="apple"] :is(#analyseH1Check,.ios-switch):checked{background:#34c759;}
+html[data-theme^="apple"] :is(#analyseH1Check,.ios-switch):checked::after{transform:translateX(18px);}
+/* Checklisten (Tages-Check, Entry-Checkliste) wie Apples "Erinnerungen": runde Haken */
+html[data-theme^="apple"] :is(.daily-checklist-item,.entry-checklist-item) input[type=checkbox]{
+  -webkit-appearance:none; appearance:none;
+  display:inline-grid; place-content:center;
+  width:20px; height:20px; margin:0; flex:0 0 20px;
+  border:1.5px solid var(--border-light);
+  border-radius:50%;
+  background:transparent;
+  cursor:pointer;
+  transition:background-color .2s var(--ease), border-color .2s var(--ease), transform .35s var(--spring);
+}
+html[data-theme^="apple"] :is(.daily-checklist-item,.entry-checklist-item) input[type=checkbox]::after{
+  content:""; width:5px; height:9px; margin-top:-2px;
+  border-right:2px solid #fff; border-bottom:2px solid #fff;
+  transform:rotate(45deg) scale(0);
+  transition:transform .35s var(--spring);
+}
+html[data-theme^="apple"] :is(.daily-checklist-item,.entry-checklist-item) input[type=checkbox]:checked{background:var(--accent-fill); border-color:var(--accent-fill);}
+html[data-theme^="apple"] :is(.daily-checklist-item,.entry-checklist-item) input[type=checkbox]:checked::after{transform:rotate(45deg) scale(1);}
+/* Schieberegler (Mental-Bewertungen) */
+html[data-theme^="apple"] input[type=range]{accent-color:var(--accent-fill);}
+
+/* ---------- 10) Modals, Dialoge, Einstellungen ---------- */
+html[data-theme^="apple"] .modal-backdrop{
+  background-color:var(--backdrop);
+  -webkit-backdrop-filter:blur(6px);
+  backdrop-filter:blur(6px);
+}
+html[data-theme^="apple"] .modal{
+  background:var(--bg-panel);
+  border:0;
+  border-radius:var(--radius-lg);
+  box-shadow:var(--shadow-lg);
+}
+html[data-theme="apple-dark"] .modal{box-shadow:var(--shadow-lg),inset 0 0 0 .5px var(--glass-border);}
+html[data-theme^="apple"] .modal-footer{border-top-color:var(--separator);}
+html[data-theme^="apple"] .modal .icon-btn,
+html[data-theme^="apple"] .modal-close{width:30px; height:30px; padding:0; display:inline-grid; place-items:center; font-size:15px; background:var(--fill); color:var(--text-dim); border-radius:50%;}
+html[data-theme^="apple"] .settings-drawer{border-radius:var(--radius-lg) 0 0 var(--radius-lg);}
+html[data-theme^="apple"] .settings-main-tabs{background:var(--bg-panel);}
+html[data-theme^="apple"] .settings-main-tabs{gap:6px; overflow-x:auto; scrollbar-width:none;}
+html[data-theme^="apple"] .settings-main-tabs::-webkit-scrollbar{display:none;}
+html[data-theme^="apple"] .settings-main-tabs button{flex:0 0 auto; border:0; border-radius:999px; padding:6px 11px; background:var(--fill); color:var(--text); font:500 12px/1.2 var(--font);}
+html[data-theme^="apple"] .settings-main-tabs button span{color:inherit; opacity:.6;}
+html[data-theme^="apple"] .settings-main-tabs button.active{background:var(--inverse-bg); color:var(--inverse-text);}
+html[data-theme^="apple"] .settings-kicker{font:600 11px/1.2 var(--font); letter-spacing:.04em; color:var(--text-dim);}
+html[data-theme^="apple"] .settings-section-head>span{font-family:var(--font); color:var(--text-faint);}
+html[data-theme^="apple"] .settings-theme-card{border-radius:16px; box-shadow:var(--shadow-sm);}
+html[data-theme^="apple"] .settings-theme-card{border-color:transparent; background:var(--bg-panel);}
+html[data-theme^="apple"] .settings-theme-card.active{border-color:var(--accent-fill); box-shadow:0 0 0 1px var(--accent-fill), var(--shadow-sm);}
+html[data-theme^="apple"] :is(.settings-pane-intro,.settings-motion-row,.settings-shortcut-row,.settings-mobile-launch,.settings-status-row,.settings-general-hint,.settings-layout-combo){border-color:transparent; background:var(--bg-card);}
+/* Formular-Abschnitte im Trade-Fenster: gruppierte iOS-Listen statt Rahmen */
+html[data-theme^="apple"] .form-section{border:0; background:var(--bg-card); border-radius:16px;}
+html[data-theme^="apple"] .form-accordion{border:0; border-radius:16px;}
+
+/* News-Zentrale + News-Popover: Milchglas statt der fest eingemischten Dunkel-Anteile */
+html[data-theme="apple"] :is(#newsWorkbenchBackdrop,#newsEventPopoverLayer){--design-accent-rgb:0,113,227; --design-accent-secondary-rgb:175,82,222; --page-accent-rgb:0,113,227; --red:#d70015; --red-dim:rgba(255,59,48,.1);}
+html[data-theme="apple-dark"] :is(#newsWorkbenchBackdrop,#newsEventPopoverLayer){--design-accent-rgb:41,151,255; --design-accent-secondary-rgb:191,90,242; --page-accent-rgb:41,151,255; --red:#ff6961; --red-dim:rgba(255,69,58,.16);}
+html[data-theme^="apple"] #newsWorkbenchBackdrop .news-workbench-modal,
+html[data-theme^="apple"] #newsEventPopoverLayer .news-event-popover{
+  /* Deckend: der Hintergrund-Container hat selbst einen backdrop-filter, darin greift Milchglas nicht */
+  background:var(--bg-panel) !important;
+  -webkit-backdrop-filter:blur(40px) saturate(180%) !important;
+  backdrop-filter:blur(40px) saturate(180%) !important;
+  box-shadow:var(--shadow-lg) !important;
+  border-color:var(--glass-border) !important;
+}
+html[data-theme^="apple"] #newsWorkbenchBackdrop .news-workbench-head,
+html[data-theme^="apple"] #newsEventPopoverLayer .news-event-head{background:transparent !important; -webkit-backdrop-filter:none !important; backdrop-filter:none !important;}
+
+/* ---------- 11) Toast & Bildansicht ---------- */
+html[data-theme^="apple"] .toast{
+  bottom:28px;
+  padding:12px 20px;
+  border:0;
+  border-radius:999px;
+  background:var(--inverse-bg);
+  color:var(--inverse-text);
+  font:500 14px/1.3 var(--font);
+  box-shadow:var(--shadow-lg);
+}
+html[data-theme^="apple"] .toast.toast-error{border:0; border-radius:18px; background:var(--red); color:#fff;}
+html[data-theme^="apple"] .toast-undo{color:#2997ff; text-decoration:none; font-weight:600;}
+html[data-theme="apple-dark"] .toast-undo{color:#0066cc;}
+html[data-theme^="apple"] .lightbox-backdrop{
+  background:rgba(0,0,0,.82);
+  -webkit-backdrop-filter:blur(24px);
+  backdrop-filter:blur(24px);
+}
+html[data-theme^="apple"] .lightbox-backdrop img{border-radius:14px; box-shadow:var(--shadow-lg);}
+html[data-theme^="apple"] .lightbox-backdrop.lb-fullscreen img{border-radius:0;}
+html[data-theme^="apple"] .lightbox-close{
+  width:36px; height:36px; padding:0; display:grid; place-items:center;
+  border:0; border-radius:50%;
+  background:rgba(255,255,255,.18);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  color:#fff; font-size:15px;
+}
+
+/* ---------- 12) Startseite: Hero als dunkle Medienkachel ---------- */
+html[data-theme^="apple"] .start-hero,
+html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero{
+  position:relative;
+  isolation:isolate;
+  overflow:hidden;
+  min-height:260px;
+  display:flex; flex-direction:column; justify-content:flex-end;
+  padding:34px 36px 30px;
+  border:0;
+  border-radius:var(--radius-lg);
+  background:#0b0b0d;
+  background-image:none;
+  box-shadow:var(--shadow-lg);
+  color:#fff;
+}
+/* Foto auf ::before (mit Puffer für die Parallaxe), Abdunklung auf ::after */
+html[data-theme^="apple"] .start-hero::before{
+  content:""; position:absolute; inset:-8% 0; z-index:-2;
+  background:var(--start-bg-image) center 38% / cover no-repeat;
+  transform:translate3d(0,calc(var(--hero-p,0) * 70px),0) scale(1.06);
+  will-change:transform;
+}
+html[data-theme^="apple"] .start-hero::after{
+  content:""; position:absolute; inset:-2px; z-index:-1; pointer-events:none; /* -2px: keine Foto-Haarlinie am Rand während Reveal/Parallaxe */
+  background:
+    radial-gradient(120% 90% at 0% 100%, rgba(0,0,0,.55), transparent 62%),
+    linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.62) 55%, rgba(0,0,0,.88) 100%);
+}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .start-hero .page-head,
+html[data-theme^="apple"] .start-hero .page-head{padding:0; margin:0 0 18px; transform-origin:left bottom;}
+html[data-theme^="apple"] .start-hero .core-view-kicker{color:rgba(255,255,255,.72); margin-bottom:10px;}
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .start-hero .page-head h1,
+html[data-theme^="apple"] .start-hero .page-head h1{
+  max-width:min(820px,82%);
+  margin:0 0 12px;
+  padding-bottom:.12em; /* sonst schneidet background-clip:text die Unterlängen ab */
+  font-family:var(--display);
+  font-size:clamp(30px,3.4vw,44px);
+  font-weight:700;
+  line-height:1.08;
+  letter-spacing:-.03em;
+  background:linear-gradient(100deg,#fff,#f5f5f7 38%,#cfe3ff 72%,#e9d9ff);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent; color:transparent;
+  text-shadow:none;
+  transform:scale(calc(1 - var(--hero-p,0) * .08));
+  opacity:calc(1 - var(--hero-p,0) * .5);
+  transform-origin:left bottom;
+}
+html[data-theme^="apple"] .start-hero .page-head p#liveClock,
+html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .start-hero .page-head p{
+  display:inline-flex; align-items:center; gap:9px;
+  margin:0;
+  font:500 15px/1.3 var(--font);
+  font-variant-numeric:tabular-nums;
+  color:rgba(255,255,255,.82);
+  opacity:1;
+  text-shadow:none;
+}
+html[data-theme^="apple"] .start-hero #liveClock::before{
+  content:""; width:8px; height:8px; flex:0 0 8px; border-radius:50%;
+  background:#30d158;
+  box-shadow:0 0 0 0 rgba(48,209,88,.5);
+}
+/* Status-Hinweis als getönte Pille */
+html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero .start-today-status{
+  align-self:flex-start;
+  display:inline-flex; align-items:center; gap:10px; flex-wrap:nowrap;
+  min-height:40px;
+  padding:5px 5px 5px 16px;
+  border-radius:999px;
+  background:rgba(255,255,255,.12);
+  -webkit-backdrop-filter:blur(20px) saturate(180%);
+  backdrop-filter:blur(20px) saturate(180%);
+  color:#fff;
+  font:500 14px/1.2 var(--font);
+}
+html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero .start-today-status.is-done{background:rgba(48,209,88,.2);}
+html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero .start-today-status-dot{background:#ff9f0a; box-shadow:none;}
+html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero .start-today-status.is-done .start-today-status-dot{background:#30d158; box-shadow:none;}
+html[data-theme^="apple"] .start-hero .start-today-status .btn{margin-left:auto; background:#fff; color:#1d1d1f; border:0; font-weight:600;}
+html[data-theme^="apple"] .start-hero .start-today-status .btn:hover{background:#f5f5f7; color:#1d1d1f;}
+html[data-theme^="apple"] .start-hero .start-today-status .btn-ghost{background:rgba(255,255,255,.16); color:#fff;}
+/* Disziplin-Ring auf dem dunklen Hero */
+html[data-theme^="apple"] .start-hero .discipline-ring-wrap{top:22px; right:24px;}
+html[data-theme^="apple"] .start-hero .discipline-ring-bg{stroke:rgba(255,255,255,.16);}
+html[data-theme^="apple"] .start-hero :is(.discipline-ring-value,.discipline-ring-label){color:#fff; text-shadow:none; font-family:var(--display);}
+html[data-theme^="apple"] .start-hero .discipline-ring-label{font:600 10px/1.2 var(--font); letter-spacing:.04em; opacity:.7;}
+
+/* ---------- 13) Diverses: Tabellen, Kalender, Tages-Check, Konto-Zeile ---------- */
+html[data-theme^="apple"] table th{font:600 11.5px/1.3 var(--font); letter-spacing:.04em; color:var(--text-dim); border-color:var(--separator);}
+html[data-theme^="apple"] table td{border-color:var(--separator);}
+html[data-theme^="apple"] .cal-selected{box-shadow:inset 0 0 0 2px var(--accent-fill);}
+html[data-theme^="apple"] :is(.diary-field-question,.diary-scale-question){color:var(--text);}
+html[data-theme^="apple"] body[data-jmb-view="start"] .start-daily-checklist-mount .daily-checklist-card{border:0; box-shadow:var(--shadow-sm); border-radius:var(--radius); padding:18px 18px;}
+html[data-theme^="apple"] .daily-checklist-title{font:600 12px/1.3 var(--font); letter-spacing:.04em; color:var(--text-dim);}
+html[data-theme^="apple"] .daily-checklist-item{color:var(--text);}
+html[data-theme^="apple"] .account-switch-label{font:600 12px/1.3 var(--font); letter-spacing:.04em; color:var(--text-dim);}
+html[data-theme^="apple"] .account-menu{border:.5px solid var(--glass-border); border-radius:14px; background:var(--glass-strong); -webkit-backdrop-filter:blur(40px) saturate(180%); backdrop-filter:blur(40px) saturate(180%); box-shadow:var(--shadow-lg);}
+html[data-theme^="apple"] .discipline-ring-bg{stroke:var(--fill-strong);}
+html[data-theme^="apple"] .rp-ring svg circle[stroke="var(--ui-border)"]{stroke:var(--fill);}
+html[data-theme^="apple"] .podium-card{background:var(--bg-panel);}
+html[data-theme^="apple"] .daily-goal-panel,
+html[data-theme^="apple"] .ftmo-eta-panel{background:var(--bg-panel);}
+/* Session-Meter: getönte Segmente statt dunkler Blöcke */
+html[data-theme^="apple"] .sm-bar{border:0; border-radius:12px; background:var(--fill); overflow:hidden;}
+html[data-theme^="apple"] .sm-seg + .sm-seg{border-left:1px solid var(--bg-panel);}
+html[data-theme^="apple"] :is(.sm-seg-out,.sm-seg-pause){background:rgba(118,118,128,.1);}
+html[data-theme^="apple"] .sm-seg-asia{background:rgba(175,82,222,.14);}
+html[data-theme^="apple"] .sm-seg-frankfurt{background:rgba(90,200,250,.2);}
+html[data-theme^="apple"] .sm-seg-london{background:rgba(52,199,89,.16);}
+html[data-theme^="apple"] .sm-seg-ny{background:rgba(0,113,227,.14);}
+html[data-theme="apple-dark"] :is(.sm-seg-out,.sm-seg-pause){background:rgba(118,118,128,.18);}
+html[data-theme="apple-dark"] .sm-seg-asia{background:rgba(191,90,242,.24);}
+html[data-theme="apple-dark"] .sm-seg-frankfurt{background:rgba(100,210,255,.2);}
+html[data-theme="apple-dark"] .sm-seg-london{background:rgba(48,209,88,.22);}
+html[data-theme="apple-dark"] .sm-seg-ny{background:rgba(41,151,255,.24);}
+html[data-theme^="apple"] .sm-seg-active{box-shadow:inset 0 0 0 1.5px var(--accent-fill); filter:none;}
+html[data-theme^="apple"] .sm-seg-name{font-weight:600;}
+html[data-theme^="apple"] .stat-grid{align-items:stretch;}
+/* ".stat-card + .stat-card" ist für gestapelte Karten gedacht – im Raster versetzt es die Kacheln */
+html[data-theme^="apple"] .stat-grid > .stat-card{margin-top:0;}
+html[data-theme^="apple"] :is(.sm-marker,.sm-marker::before){background:var(--accent-fill); box-shadow:none;}
+
+/* ---------- 14) Druck & Barrierefreiheit ---------- */
+@media (forced-colors:active){
+  html[data-theme^="apple"] .start-hero .page-head h1{-webkit-text-fill-color:CanvasText; color:CanvasText; background:none;}
+  html[data-theme^="apple"] #mainNav .tabs-indicator{background:Highlight; forced-color-adjust:none; opacity:.35;}
+  html[data-theme^="apple"] header.topnav::before{background:Canvas;}
+}
+@media print{
+  html[data-theme^="apple"] body::before{display:none;}
+  html[data-theme^="apple"] header.topnav::before{display:none;}
+}
+
+/* ---------- 15) Responsiv: Tablet ----------
+   Zwischen 641 und 1220 px: zwei Zeilen wie bei Apple (Titel links + Aktionen rechts,
+   darunter das Segmented Control mittig) statt drei gestapelter Zeilen. */
+@media (min-width:641px) and (max-width:1220px){
+  html[data-theme^="apple"] header.topnav{
+    grid-template-columns:1fr auto !important;
+    grid-template-areas:"brand actions" "nav nav";
+    justify-items:stretch !important;
+    row-gap:8px !important;
+  }
+  html[data-theme^="apple"] .topnav-left{grid-area:brand; justify-self:start !important;}
+  html[data-theme^="apple"] .topnav-right{grid-area:actions; justify-self:end !important;}
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle{grid-area:nav; justify-self:center !important; width:auto !important; max-width:100%;}
+}
+
+@media (max-width:980px){
+  html[data-theme^="apple"] .start-hero{padding:28px 26px 24px; min-height:230px;}
+}
+@media (max-width:800px){
+  html[data-theme^="apple"] :is(.panel,.stat-card){padding:18px 18px;}
+  html[data-theme^="apple"] .stat-card .value{font-size:28px;}
+}
+
+/* ---------- 16) Handy (≤ 640 px): iOS-Tab-Leiste unten ---------- */
+@media (max-width:640px){
+  html[data-theme^="apple"] header.topnav{
+    grid-template-columns:1fr auto !important;
+    justify-items:stretch !important;
+    row-gap:0 !important;
+    padding:calc(8px + env(safe-area-inset-top)) 14px 8px calc(14px + env(safe-area-inset-left)) !important;
+  }
+  html[data-theme^="apple"] .topnav-left{justify-self:start !important;}
+  html[data-theme^="apple"] .topnav-right{justify-self:end !important; gap:2px;}
+  html[data-theme^="apple"] .backup-board-wrap .backup-board-toggle{padding:4px 9px !important;}
+  /* Dieselben Reiter werden zur Tab-Leiste: fixiert, Milchglas, Symbol über Label */
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle{
+    position:fixed; left:0; right:0; bottom:0; z-index:90;
+    width:auto !important; max-width:none; justify-self:stretch !important; /* sonst schrumpft die fixierte Leiste im Grid-Header auf Inhaltsbreite */
+    display:flex; flex-wrap:nowrap !important; justify-content:space-around; align-items:stretch;
+    gap:0;
+    margin:0;
+    padding:6px calc(4px + env(safe-area-inset-right)) calc(6px + env(safe-area-inset-bottom)) calc(4px + env(safe-area-inset-left));
+    border-radius:0 !important;
+    border-top:.5px solid var(--separator);
+    background:var(--glass-strong);
+    -webkit-backdrop-filter:blur(20px) saturate(180%);
+    backdrop-filter:blur(20px) saturate(180%);
+    box-shadow:none;
+  }
+  /* Über dem schwebenden Tages-Check (z 80), unter Fenstern (z 100) – sonst liegt das Mindset-Menü darunter */
+  html[data-theme^="apple"] #stickyNavWrap{z-index:85;}
+  html[data-theme^="apple"] #mainNav .tabs-indicator,
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-divider-subtle{display:none;}
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle :is(.nav-core,.nav-secondary,.nav-sub-btn){
+    flex:1 1 auto; min-width:0;
+    display:flex; flex-direction:column; align-items:center; justify-content:flex-start; gap:3px;
+    min-height:46px;
+    padding:3px 2px 0;
+    border-radius:10px;
+    font:500 10px/1.1 var(--font);
+    letter-spacing:0;
+    color:var(--text-faint);
+    white-space:nowrap;
+  }
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown{flex:1 1 auto; min-width:0; display:flex;}
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-sub-btn{width:100%;}
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-sub-btn::after{display:none;}
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle :is(.nav-core,.nav-secondary,.nav-sub-btn).active{color:var(--accent); font-weight:600;}
+  /* Symbole als Masken (Farbe = currentColor) */
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle :is(.nav-core,.nav-secondary,.nav-sub-btn)::before{
+    content:""; display:block; flex:0 0 auto;
+    width:22px; height:22px; opacity:1;
+    background:currentColor;
+    -webkit-mask:var(--tab-icon) center / contain no-repeat;
+    mask:var(--tab-icon) center / contain no-repeat;
+  }
+  html[data-theme^="apple"] #mainNav [data-view="start"]{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.5 10.5 12 3.8l8.5 6.7V20a.9.9 0 0 1-.9.9h-4.8v-6.2H9.2v6.2H4.4a.9.9 0 0 1-.9-.9z'/%3E%3C/svg%3E");}
+  html[data-theme^="apple"] #mainNav [data-view="live"]{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3 12h3.5l2.5-6 4 12 2.5-6H21'/%3E%3C/svg%3E");}
+  html[data-theme^="apple"] #mainNav [data-view="eod"]{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.8 6.8 0 0 0 10.7 10.7z'/%3E%3C/svg%3E");}
+  html[data-theme^="apple"] #mainNav [data-view="diary"]{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 20.3s-7.8-4.6-7.8-10.2A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 7.8 2.5c0 5.6-7.8 10.2-7.8 10.2z'/%3E%3C/svg%3E");}
+  html[data-theme^="apple"] #mainNav [data-view="bericht"]{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 20V13M10 20V8M15 20v-5M20 20V4'/%3E%3C/svg%3E");}
+  html[data-theme^="apple"] #mainNav [data-view="erkenntnisse"]{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.7.6 1.1 1.4 1.1 2.2h5c0-.8.4-1.6 1.1-2.2A6 6 0 0 0 12 3z'/%3E%3C/svg%3E");}
+  html[data-theme^="apple"] #mainNav [data-view="strategie"]{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='8.5'/%3E%3Ccircle cx='12' cy='12' r='4.5'/%3E%3Ccircle cx='12' cy='12' r='.8' fill='%23000'/%3E%3C/svg%3E");}
+  html[data-theme^="apple"] #mainNav #becomeTraderToggle{--tab-icon:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23000' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M12 3.5l2.4 5 5.4.6-4 3.7 1.1 5.4L12 15.5l-4.9 2.7 1.1-5.4-4-3.7 5.4-.6z'/%3E%3C/svg%3E");}
+  /* Mindset-Menü öffnet nach oben über der Tab-Leiste */
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown-menu{
+    position:fixed; top:auto; left:auto; right:10px;
+    bottom:calc(66px + env(safe-area-inset-bottom));
+    transform:none;
+    transform-origin:bottom right;
+  }
+  /* In der Tab-Leiste (selbst Milchglas) greift ein zweites Milchglas nicht → deckend */
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle .nav-dropdown-menu-inner{background:var(--bg-panel);}
+  html[data-theme^="apple"] main#app{padding-bottom:calc(92px + env(safe-area-inset-bottom)) !important;}
+  html[data-theme^="apple"] .toast{bottom:calc(76px + env(safe-area-inset-bottom));}
+  html[data-theme^="apple"] .backup-board-panel{bottom:calc(76px + env(safe-area-inset-bottom)) !important;}
+  html[data-theme^="apple"] #dailyChecklistWidget{bottom:calc(76px + env(safe-area-inset-bottom));}
+  /* Inhalt */
+  html[data-theme^="apple"] .stat-grid{grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  html[data-theme^="apple"] :is(.panel,.stat-card){padding:16px;}
+  html[data-theme^="apple"] .stat-card .value{font-size:26px;}
+  html[data-theme^="apple"] .start-hero,
+  html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero{padding:22px 16px 16px; border-radius:24px; min-height:220px;}
+  html[data-theme^="apple"][data-ui-system="jmb-professional-v2"] .start-hero .page-head h1,
+  html[data-theme^="apple"] .start-hero .page-head h1{font-size:27px; max-width:calc(100% - 60px);}
+  html[data-theme^="apple"] .start-hero .discipline-ring-wrap{top:16px; right:14px;}
+  /* Status-Pille: volle Breite, einzeilig, Aktion rechtsbündig */
+  html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero .start-today-status{
+    align-self:stretch; width:100%;
+    border-radius:14px;
+    font-size:13px;
+    white-space:nowrap;
+  }
+  html[data-theme^="apple"] body[data-jmb-view="start"] .start-hero .start-today-status > span:not(.start-today-status-dot){overflow:hidden; text-overflow:ellipsis; min-width:0;}
+  html[data-theme^="apple"] .start-hero .start-today-status .btn{padding:6px 12px; font-size:12.5px;}
+  html[data-theme^="apple"] .modal{border-radius:22px;}
+  /* Aktionen als schwebende Milchglas-Leiste, die beim Scrollen unten stehen bleibt */
+  html[data-theme^="apple"] .modal-footer{position:sticky; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:2; margin-inline:-12px; padding:10px 12px; border:0; border-radius:18px; background:var(--glass-strong); -webkit-backdrop-filter:blur(20px) saturate(180%); backdrop-filter:blur(20px) saturate(180%); box-shadow:var(--shadow-md);}
+}
+/* Querformat mit wenig Höhe: Tab-Leiste nicht fixieren */
+@media (max-width:640px) and (max-height:500px){
+  html[data-theme^="apple"] #mainNav.nav-single-row-subtle{position:static; border-radius:11px !important; border-top:0;}
+  html[data-theme^="apple"] main#app{padding-bottom:24px !important;}
+  html[data-theme^="apple"] .toast{bottom:24px;}
+}
+</style>
+
+<style id="jmb-motion">
+/* =====================================================================
+   BEWEGUNG & ÜBERGÄNGE · designübergreifend, an/aus in
+   Einstellungen → Darstellung → 03 (seit 28.09.2026)
+   -------------------------------------------------------------------------
+   Aktiv nur mit html[data-motion="on"] (Geräte-Einstellung "tj_motion_v1",
+   Standard: an). Aus = exakt das bisherige Verhalten aller Designs.
+   Regeln: animiert werden nur transform und opacity; Einblendungen laufen nur
+   bei echten Ansichtswechseln (render() mit neuem View-Schlüssel), nie beim
+   Neu-Rendern nach Speichern/Filtern/Sync. Die Logik dazu liegt gekapselt in
+   JournalMotion (Script), das per MutationObserver auf #app reagiert.
+   ===================================================================== */
+:root{
+  --mo-ease:cubic-bezier(0.28,0.11,0.32,1);
+  --mo-spring:cubic-bezier(0.34,1.56,0.64,1);
+}
+
+/* ---------- Schalter in Einstellungen → Darstellung (für alle Designs) ---------- */
+.settings-motion-row{display:flex; align-items:center; justify-content:space-between; gap:16px; margin:0 0 18px; padding:14px 16px; border:1px solid var(--ui-border); border-radius:14px; background:var(--ui-surface-subtle); cursor:pointer;}
+.settings-motion-row strong{display:block; font-size:13px; color:var(--ui-text);}
+.settings-motion-row small{display:block; margin-top:3px; font-size:11.5px; line-height:1.45; color:var(--ui-text-muted);}
+.ios-switch{
+  -webkit-appearance:none; appearance:none;
+  position:relative; flex:0 0 auto;
+  width:44px; height:26px; margin:0;
+  border-radius:999px;
+  background:color-mix(in srgb,var(--ui-text) 22%,transparent);
+  cursor:pointer;
+  transition:background-color .25s cubic-bezier(0.28,0.11,0.32,1);
+}
+.ios-switch::after{
+  content:""; position:absolute; top:2px; left:2px;
+  width:22px; height:22px; border-radius:50%;
+  background:#fff;
+  box-shadow:0 3px 8px rgba(0,0,0,.15),0 3px 1px rgba(0,0,0,.06);
+  transition:transform .4s cubic-bezier(0.34,1.56,0.64,1);
+}
+.ios-switch:checked{background:#34c759;}
+.ios-switch:checked::after{transform:translateX(18px);}
+.ios-switch:focus-visible{outline:3px solid color-mix(in srgb,var(--ui-accent) 55%,transparent); outline-offset:2px;}
+
+/* ---------- Ansichtswechsel ---------- */
+@keyframes moViewFadeIn{from{opacity:0; transform:translateY(8px);}to{opacity:1; transform:none;}}
+html[data-motion="on"] .view-fade{animation:moViewFadeIn .45s var(--mo-ease) both;}
+html[data-motion="on"] [data-ui-system="jmb-professional-v2"] .view-fade{animation-duration:.45s; animation-timing-function:var(--mo-ease);}
+html[data-motion="on"] .view-fade.view-still{animation:none !important;}
+
+/* ---------- Scroll-Reveal (Klassen setzt JournalMotion) ---------- */
+/* Versteckter Startzustand ohne Übergang (sonst würde das Ausblenden selbst animiert) … */
+html[data-motion="on"] .mo-reveal:not(.is-visible){
+  opacity:0 !important;
+  transform:translate3d(0,24px,0) !important;
+  transition:none !important;
+}
+/* … erst .is-visible blendet mit Verzögerung (Staffelung) ein */
+html[data-motion="on"] .mo-reveal.is-visible{
+  transition-property:opacity,transform !important;
+  transition-duration:.8s,.9s !important;
+  transition-timing-function:var(--mo-ease),var(--mo-ease) !important;
+  transition-delay:var(--mo-delay,0ms),var(--mo-delay,0ms) !important;
+}
+
+/* ---------- Beim Erscheinen: Balken wachsen, Ringe drehen ein, Charts gleiten hoch ---------- */
+@keyframes moBarGrowX{from{transform:scaleX(0);}to{transform:scaleX(1);}}
+@keyframes moBarGrowY{from{transform:scaleY(0);}to{transform:scaleY(1);}}
+@keyframes moGaugeIn{from{opacity:0; transform:scale(.6) rotate(-40deg);}to{opacity:1; transform:none;}}
+/* Ringe sind per CSS schon um -90° gedreht (Start oben) – Endzustand muss das behalten */
+@keyframes moGaugeInRot{from{opacity:0; transform:rotate(-130deg) scale(.6);}to{opacity:1; transform:rotate(-90deg);}}
+@keyframes moChartIn{from{opacity:0; transform:translateY(10px);}to{opacity:1; transform:none;}}
+@keyframes moBadgePop{from{opacity:0; transform:scale(.8);}to{opacity:1; transform:none;}}
+html[data-motion="on"] .mo-play :is(.ratio-fill,.rp-track > i){transform-origin:left center; animation:moBarGrowX 1.1s var(--mo-ease) calc(var(--mo-delay,0ms) + .2s) both;}
+html[data-motion="on"] .mo-play .rp-bar .up > i{transform-origin:center bottom; animation:moBarGrowY 1.1s var(--mo-ease) calc(var(--mo-delay,0ms) + .2s) both;}
+html[data-motion="on"] .mo-play .rp-bar .down > i{transform-origin:center top; animation:moBarGrowY 1.1s var(--mo-ease) calc(var(--mo-delay,0ms) + .2s) both;}
+html[data-motion="on"] .mo-play .podium-bar{transform-origin:center bottom; animation:moBarGrowY 1.1s var(--mo-ease) calc(var(--mo-delay,0ms) + .2s) both;}
+html[data-motion="on"] .mo-play :is(.rp-ring svg,.discipline-ring){animation:moGaugeInRot .9s var(--mo-spring) var(--mo-delay,0ms) both;}
+html[data-motion="on"] .mo-play canvas{animation:moChartIn .9s var(--mo-ease) var(--mo-delay,0ms) both;}
+html[data-motion="on"] .mo-play .badge{animation:moBadgePop .6s var(--mo-spring) calc(var(--mo-delay,0ms) + .15s) both;}
+
+/* ---------- Hover (nur mit Maus) & Drücken ---------- */
+@media (hover:hover) and (pointer:fine){
+  html[data-motion="on"] :is(.stat-card,.week-card,.podium-card,.rp-card,.book-card,.ziele-goal-card,.compare-ring-item,.settings-theme-card){
+    transition:transform .5s var(--mo-spring), box-shadow .35s var(--mo-ease), border-color .2s var(--mo-ease), background-color .2s var(--mo-ease);
+  }
+  html[data-motion="on"] :is(.stat-card,.week-card,.podium-card,.rp-card,.book-card,.ziele-goal-card,.compare-ring-item):hover{transform:translateY(-3px);}
+  html[data-theme^="apple"][data-motion="on"] :is(.stat-card,.week-card,.podium-card,.rp-card,.book-card,.ziele-goal-card,.compare-ring-item):hover{box-shadow:var(--shadow-md);}
+  html[data-motion="on"] :is(.shot-thumb,.trade-gallery-card) img{transition:transform .7s var(--mo-ease);}
+  html[data-motion="on"] :is(.shot-thumb,.trade-gallery-card):hover img{transform:scale(1.04);}
+}
+html[data-motion="on"] :is(.btn,.chip,.subtab,nav.tabs button,.icon-btn,.utility-icon-button,.backup-board-toggle,.cal-cell,.trade-card,.week-card,.podium-card,.settings-theme-card,.daily-goal-panel,.mjmp-nav-btn,.mjmp-nav-add){
+  -webkit-tap-highlight-color:transparent;
+}
+html[data-motion="on"] .btn:active:not(:disabled){transform:scale(.97) !important; transition:transform .12s var(--mo-ease) !important;}
+html[data-motion="on"] :is(.chip,.subtab,nav.tabs button,.area-toggle button,.settings-main-tabs button):active{transform:scale(.96) !important; transition:transform .12s var(--mo-ease) !important;}
+html[data-motion="on"] :is(.icon-btn,.utility-icon-button,.lightbox-close,.btn-icon-del):active{transform:scale(.9) !important; transition:transform .12s var(--mo-ease) !important;}
+html[data-motion="on"] :is(.trade-card,.week-card,.podium-card,.settings-theme-card,.daily-goal-panel,.cal-cell):active{transform:scale(.98) !important; transition:transform .12s var(--mo-ease) !important;}
+/* Zurückfedern nach dem Loslassen */
+html[data-motion="on"] :is(.btn,.chip,.subtab,.icon-btn,.utility-icon-button,.lightbox-close,.btn-icon-del,.area-toggle button,.settings-main-tabs button){
+  transition-property:background-color,border-color,color,box-shadow,opacity,filter,transform;
+  transition-duration:.2s,.2s,.2s,.2s,.2s,.2s,.35s;
+  transition-timing-function:var(--mo-ease),var(--mo-ease),var(--mo-ease),var(--mo-ease),var(--mo-ease),var(--mo-ease),var(--mo-spring);
+}
+
+/* ---------- Navigation ---------- */
+@keyframes moThumbIn{from{transform:scale(.92); opacity:.6;}to{transform:none; opacity:1;}}
+@keyframes moTabBounce{0%{transform:scale(.8);}100%{transform:none;}}
+html[data-motion="on"] .mo-thumb-pop{animation:moThumbIn .4s var(--mo-spring) both;}
+html[data-motion="on"] #mainNav .mo-tab-bounce::before{animation:moTabBounce .5s var(--mo-spring) both;}
+
+/* ---------- Overlays ---------- */
+@keyframes moFadeIn{from{opacity:0;}to{opacity:1;}}
+@keyframes moSheetIn{from{opacity:0; transform:translateY(40px) scale(.97);}to{opacity:1; transform:none;}}
+@keyframes moPopIn{from{opacity:0; transform:scale(.92) translateY(-4px);}to{opacity:1; transform:none;}}
+@keyframes moToastIn{from{opacity:0; transform:translate(-50%,24px) scale(.94);}to{opacity:1; transform:translate(-50%,0);}}
+@keyframes moZoomIn{from{opacity:0; transform:scale(.88);}to{opacity:1; transform:none;}}
+/* Modal: nur beim ersten Öffnen (.modal-anim-in setzt die App schon heute nur dann) */
+html[data-motion="on"] .modal-anim-in:not(.settings-drawer-backdrop){animation:moFadeIn .35s var(--mo-ease) both;}
+html[data-motion="on"] .modal-anim-in .modal:not(.settings-drawer){animation:moSheetIn .55s var(--mo-spring) both;}
+/* Popover/Menüs: erscheinen per [hidden] → Animation startet beim Einblenden */
+html[data-motion="on"] :is(.backup-board-panel,.account-menu,.word-menu-dropdown,.news-event-popover):not([hidden]){transform-origin:top right; animation:moPopIn .35s var(--mo-spring) both;}
+html[data-motion="on"] #mainNav.nav-single-row-subtle .nav-dropdown-menu{transform-origin:top right; transition:opacity .2s var(--mo-ease), visibility .2s, transform .35s var(--mo-spring);}
+html[data-motion="on"] .toast{animation:moToastIn .55s var(--mo-spring) both;}
+html[data-motion="on"] .lightbox-backdrop{animation:moFadeIn .35s var(--mo-ease) both;}
+html[data-motion="on"] .lightbox-backdrop img{animation:moZoomIn .5s var(--mo-spring) both;}
+
+/* ---------- Apple: Schieber, Live-Punkt, Umgebungslicht, Parallaxe ---------- */
+@keyframes moStartPulse{0%{box-shadow:0 0 0 0 rgba(48,209,88,.5);}70%{box-shadow:0 0 0 8px rgba(48,209,88,0);}100%{box-shadow:0 0 0 0 rgba(48,209,88,0);}}
+@keyframes moAmbientDrift{
+  0%,100%{transform:translate3d(0,0,0) scale(1); opacity:.8;}
+  50%{transform:translate3d(1.5%,-3%,0) scale(1.06); opacity:1;}
+}
+html[data-motion="on"][data-theme^="apple"] .start-hero #liveClock::before{animation:moStartPulse 2s infinite;}
+html[data-motion="on"][data-theme^="apple"] body::before{animation:moAmbientDrift 16s ease-in-out infinite;}
+html[data-motion="on"][data-theme^="apple"] .start-hero .page-head{will-change:transform;}
+
+/* ---------- Hell/Dunkel-Wechsel (View Transitions API) ----------
+   Neue Ansicht liegt deckend darunter, das Standbild der alten blendet darüber
+   aus → kein Helligkeitsknick. */
+@keyframes moThemeOut{from{opacity:1;}to{opacity:0;}}
+@keyframes moThemeIn{from{opacity:.4;}to{opacity:1;}}
+html.theme-vt::view-transition-new(root){animation:none;}
+html.theme-vt::view-transition-old(root){z-index:1; animation:moThemeOut .6s cubic-bezier(.4,0,.2,1) both;}
+#appShell.mo-theme-in{animation:moThemeIn .35s var(--mo-ease);}
+
+/* ---------- Mobile-Oberfläche (JMB Mobile) ---------- */
+html[data-motion="on"] .mjmp-view{animation:moViewFadeIn .45s var(--mo-ease) both;}
+html[data-motion="on"] :is(.mjmp-nav-btn,.mjmp-nav-add):active{transform:scale(.92); transition:transform .12s var(--mo-ease);}
+
+/* ---------- Barrierefreiheit & Druck ---------- */
+@media (prefers-reduced-motion:reduce){
+  html[data-motion="on"] *,
+  html[data-motion="on"] *::before,
+  html[data-motion="on"] *::after{animation-duration:.01ms !important; animation-iteration-count:1 !important; transition-duration:.01ms !important;}
+  html[data-motion="on"] .mo-reveal:not(.is-visible){opacity:1 !important; transform:none !important;}
+  html[data-theme^="apple"] .start-hero{--hero-p:0 !important;}
+}
+@media print{
+  .mo-reveal,.mo-reveal:not(.is-visible){opacity:1 !important; transform:none !important;}
+}
 </style>
 
 </head>
@@ -15184,6 +16320,8 @@ html.theme-sunrise::view-transition-new(root){
   }, 2500);
 })();
 </script>
+
+<a class="skip-link" href="#app" id="skipToContent">Zum Inhalt springen</a>
 
 <div id="appShell">
 
@@ -15300,6 +16438,12 @@ html.theme-sunrise::view-transition-new(root){
         <span class="utility-label">News</span>
         <span class="utility-count" aria-hidden="true" id="newsWorkbenchCount"></span>
       </button>
+      <!-- Apple-Design: Hell/Dunkel-Umschalter (per CSS nur bei data-theme="apple*" sichtbar) -->
+      <button class="utility-icon-button apple-theme-toggle" id="btnAppleTheme" type="button" title="Hell / Dunkel" aria-label="Zwischen Apple Hell und Apple Dunkel wechseln">
+        <svg class="att-moon" viewBox="0 0 24 24" aria-hidden="true"><path d="M20.5 14.2A8.5 8.5 0 1 1 9.8 3.5a6.8 6.8 0 0 0 10.7 10.7z"></path></svg>
+        <svg class="att-sun" viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="4"></circle><path d="M12 2.5v2M12 19.5v2M4.6 4.6l1.4 1.4M18 18l1.4 1.4M2.5 12h2M19.5 12h2M4.6 19.4 6 18M18 6l1.4-1.4"></path></svg>
+        <span class="utility-label">Hell/Dunkel</span>
+      </button>
       <button class="btn btn-ghost btn-sm utility-icon-button" id="btnSettings" title="Einstellungen" aria-label="Einstellungen">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h10M18 7h2M4 12h3M11 12h9M4 17h8M16 17h4"></path><circle cx="16" cy="7" r="2"></circle><circle cx="9" cy="12" r="2"></circle><circle cx="14" cy="17" r="2"></circle></svg>
         <span class="utility-label">Einstellungen</span>
@@ -15337,7 +16481,7 @@ html.theme-sunrise::view-transition-new(root){
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.28-tradefenster-flackerfrei";
+const APP_VERSION = "2026.09.28-apple-design";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -16926,7 +18070,9 @@ const JULIAN_DESIGN_SYSTEM = Object.freeze({
     blueprint:Object.freeze({label:"Blueprint",identity:"Technical Draft",feel:"konstruiert · exakt · kühl",motif:"Bauplan-Linien",heading:"JetBrains Mono"}),
     matrix:Object.freeze({label:"Matrix",identity:"Code Rain",feel:"technisch · dunkel · fokussiert",motif:"Code-Regen / Grid",heading:"JetBrains Mono"}),
     biolum:Object.freeze({label:"Bio-Luminescence",identity:"Living Light",feel:"organisch · leuchtend · tief",motif:"Plankton / Wellen",heading:"Manrope"}),
-    rte:Object.freeze({label:"Rich Trades Elite",identity:"Silver Globe",feel:"elitär · kühl · präzise",motif:"Chrom / Punkt-Weltkugel",heading:"Outfit"})
+    rte:Object.freeze({label:"Rich Trades Elite",identity:"Silver Globe",feel:"elitär · kühl · präzise",motif:"Chrom / Punkt-Weltkugel",heading:"Outfit"}),
+    apple:Object.freeze({label:"Apple Hell",identity:"Cupertino Light",feel:"klar · ruhig · hochwertig",motif:"Milchglas / Segmented Control",heading:"SF Pro · Inter"}),
+    "apple-dark":Object.freeze({label:"Apple Dunkel",identity:"Cupertino Dark",feel:"tief · ruhig · präzise",motif:"Milchglas / Segmented Control",heading:"SF Pro · Inter"})
   }),
   // Zweite Design-Achse (seit 25.09.2026): Layout-Stil = Form, Dichte, Schrift.
   // Farbe kommt weiterhin aus themeIdentity; beide Achsen sind frei kombinierbar.
@@ -21129,6 +22275,8 @@ const THEMES = [
   { key:"sakura",    label:"Sakura",           sub:"Soft Bloom",       group:1 },
   { key:"cosmic",    label:"Cosmic Nebula",    sub:"Deep Space",       group:1 },
   { key:"glass",     label:"Glass",            sub:"Frosted Layer",    group:1 },
+  { key:"apple",     label:"Apple Hell",       sub:"Cupertino Light",  group:1 },
+  { key:"apple-dark",label:"Apple Dunkel",     sub:"Cupertino Dark",   group:1 },
   { key:"cream",     label:"Creme",            sub:"Editorial Paper",  group:2 },
   { key:"aurora",    label:"Aurora",           sub:"Polar Light",      group:2 },
   { key:"terminal",  label:"Terminal",         sub:"Amber CRT",        group:2 },
@@ -21172,6 +22320,54 @@ function applyTheme(theme){
   updateSakuraPetals();
   updateSakuraTree();
   updateThemeFx();
+  // Statusleisten-Farbe (iPhone/PWA): Apple Hell/Dunkel passend, alle anderen wie bisher
+  const themeColorMeta=document.querySelector('meta[name="theme-color"]');
+  if(themeColorMeta) themeColorMeta.setAttribute("content", theme==="apple"?"#f5f5f7":theme==="apple-dark"?"#000000":"#0a0a0d");
+}
+/* Apple-Design: Hell/Dunkel-Umschalter im Header (#btnAppleTheme, per CSS nur im
+   Apple-Design sichtbar). Wechselt zwischen den Keys "apple" und "apple-dark";
+   gespeichert wie jede Design-Wahl (LS_THEME, Geräte-Einstellung, nicht im Backup).
+   Mit Bewegung an läuft der Wechsel über die View Transitions API: das Standbild der
+   alten Ansicht blendet über der deckend darunterliegenden neuen aus (Klasse theme-vt,
+   Keyframes in "jmb-motion") – kein Helligkeitsknick, keine Farb-Transitions auf jedem
+   Element. Ohne API: sofort umschalten und #appShell kurz einblenden. */
+let appleThemeTransition=null;
+function toggleAppleTheme(){
+  const next=currentTheme()==="apple-dark"?"apple":"apple-dark";
+  JournalStorage.set(LS_THEME,next);
+  const afterApply=()=>{
+    if(document.getElementById("settingsBackdrop")) renderSettingsModal();
+    if(STATE.view==="bericht"&&typeof renderCharts==="function") renderCharts();
+  };
+  const html=document.documentElement;
+  if(appleThemeTransition){ try{ appleThemeTransition.skipTransition(); }catch(e){} appleThemeTransition=null; }
+  if(!JournalMotion.enabled()||typeof document.startViewTransition!=="function"){
+    applyTheme(next); afterApply();
+    const shell=document.getElementById("appShell");
+    if(shell&&JournalMotion.enabled()){ shell.classList.remove("mo-theme-in"); void shell.offsetWidth; shell.classList.add("mo-theme-in"); setTimeout(()=>shell.classList.remove("mo-theme-in"),400); }
+    return;
+  }
+  html.classList.add("theme-vt");
+  try{
+    const vt=document.startViewTransition(()=>{ applyTheme(next); afterApply(); });
+    appleThemeTransition=vt;
+    vt.finished.finally(()=>{ if(appleThemeTransition===vt){ appleThemeTransition=null; html.classList.remove("theme-vt"); } });
+  }catch(err){
+    html.classList.remove("theme-vt"); applyTheme(next); afterApply();
+  }
+}
+{
+  const appleThemeBtn=document.getElementById("btnAppleTheme");
+  if(appleThemeBtn) JournalEventLifecycle.bind("AppleTheme",appleThemeBtn,"click","toggle",toggleAppleTheme);
+  // Skip-Link: Fokus in den Inhalt setzen, ohne "#app" in die Adresszeile zu schreiben
+  const skipLink=document.getElementById("skipToContent");
+  if(skipLink) JournalEventLifecycle.bind("AppleTheme",skipLink,"click","skip",(e)=>{
+    e.preventDefault();
+    const app=document.getElementById("app");
+    if(!app) return;
+    if(!app.hasAttribute("tabindex")) app.setAttribute("tabindex","-1");
+    try{ app.focus({preventScroll:false}); }catch(_){ app.focus(); }
+  });
 }
 /* Kirschblütenblätter für das Sakura-Design: einmalig ~26 Blätter mit zufälliger
    Größe, Position, Fallgeschwindigkeit und Drehung erzeugen; bei anderen Designs
@@ -21471,8 +22667,345 @@ function chartColors(){
   if(t==="biolum")   return { grid:"#0f1c2e", text:"#7797ab", zero:"#1f4a5a" };
   if(t==="alchemy")  return { grid:"#2a2a30", text:"#96949f", zero:"#2f5560" };
   if(t==="rte")      return { grid:"#222224", text:"#8e8e94", zero:"#4a4a50" };
+  if(t==="apple")    return { grid:"#e5e5ea", text:"#86868b", zero:"#c7c7cc" };
+  if(t==="apple-dark")return { grid:"#2c2c2e", text:"#8e8e93", zero:"#48484a" };
   return { grid:"#2a2418", text:"#95896f", zero:"#5a4a2a" };   // Black & Gold
 }
+
+/* =========================================================================
+   BEWEGUNG & ÜBERGÄNGE · JournalMotion (seit 28.09.2026)
+   Designübergreifende, abgekapselte Bewegungsschicht. Greift NICHT in Daten-
+   oder Render-Logik ein, sondern reagiert per MutationObserver auf das, was
+   render() ohnehin erzeugt:
+   - #app bekommt ein neues .view-fade OHNE .view-still → echter Ansichtswechsel
+     → gestaffelter Scroll-Reveal, Count-up der Kennzahlen, Balken/Ringe/Charts.
+   - Re-Render im selben Bereich (.view-still), lokale Updates, Sync → nichts.
+   Dazu: Header-Kompaktmodus beim Scrollen, Hero-Parallaxe (Apple), gleitender
+   Reiter-Schieber per FLIP (Apple), Tab-Leisten-Hüpfer (Apple mobil),
+   Unter-Reiter-Pop. Schalter: Einstellungen → Darstellung → 03 (LS_MOTION,
+   Geräte-Einstellung wie LS_THEME, bewusst nicht im Backup). Aus = bisheriges
+   Verhalten; prefers-reduced-motion schaltet alles Bewegte zusätzlich ab.
+   CSS dazu: Style-Layer "jmb-motion".
+   ========================================================================= */
+const LS_MOTION = "tj_motion_v1";
+const JournalMotion = window.JournalMotion = (() => {
+  const html=document.documentElement;
+  const reducedMq=window.matchMedia?window.matchMedia("(prefers-reduced-motion: reduce)"):null;
+  const tabBarMq=window.matchMedia?window.matchMedia("(max-width: 640px)"):null;
+  // Einblend-Kandidaten: nur die jeweils äußersten Treffer werden animiert.
+  const REVEAL_SEL=[
+    ".core-area-head",".page-head",".start-hero",".section-title",".stat-card",".panel",
+    ".trade-card",".week-card",".week-sidebar",".podium-card",".rp-card",".equity-card",
+    ".compare-ring-item",".book-card",".ziele-goal-card",".strategy-panel",".cal-panel",
+    ".ftmo-eta-panel",".daily-goal-panel",".trade-gallery-card",".chart-wrap",".daily-checklist-card"
+  ].join(",");
+  const COUNT_SEL=".stat-card .value, .rp-num, .rp-hero-value, .mini-stat-value, .discipline-ring-value, .week-sidebar-total-value";
+  const MAX_REVEAL=60, MAX_STAGGER=8, STAGGER_MS=70, COUNT_MS=1100;
+  let initialized=false, lastWrap=null;
+  let revealObserver=null, countObserver=null;
+  const pendingReveal=new Set();
+  const counted=new WeakSet();
+  let scrollTicking=false, lastCompact=null, heroEl=null;
+  let indicator=null, indicatorRect=null, lastActiveTab=null, placeQueued=false;
+  let resizeTimer=null;
+
+  function enabled(){ return html.getAttribute("data-motion")==="on" && !(reducedMq&&reducedMq.matches); }
+  function isApple(){ return /^apple/.test(html.getAttribute("data-theme")||""); }
+
+  /* ---------- Schalter ---------- */
+  function set(on){
+    JournalStorage.set(LS_MOTION,on?"on":"off");
+    html.setAttribute("data-motion",on?"on":"off");
+    if(!on) settleAll();
+    refresh();
+    return on;
+  }
+  // Alles sofort in den Endzustand (Motion aus / Reduced Motion).
+  function settleAll(){
+    if(revealObserver){ revealObserver.disconnect(); revealObserver=null; }
+    if(countObserver){ countObserver.disconnect(); countObserver=null; }
+    pendingReveal.clear();
+    document.querySelectorAll(".mo-reveal,.mo-play").forEach(el=>{
+      el.classList.remove("mo-reveal","is-visible","mo-play");
+      el.style.removeProperty("--mo-delay");
+    });
+    if(heroEl){ heroEl.style.removeProperty("--hero-p"); heroEl=null; }
+  }
+
+  /* ---------- Ansichtswechsel erkennen ---------- */
+  function onAppMutation(){
+    const app=document.getElementById("app");
+    const wrap=app&&app.firstElementChild;
+    if(!wrap||wrap===lastWrap) return;
+    lastWrap=wrap;
+    heroEl=null;
+    if(!wrap.classList.contains("view-fade")||wrap.classList.contains("view-still")) return;
+    animateView(wrap);
+  }
+
+  function animateView(root){
+    if(revealObserver){ revealObserver.disconnect(); revealObserver=null; }
+    if(countObserver){ countObserver.disconnect(); countObserver=null; }
+    pendingReveal.clear();
+    if(!enabled()||typeof IntersectionObserver!=="function") return;
+
+    const targets=[];
+    for(const el of root.querySelectorAll(REVEAL_SEL)){
+      if(targets.length>=MAX_REVEAL) break;
+      if(el.closest(".week-sidebar-viewport")) continue;           // Karussell bleibt eine Einheit
+      if(targets.some(t=>t.contains(el))) continue;                // nur äußerste Treffer
+      targets.push(el);
+    }
+    revealObserver=new IntersectionObserver(onReveal,{rootMargin:"0px 0px -6% 0px",threshold:.08});
+    targets.forEach(el=>{ el.classList.add("mo-reveal"); pendingReveal.add(el); revealObserver.observe(el); });
+
+    const numbers=[...root.querySelectorAll(COUNT_SEL)].slice(0,40).filter(el=>!counted.has(el));
+    if(numbers.length){
+      countObserver=new IntersectionObserver(onCount,{rootMargin:"0px 0px -6% 0px",threshold:.3});
+      numbers.forEach(el=>countObserver.observe(el));
+    }
+  }
+
+  function onReveal(entries){
+    let i=0;
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      showEl(entry.target,Math.min(i++,MAX_STAGGER)*STAGGER_MS);
+    });
+  }
+  // Übersprungene Bereiche (Sprung per Anker/Taste über den Inhalt hinweg) sofort fertig
+  // anzeigen; am Seitenende alles Restliche einblenden – sonst bliebe dort etwas unsichtbar.
+  function settleEl(el){
+    pendingReveal.delete(el);
+    revealObserver&&revealObserver.unobserve(el);
+    el.classList.remove("mo-reveal","is-visible","mo-play");
+    el.style.removeProperty("--mo-delay");
+  }
+  function checkPendingReveal(){
+    if(!pendingReveal.size) return;
+    const vh=window.innerHeight||0;
+    const atBottom=(window.scrollY||0)+vh>=document.documentElement.scrollHeight-4;
+    let i=0;
+    [...pendingReveal].forEach(el=>{
+      if(!el.isConnected){ pendingReveal.delete(el); return; }
+      const r=el.getBoundingClientRect();
+      if(r.bottom<=0) settleEl(el);
+      else if(atBottom) (r.top<vh ? showEl(el,Math.min(i++,MAX_STAGGER)*STAGGER_MS) : settleEl(el));
+    });
+  }
+  function showEl(el,delay){
+    pendingReveal.delete(el);
+    revealObserver&&revealObserver.unobserve(el);
+    el.style.setProperty("--mo-delay",delay+"ms");
+    el.classList.add("is-visible","mo-play");
+    // Nach dem Einblenden .mo-reveal entfernen, damit Hover-Übergänge wieder normal laufen;
+    // .mo-play (Balken/Ringe/Charts) bleibt, bis deren Animation sicher durch ist.
+    let done=false;
+    const finishReveal=()=>{
+      if(done) return; done=true;
+      el.removeEventListener("transitionend",onEnd);
+      el.classList.remove("mo-reveal","is-visible");
+    };
+    const onEnd=ev=>{ if(ev.target===el&&ev.propertyName==="transform") finishReveal(); };
+    el.addEventListener("transitionend",onEnd);
+    setTimeout(finishReveal,1800+delay);
+    setTimeout(()=>{ el.classList.remove("mo-play"); el.style.removeProperty("--mo-delay"); },1700+delay);
+  }
+
+  /* ---------- Count-up der Kennzahlen ----------
+     Deutsches Zahlenformat, Präfix/Suffix (+, R, %, €) bleiben stehen, Endwert wird am
+     Schluss exakt wiederhergestellt. Jedes Element nur einmal. Ändert die App den Wert
+     währenddessen selbst, bricht die Animation sofort ab. */
+  function onCount(entries){
+    entries.forEach(entry=>{
+      if(!entry.isIntersecting) return;
+      const el=entry.target;
+      countObserver&&countObserver.unobserve(el);
+      if(counted.has(el)) return;
+      counted.add(el);
+      const host=el.closest(".mo-reveal");
+      const delay=host?parseFloat(host.style.getPropertyValue("--mo-delay"))||0:0;
+      countUp(el,delay);
+    });
+  }
+  function countUp(el,delay){
+    if(!enabled()) return;
+    const node=[...el.childNodes].find(n=>n.nodeType===3&&n.nodeValue.trim());
+    if(!node) return;
+    const original=node.nodeValue;
+    const m=original.match(/^(\s*[^\d+\-−]*?)([+\-−]?)(\d{1,3}(?:\.\d{3})+|\d+)(?:,(\d+))?([^\d]*)$/);
+    if(!m) return;
+    const [,pre,sign,intPart,dec="",suf]=m;
+    const grouped=intPart.includes(".");
+    const target=parseFloat(intPart.replace(/\./g,"")+(dec?"."+dec:""));
+    if(!isFinite(target)||target===0) return;
+    const fmt=v=>v.toLocaleString("de-DE",{minimumFractionDigits:dec.length,maximumFractionDigits:dec.length,useGrouping:grouped});
+    let written=pre+sign+fmt(0)+suf;
+    node.nodeValue=written;
+    const start=performance.now()+delay;
+    const step=now=>{
+      if(!node.isConnected||node.nodeValue!==written) return;       // App hat übernommen
+      const t=Math.max(0,Math.min(1,(now-start)/COUNT_MS));
+      const eased=1-Math.pow(1-t,3);
+      if(t>=1){ node.nodeValue=original; return; }
+      written=pre+sign+fmt(target*eased)+suf;
+      node.nodeValue=written;
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  /* ---------- Scrollen: Header-Kompaktmodus + Hero-Parallaxe (gebündelt per rAF) ---------- */
+  function onScroll(){
+    if(scrollTicking) return;
+    scrollTicking=true;
+    requestAnimationFrame(()=>{ scrollTicking=false; updateScroll(); });
+  }
+  function updateScroll(){
+    const y=window.scrollY||window.pageYOffset||0;
+    const header=document.querySelector("header.topnav");
+    const compact=y>8;
+    if(header&&compact!==lastCompact){ header.classList.toggle("is-compact",compact); lastCompact=compact; }
+    checkPendingReveal();
+    const hero=(isApple()&&enabled())?document.querySelector("#app .start-hero"):null;
+    if(heroEl&&heroEl!==hero) heroEl.style.removeProperty("--hero-p");
+    heroEl=hero;
+    if(hero){
+      const p=Math.max(0,Math.min(1,y/(hero.offsetHeight||1)));
+      hero.style.setProperty("--hero-p",p.toFixed(3));
+    }
+  }
+
+  /* ---------- Reiter-Schieber (Apple, FLIP) ----------
+     Endzustand direkt setzen, dann die alte Lage als transform darüberlegen, Reflow
+     erzwingen und transform leeren → gleitet mit transform .5s var(--spring). */
+  function ensureIndicator(){
+    const nav=document.getElementById("mainNav");
+    if(!nav) return null;
+    if(!indicator||!indicator.isConnected){
+      indicator=nav.querySelector(":scope > .tabs-indicator")||document.createElement("span");
+      indicator.className="tabs-indicator";
+      indicator.setAttribute("aria-hidden","true");
+      if(!indicator.parentNode) nav.prepend(indicator);
+    }
+    return indicator;
+  }
+  function activeTab(nav){
+    return nav.querySelector(":scope > button.active[data-view], :scope > .nav-dropdown > .nav-sub-btn.active");
+  }
+  function layoutBox(el,nav){
+    // offset* statt getBoundingClientRect: unabhängig von laufenden transforms (Drücken, Header)
+    let x=0,y=0,n=el;
+    while(n&&n!==nav){ x+=n.offsetLeft; y+=n.offsetTop; n=n.offsetParent; }
+    if(n!==nav) return null;
+    return {x,y,w:el.offsetWidth,h:el.offsetHeight};
+  }
+  function placeIndicator(animate){
+    const ind=ensureIndicator();
+    if(!ind) return;
+    const nav=ind.parentNode;
+    const btn=activeTab(nav);
+    const tabBar=isApple()&&tabBarMq&&tabBarMq.matches;
+    // Tab-Leiste (Apple, Handy): aktives Symbol hüpft kurz
+    if(btn&&btn!==lastActiveTab&&lastActiveTab&&tabBar&&enabled()){
+      btn.classList.remove("mo-tab-bounce"); void btn.offsetWidth; btn.classList.add("mo-tab-bounce");
+      setTimeout(()=>btn.classList.remove("mo-tab-bounce"),600);
+    }
+    lastActiveTab=btn||null;
+    if(!isApple()||tabBar||!btn||getComputedStyle(ind).display==="none"){
+      ind.classList.remove("is-ready","is-sliding"); indicatorRect=null; return;
+    }
+    const box=layoutBox(btn,nav);
+    if(!box||!box.w){ ind.classList.remove("is-ready"); indicatorRect=null; return; }
+    const prev=indicatorRect;
+    indicatorRect=box;
+    const wasReady=ind.classList.contains("is-ready");
+    ind.classList.remove("is-sliding");
+    ind.style.transform="";
+    ind.style.left=box.x+"px"; ind.style.top=box.y+"px";
+    ind.style.width=box.w+"px"; ind.style.height=box.h+"px";
+    ind.classList.add("is-ready");
+    if(animate&&prev&&wasReady&&enabled()&&(prev.x!==box.x||prev.y!==box.y||prev.w!==box.w)){
+      ind.style.transform=`translate(${prev.x-box.x}px,${prev.y-box.y}px) scaleX(${prev.w/box.w})`;
+      void ind.offsetWidth;
+      ind.classList.add("is-sliding");
+      ind.style.transform="";
+    }
+  }
+  function queuePlace(animate){
+    if(placeQueued) return;
+    placeQueued=true;
+    requestAnimationFrame(()=>{ placeQueued=false; placeIndicator(animate); });
+  }
+
+  /* ---------- Unter-Reiter: aktiver Schieber poppt nach Klick ---------- */
+  function onSubtabClick(e){
+    if(!enabled()) return;
+    const btn=e.target.closest&&e.target.closest(".subtab, .area-toggle button");
+    if(!btn) return;
+    const label=btn.textContent.trim();
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      const hit=[...document.querySelectorAll(".subtab.active, .subtab[aria-selected='true'], .area-toggle button.on")]
+        .find(b=>b.textContent.trim()===label);
+      if(!hit) return;
+      hit.classList.remove("mo-thumb-pop"); void hit.offsetWidth; hit.classList.add("mo-thumb-pop");
+      setTimeout(()=>hit.classList.remove("mo-thumb-pop"),450);
+    }));
+  }
+
+  function onResize(){
+    clearTimeout(resizeTimer);
+    resizeTimer=setTimeout(()=>{ placeIndicator(false); updateScroll(); },120);
+  }
+
+  // Nach Design-/Layout-/Motion-Wechsel: Schieber ohne Animation neu setzen.
+  function refresh(){
+    if(!enabled()) settleAll();
+    placeIndicator(false);
+    updateScroll();
+  }
+
+  function init(){
+    if(initialized) return;
+    initialized=true;
+    if(!html.hasAttribute("data-motion")) html.setAttribute("data-motion",JournalStorage.get(LS_MOTION,"on")==="off"?"off":"on");
+    const app=document.getElementById("app");
+    if(app) new MutationObserver(onAppMutation).observe(app,{childList:true});
+    const nav=document.getElementById("mainNav");
+    if(nav){
+      ensureIndicator();
+      new MutationObserver(muts=>{
+        if(muts.every(m=>m.target===indicator||(m.target.classList&&m.target.classList.contains("mo-tab-bounce")))) return;
+        queuePlace(true);
+      }).observe(nav,{attributes:true,attributeFilter:["class"],subtree:true});
+    }
+    new MutationObserver(()=>queuePlace(false)).observe(html,{attributes:true,attributeFilter:["data-theme","data-layout","data-motion"]});
+    JournalEventLifecycle.bind("Motion",window,"scroll","scroll",onScroll,{passive:true});
+    JournalEventLifecycle.bind("Motion",window,"resize","resize",onResize,{passive:true});
+    JournalEventLifecycle.bind("Motion",document,"click","subtab-pop",onSubtabClick,true);
+    if(reducedMq&&reducedMq.addEventListener) reducedMq.addEventListener("change",refresh);
+    if(tabBarMq&&tabBarMq.addEventListener) tabBarMq.addEventListener("change",()=>placeIndicator(false));
+    if(document.fonts&&document.fonts.ready) document.fonts.ready.then(()=>placeIndicator(false)).catch(()=>{});
+    placeIndicator(false);
+    updateScroll();
+  }
+
+  function status(){
+    return Object.freeze({enabled:enabled(),setting:html.getAttribute("data-motion"),reducedMotion:!!(reducedMq&&reducedMq.matches),indicator:!!(indicator&&indicator.classList.contains("is-ready"))});
+  }
+
+  return Object.freeze({init,set,enabled,refresh,status,placeIndicator});
+})();
+JournalMotion.init();
+
+// Canvas-Diagramme kennen kein CSS: nach einer Breitenänderung (entprellt 180 ms) neu zeichnen.
+let chartResizeTimer=null, chartResizeWidth=window.innerWidth;
+JournalEventLifecycle.bind("Charts",window,"resize","redraw",()=>{
+  if(window.innerWidth===chartResizeWidth) return;              // reine Höhenänderung (Handy-Adressleiste)
+  chartResizeWidth=window.innerWidth;
+  clearTimeout(chartResizeTimer);
+  chartResizeTimer=setTimeout(()=>{ if(STATE.view==="bericht"&&typeof renderCharts==="function") renderCharts(); },180);
+},{passive:true});
 
 function refreshBackupHubDriveUi(){
   const drive=DriveBackupController.status();
@@ -21957,12 +23490,21 @@ function settingsAppearanceHtml(){
     <div class="settings-section-head"><span>02</span><div><strong>Layout-Stil</strong><small>Form, Dichte und Schrift – frei kombinierbar mit jedem Farb-Design.</small></div></div>
     ${settingsLayoutPickerHtml(current)}
 
-    <div class="settings-section-head"><span>03</span><div><strong>Tastenkürzel</strong><small>Direkt zwischen den wichtigsten Bereichen springen.</small></div></div>
+    <div class="settings-section-head"><span>03</span><div><strong>Bewegung &amp; Übergänge</strong><small>Sanfte Einblendungen, hochzählende Kennzahlen, federnde Buttons – für jedes Design.</small></div></div>
+    ${(()=>{const mo=JournalMotion.status();return `<label class="settings-motion-row" for="settingsMotionToggle">
+      <div>
+        <strong>Animationen ${mo.setting==="off"?"aus":"an"}</strong>
+        <small>Einblendungen laufen nur beim echten Ansichtswechsel, nie beim Speichern, Filtern oder Sync.${mo.reducedMotion?" Dein System wünscht reduzierte Bewegung – deshalb bleibt es trotzdem ruhig.":""}</small>
+      </div>
+      <input type="checkbox" class="ios-switch" id="settingsMotionToggle" role="switch"${mo.setting==="off"?"":" checked"} aria-label="Bewegung und Übergänge">
+    </label>`;})()}
+
+    <div class="settings-section-head"><span>04</span><div><strong>Tastenkürzel</strong><small>Direkt zwischen den wichtigsten Bereichen springen.</small></div></div>
     <div class="settings-shortcut-grid">
       ${[...shortcutCurrentList().map(x=>({keys:shortcutLabel(x.binding),action:x.action})),...JULIAN_SYSTEM_SHORTCUTS].map(x=>`<div class="settings-shortcut-row"><kbd>${escHtml(x.keys)}</kbd><span>${escHtml(x.action)}</span></div>`).join("")}
     </div>
 
-    <div class="settings-section-head"><span>04</span><div><strong>Mobile</strong><small>Die Smartphone-Oberfläche direkt aus den Einstellungen öffnen.</small></div></div>
+    <div class="settings-section-head"><span>05</span><div><strong>Mobile</strong><small>Die Smartphone-Oberfläche direkt aus den Einstellungen öffnen.</small></div></div>
     <div class="settings-mobile-launch">
       <div>
         <span class="settings-kicker">JMB MOBILE</span>
@@ -22290,6 +23832,14 @@ function wireSettingsModal(){
   if(mobilePreviewBtn) mobilePreviewBtn.addEventListener("click",()=>{
     closeSettingsModal();
     setTimeout(()=>{ try{ window.JulianMobileShell?.open?.(); }catch(err){ console.error("Mobile preview open failed",err); } },0);
+  });
+
+  const motionToggle=document.getElementById("settingsMotionToggle");
+  if(motionToggle) motionToggle.addEventListener("change",()=>{
+    const on=JournalMotion.set(motionToggle.checked);
+    settingsActiveTab="appearance";
+    renderSettingsModal();
+    try{ toast(`Bewegung & Übergänge: ${on?"an":"aus"}`); }catch(e){}
   });
 
   document.querySelectorAll("details.settings-theme-group").forEach(group=>{
