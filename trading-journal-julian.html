@@ -1004,6 +1004,10 @@
      horizontale Scroll wirkungslos (kein Überlauf mehr vorhanden).
   */
   .trade-list{display:flex; flex-direction:column; gap:10px; overflow-x:auto; -webkit-overflow-scrolling:touch;}
+  /* [Fix 2026.10.01] Die Liste wächst in der Höhe mit — vertikal nie eigene Scrollleiste
+     (overflow-x:auto machte overflow-y implizit auch "auto"; jede kurze Höhen-Überschreitung
+     ließ sonst rechts eine Leiste aufblitzen und die Zeilen seitlich springen). */
+  .trade-list{overflow-y:hidden;}
   .subtab-row{display:flex; gap:4px; background:var(--ui-surface); padding:4px; border-radius:var(--ui-radius-button); flex-wrap:wrap;}
   .subtab{background:transparent; border:none; color:var(--ui-text-muted); padding:8px 15px; border-radius:9px; font-size:13.5px; font-weight:600; white-space:nowrap;}
   .subtab:hover{color:var(--ui-text);}
@@ -16206,6 +16210,14 @@ html[data-motion="on"] .mo-reveal.is-visible{
   transition-timing-function:var(--mo-ease),var(--mo-ease) !important;
   transition-delay:var(--mo-delay,0ms),var(--mo-delay,0ms) !important;
 }
+/* [Fix 2026.10.01] Trade-Liste (Live/EOD) ist wegen overflow-x:auto ein Scroll-Container.
+   Die unterste, noch nicht eingeblendete Karte ragte durch translateY(24px) unten heraus →
+   Windows blendete kurz eine vertikale Scrollleiste ein, die nach dem Reveal wieder
+   verschwand → Liste sprang seitlich. Hier deshalb nur Opacity-Fade, keine Verschiebung. */
+html[data-motion="on"] .trade-list > .mo-reveal,
+html[data-motion="on"] .trade-list > .mo-reveal:not(.is-visible){
+  transform:none !important;
+}
 
 /* ---------- Beim Erscheinen: Balken wachsen, Ringe drehen ein, Charts gleiten hoch ---------- */
 @keyframes moBarGrowX{from{transform:scaleX(0);}to{transform:scaleX(1);}}
@@ -16502,7 +16514,7 @@ html[data-motion="on"] :is(.mjmp-nav-btn,.mjmp-nav-add):active{transform:scale(.
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.09.30-mindset-menue";
+const APP_VERSION = "2026.10.01-tradelist-scrollbar-fix";
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -20277,7 +20289,11 @@ RecoveryManager.recoverInterrupted();
 // Läuft über denselben kanonischen Domain-Persistenzweg, aber bewusst ohne normalen
 // Änderungs-/Backup-Trigger, weil reine Start-Demodaten keine Nutzeränderung sind.
 if(STATE.trades.length === 0){
-  STATE.trades = buildDemoTrades();
+  // [Fix 2026.10.01] Demo-Trades laufen jetzt durch dieselbe Migration wie geladene/
+  // importierte Trades. Vorher standen level/zeiteinheit in der ersten Sitzung als
+  // String ("50", "m5") im STATE → Trade-Detail stürzte ab ((t.level||[]).map is not a
+  // function) und "→ EOD" kopierte Level als ["5","0"]. Erst nach Neuladen waren es Arrays.
+  STATE.trades = migrateTrades(buildDemoTrades());
   CategoryIdentity.ensureAll(STATE.config, STATE.trades);
   JournalDomain.persist("config", {markChanged:false, origin:"bootstrap-demo"});
   JournalDomain.persist("trades", {markChanged:false, origin:"bootstrap-demo"});
