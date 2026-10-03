@@ -2,13 +2,106 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!-- Apple-Design: viewport-fit=cover, damit env(safe-area-inset-*) am iPhone greift -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- Apple-Design: PWA-/Vollbild-Meta-Tags -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Werkbank">
+<meta name="theme-color" id="meta-theme-color" content="#f5f5f7">
 <title>Werkbank — Projektmanagement</title>
 
-<!-- Fonts -->
+<!-- Apple-Design: Theme VOR dem ersten Zeichnen setzen (kein Aufblitzen).
+     Gespeicherte Wahl gewinnt, sonst Systemeinstellung (prefers-color-scheme).
+     Zusätzlich: Läuft die Seite im iframe des JMB Headquarter, bekommt <html>
+     die Klasse "in-hq" — nur dann wird links Platz für dessen Zurück-Pfeil
+     (oben links, top/left 18px, 52px hoch) gelassen. -->
+<script>
+  (function () {
+    var root = document.documentElement, t = null;
+    try { t = localStorage.getItem('wb_theme_v1'); } catch (e) {}
+    if (t !== 'light' && t !== 'dark') {
+      t = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    root.setAttribute('data-theme', t);
+    var meta = document.getElementById('meta-theme-color');
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#000000' : '#f5f5f7');
+    try { if (window.self !== window.top) root.classList.add('in-hq'); } catch (e) { root.classList.add('in-hq'); }
+  })();
+</script>
+
+<!-- Fonts — Apple-Design: SF Pro über -apple-system; Inter nur noch als Fallback für Nicht-Apple-Geräte -->
+<script id="jmb-global-theme-bridge">
+/* JMB GLOBAL THEME BRIDGE · Trading Journal = Design-Master */
+(function(){
+  'use strict';
+  var KEY='jmb_global_theme_v1';
+  var CHANNEL='jmb-global-theme-v1';
+  var PRIMARY=['dark','neon','rte','sakura','cosmic','glass','apple','apple-dark'];
+  var DARK={dark:1,neon:1,rte:1,cosmic:1,glass:1,'apple-dark':1};
+  var root=document.documentElement;
+  var bc=null;
+  function valid(t){return PRIMARY.indexOf(t)>-1?t:null;}
+  function read(){
+    try{
+      var g=valid(localStorage.getItem(KEY));
+      if(g)return g;
+      var j=valid(localStorage.getItem('tj_theme_v1'));
+      if(j)return j;
+    }catch(e){}
+    return 'dark';
+  }
+  function metaColor(t){
+    if(t==='apple')return '#f5f5f7';
+    if(t==='sakura')return '#fdf8f9';
+    if(t==='apple-dark')return '#000000';
+    if(t==='neon')return '#090a12';
+    if(t==='rte')return '#050505';
+    if(t==='cosmic')return '#04030d';
+    if(t==='glass')return '#090b11';
+    return '#070605';
+  }
+  function apply(t){
+    t=valid(t)||'dark';
+    root.setAttribute('data-theme',t);
+    root.setAttribute('data-jmb-theme',t);
+    root.setAttribute('data-jmb-dark',DARK[t]?'true':'false');
+    var meta=document.querySelector('meta[name="theme-color"]');
+    if(meta)meta.setAttribute('content',metaColor(t));
+    try{window.dispatchEvent(new CustomEvent('jmb-global-theme-change',{detail:{theme:t}}));}catch(e){}
+    return t;
+  }
+  function persist(t){try{localStorage.setItem(KEY,t);}catch(e){}}
+  function postParent(t){
+    try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'jmb-global-theme',theme:t},'*');}catch(e){}
+  }
+  function postFrame(t,except){
+    try{
+      var f=document.getElementById('appFrame');
+      if(f&&f.contentWindow&&f.contentWindow!==except)f.contentWindow.postMessage({type:'jmb-global-theme',theme:t},'*');
+    }catch(e){}
+  }
+  function broadcast(t){try{if(bc)bc.postMessage({type:'jmb-global-theme',theme:t});}catch(e){}}
+  function set(t,opt){
+    opt=opt||{}; t=valid(t); if(!t)return current();
+    apply(t);
+    if(opt.persist!==false)persist(t);
+    if(opt.broadcast!==false)broadcast(t);
+    if(opt.post!==false){postParent(t);postFrame(t,null);}
+    return t;
+  }
+  function current(){return valid(root.getAttribute('data-jmb-theme')||root.getAttribute('data-theme'))||'dark';}
+  try{if('BroadcastChannel'in window){bc=new BroadcastChannel(CHANNEL);bc.onmessage=function(e){var d=e.data||{};if(d.type==='jmb-global-theme'&&valid(d.theme))set(d.theme,{persist:true,broadcast:false,post:false});};}}catch(e){}
+  window.addEventListener('storage',function(e){if(e.key===KEY&&valid(e.newValue))set(e.newValue,{persist:false,broadcast:false,post:false});});
+  window.addEventListener('message',function(e){var d=e.data||{};if(d.type!=='jmb-global-theme'||!valid(d.theme))return;set(d.theme,{persist:true,broadcast:true,post:false});postFrame(d.theme,e.source);});
+  window.JMBGlobalTheme=Object.freeze({key:KEY,primary:PRIMARY.slice(),current:current,set:set,apply:apply});
+  apply(read());
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 
 <!-- Font Awesome -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -20,321 +113,1011 @@
   tailwind.config = {
     theme: {
       extend: {
+        // Apple-Design: Die bisherigen Farbnamen bleiben bestehen, weil das JS sie in
+        // Klassen erzeugt (z. B. "bg-cyan-soft text-cyan"). Sie zeigen jetzt auf die
+        // Design-Tokens unten und wechseln dadurch automatisch mit Hell/Dunkel.
+        // "cyan" = Apple-Blau (Akzent), "slate2" = neutrales Grau.
         colors: {
-          ink:       '#F3F4FA',
-          inksoft:   '#8B90B3',
-          inkfaint:  '#565B80',
-          line:      'rgba(255,255,255,.08)',
-          surface:   'rgba(255,255,255,.035)',
-          surface2:  'rgba(255,255,255,.06)',
-          purple:    { DEFAULT: '#7C5CFC', soft: 'rgba(124,92,252,.14)' },
-          cyan:      { DEFAULT: '#22D3EE', soft: 'rgba(34,211,238,.14)' },
-          amber:     { DEFAULT: '#F5A623', soft: 'rgba(245,166,35,.14)' },
-          red:       { DEFAULT: '#F76E6E', soft: 'rgba(247,110,110,.14)' },
-          green:     { DEFAULT: '#34D399', soft: 'rgba(52,211,153,.14)' },
-          slate2:    { DEFAULT: '#8B90B3', soft: 'rgba(139,144,179,.14)' },
+          ink:       'var(--text)',
+          inksoft:   'var(--text-dim)',
+          inkfaint:  'var(--text-faint)',
+          line:      'var(--separator)',
+          surface:   'var(--bg-card)',
+          surface2:  'var(--fill)',
+          purple:    { DEFAULT: 'var(--purple)', soft: 'var(--purple-dim)' },
+          cyan:      { DEFAULT: 'var(--accent)', soft: 'var(--accent-dim)' },
+          amber:     { DEFAULT: 'var(--amber)',  soft: 'var(--amber-dim)' },
+          red:       { DEFAULT: 'var(--red)',    soft: 'var(--red-dim)' },
+          green:     { DEFAULT: 'var(--green)',  soft: 'var(--green-dim)' },
+          slate2:    { DEFAULT: 'var(--text-dim)', soft: 'var(--fill)' },
         },
+        // Apple-Design: SF Pro Display/Text statt Space Grotesk/Inter
         fontFamily: {
-          display: ['"Space Grotesk"', 'system-ui', 'sans-serif'],
-          sans: ['"Inter"', 'system-ui', 'sans-serif'],
+          display: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', 'Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'],
+          sans:    ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Text"', 'Inter', '"Helvetica Neue"', 'Arial', 'sans-serif'],
         },
-        borderRadius: { xl2: '1.1rem' },
       }
     }
   }
 </script>
 
+<link id="jmb-global-theme-fonts" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
-  :root { color-scheme: dark; }
-  html, body { background: #0A0A13; }
+  /* =====================================================================
+     APPLE-DESIGN — komplett überarbeitete Darstellung.
+     Hell ist die Basis (:root), Dunkel über :root[data-theme="dark"].
+     ===================================================================== */
+
+  /* ---------- 1. Design-Tokens: Hell ---------- */
+  :root {
+    color-scheme: light;
+    --bg: #f5f5f7;
+    --bg-panel: #ffffff;
+    --bg-card: #f5f5f7;
+    --bg-card-hover: #e8e8ed;
+    --panel-border: transparent;            /* im Hellmodus keine sichtbaren Rahmen */
+    --fill: rgba(118,118,128,.12);
+    --fill-strong: rgba(118,118,128,.2);
+    --glass: rgba(255,255,255,.72);
+    --glass-strong: rgba(255,255,255,.86);
+    --glass-border: rgba(0,0,0,.08);
+    --separator: rgba(60,60,67,.14);
+    --text: #1d1d1f;
+    --text-dim: #6e6e73;
+    --text-faint: #86868b;
+    --accent: #0066cc;
+    --accent-fill: #0071e3;
+    --accent-dim: rgba(0,113,227,.12);
+    --purple: #8944ab;
+    --purple-dim: rgba(175,82,222,.12);
+    --green: #1a7f37;
+    --green-fill: #34c759;
+    --green-dim: rgba(52,199,89,.14);
+    --red: #d70015;
+    --red-dim: rgba(255,59,48,.1);
+    --amber: #b25000;
+    --amber-fill: #ff9f0a;
+    --amber-dim: rgba(255,159,10,.14);
+    --inverse-bg: #1d1d1f;
+    --inverse-text: #ffffff;
+    --thumb: #ffffff;
+    --thumb-shadow: 0 3px 8px rgba(0,0,0,.12), 0 3px 1px rgba(0,0,0,.04);
+    --backdrop: rgba(0,0,0,.28);
+    --focus: #0071e3;
+    --ambient-a: rgba(0,113,227,.10);
+    --ambient-b: rgba(175,82,222,.08);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%236e6e73' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+
+    --radius-lg: 28px;
+    --radius: 18px;
+    --radius-sm: 12px;
+    --radius-xs: 8px;
+
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.04), 0 1px 1px rgba(0,0,0,.02);
+    --shadow-md: 0 4px 14px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.04);
+    --shadow-lg: 0 24px 60px rgba(0,0,0,.14), 0 6px 18px rgba(0,0,0,.06);
+
+    --ease: cubic-bezier(0.28, 0.11, 0.32, 1);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+
+    --font-text: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Helvetica Neue", Arial, sans-serif;
+    --font-display: -apple-system, BlinkMacSystemFont, "SF Pro Display", "Inter", "Helvetica Neue", Arial, sans-serif;
+
+    --gutter: 32px;
+  }
+
+  /* ---------- 1b. Design-Tokens: Dunkel ---------- */
+  :root[data-theme="dark"] {
+    color-scheme: dark;
+    --bg: #000000;
+    --bg-panel: #1c1c1e;
+    --bg-card: #2c2c2e;
+    --bg-card-hover: #3a3a3c;
+    --panel-border: rgba(255,255,255,.05);
+    --fill: rgba(118,118,128,.24);
+    --fill-strong: rgba(118,118,128,.36);
+    --glass: rgba(22,22,23,.72);
+    --glass-strong: rgba(28,28,30,.88);
+    --glass-border: rgba(255,255,255,.08);
+    --separator: rgba(84,84,88,.6);
+    --text: #f5f5f7;
+    --text-dim: #a1a1a6;
+    --text-faint: #6e6e73;
+    --accent: #2997ff;
+    --accent-fill: #0071e3;
+    --accent-dim: rgba(41,151,255,.18);
+    --purple: #da8fff;
+    --purple-dim: rgba(191,90,242,.18);
+    --green: #30d158;
+    --green-fill: #30d158;
+    --green-dim: rgba(48,209,88,.16);
+    --red: #ff6961;
+    --red-dim: rgba(255,69,58,.16);
+    --amber: #ffb340;
+    --amber-fill: #ffb340;
+    --amber-dim: rgba(255,159,10,.18);
+    --inverse-bg: #f5f5f7;
+    --inverse-text: #1d1d1f;
+    --thumb: #636366;
+    --thumb-shadow: 0 3px 8px rgba(0,0,0,.35), 0 3px 1px rgba(0,0,0,.2);
+    --backdrop: rgba(0,0,0,.5);
+    --focus: #2997ff;
+    --ambient-a: rgba(41,151,255,.12);
+    --ambient-b: rgba(191,90,242,.10);
+    --select-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%23a1a1a6' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+    /* deutlich stärkere, schwarze Schatten */
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.6), 0 1px 1px rgba(0,0,0,.4);
+    --shadow-md: 0 10px 28px rgba(0,0,0,.65), 0 2px 6px rgba(0,0,0,.5);
+    --shadow-lg: 0 30px 80px rgba(0,0,0,.75), 0 10px 24px rgba(0,0,0,.55);
+  }
+
+  /* ---------- 2. Basis & Typografie ---------- */
+  html { background: var(--bg); -webkit-text-size-adjust: 100%; }
   body {
-    font-family: 'Inter', system-ui, sans-serif; color: #F3F4FA;
+    font-family: var(--font-text);
+    font-size: 15px; line-height: 1.47; letter-spacing: -.01em;
+    color: var(--text); background: var(--bg);
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+  }
+  .font-display { font-family: var(--font-display); letter-spacing: -.022em; }
+  .page-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(30px, 3.4vw, 44px); letter-spacing: -.03em; line-height: 1.08;
+  }
+  .page-sub { color: var(--text-dim); margin-top: 6px; font-size: 15px; }
+  .section-title {
+    font-family: var(--font-display); font-weight: 700; font-size: 22px;
+    letter-spacing: -.022em; line-height: 1.1; margin-bottom: 14px;
+  }
+  .modal-title {
+    font-family: var(--font-display); font-weight: 700; font-size: 24px;
+    letter-spacing: -.022em; line-height: 1.15;
+  }
+  .eyebrow {
+    font-size: 12px; font-weight: 600; text-transform: uppercase;
+    letter-spacing: .04em; color: var(--text-dim); line-height: 1.3;
+  }
+  .kpi-figure { font-variant-numeric: tabular-nums; }
+  ::selection { background: var(--accent-fill); color: #fff; }
+
+  /* Fokus, Skip-Link, Scrollbars */
+  :focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 65%, transparent); outline-offset: 2px; }
+  input:focus-visible, textarea:focus-visible, select:focus-visible { outline: none; }
+  .skip-link {
+    position: fixed; left: 16px; top: 12px; z-index: 100;
+    padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 600;
+    background: var(--inverse-bg); color: var(--inverse-text);
+    transform: translateY(-160%); transition: transform .3s var(--ease);
+  }
+  .skip-link:focus { transform: none; }
+  * { scrollbar-width: thin; scrollbar-color: var(--fill-strong) transparent; }
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--fill-strong); border-radius: 999px; border: 3px solid transparent; background-clip: padding-box; }
+
+  /* ---------- 3. Umgebungslicht (driftet langsam hinter der App) ---------- */
+  .ambient {
+    position: fixed; inset: -10%; z-index: 0; pointer-events: none;
     background:
-      radial-gradient(900px 500px at 88% -8%, rgba(124,92,252,.20), transparent 60%),
-      radial-gradient(700px 500px at -8% 30%, rgba(34,211,238,.10), transparent 55%),
-      radial-gradient(1000px 700px at 50% 120%, rgba(124,92,252,.08), transparent 60%),
-      #0A0A13;
-    background-attachment: fixed;
+      radial-gradient(38% 34% at 84% 8%, var(--ambient-a), transparent 70%),
+      radial-gradient(42% 40% at 8% 42%, var(--ambient-b), transparent 70%);
+    animation: ambientDrift 16s ease-in-out infinite;
+    will-change: transform, opacity;
   }
-  .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+  @keyframes ambientDrift {
+    0%, 100% { transform: translate3d(0, 0, 0) scale(1); opacity: .8; }
+    33%      { transform: translate3d(1.5%, -3%, 0) scale(1.06); opacity: 1; }
+    66%      { transform: translate3d(-1.5%, -1.5%, 0) scale(1.03); opacity: .9; }
+  }
+  #appShell { position: relative; z-index: 1; min-height: 100vh; }
+  #appShell.theme-in { animation: themeIn .35s var(--ease); }
 
-  /* Slim capsule progress bar */
-  .pbar { height: 4px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
-  .pbar-fill { height: 100%; border-radius: 999px; width: 0%; transition: width .5s cubic-bezier(.4,0,.2,1); }
+  /* ---------- 4. Header (Milchglas auf ::before, NICHT auf dem Header selbst,
+     sonst bleibt die fixierte Tab-Leiste am Handy darin hängen) ---------- */
+  .app-header {
+    position: sticky; top: 0; z-index: 30;
+    padding-top: calc(10px + env(safe-area-inset-top)); padding-bottom: 10px;
+    transition: transform .5s var(--ease);
+  }
+  .app-header::before {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(20px) saturate(180%);
+    backdrop-filter: blur(20px) saturate(180%);
+    border-bottom: 1px solid transparent;
+    box-shadow: 0 1px 20px rgba(0,0,0,0);
+    transition: background-color .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease);
+  }
+  .app-header.is-compact::before {
+    background: var(--glass-strong);
+    border-bottom-color: var(--separator);
+    box-shadow: 0 1px 20px rgba(0,0,0,.05);
+  }
+  .header-inner {
+    max-width: 1152px; margin: 0 auto; padding: 0 var(--gutter);
+    display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+    align-items: center; gap: 16px; min-height: 44px;
+    transition: transform .5s var(--ease);
+  }
+  /* Platz für den Zurück-Pfeil des JMB Headquarter (nur im iframe) */
+  html.in-hq .header-inner { padding-left: clamp(var(--gutter), calc(88px - (100vw - 1152px) / 2), 88px); }
 
+  .brand { grid-column: 1; display: flex; align-items: center; gap: 12px; min-width: 0; }
+  .brand-mark {
+    width: 34px; height: 34px; border-radius: 9px; flex-shrink: 0;
+    display: grid; place-items: center; color: #fff; font-size: 15px;
+    background: linear-gradient(145deg, #0a84ff, #5e5ce6);
+    box-shadow: 0 2px 6px rgba(0,113,227,.28), inset 0 1px 0 rgba(255,255,255,.25);
+    transition: transform .5s var(--ease);
+  }
+  .brand-text { min-width: 0; }
+  .brand-title { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -.022em; line-height: 1.15; }
+  .brand-sub { font-size: 12px; color: var(--text-dim); line-height: 1.25; }
+
+  /* Hauptnavigation Desktop: iOS-Segmented-Control mit gleitendem Schieber */
+  .tabs {
+    grid-column: 2; position: relative; display: flex; gap: 2px;
+    padding: 3px; border-radius: 11px; background: var(--fill);
+  }
+  .tabs-indicator {
+    position: absolute; top: 3px; left: 3px; width: 0; height: 0;
+    border-radius: 8px; background: var(--thumb); box-shadow: var(--thumb-shadow);
+    transform-origin: left center; transition: transform .5s var(--spring);
+    pointer-events: none; z-index: 0;
+  }
   .nav-item {
-    display: flex; align-items: center; gap: .8rem;
-    padding: .65rem .9rem; margin: 0 .6rem;
-    color: #8B90B3; font-weight: 500; font-size: .875rem;
-    border-radius: .75rem;
-    transition: color .15s ease, background-color .15s ease;
+    position: relative; z-index: 1;
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 6px 16px; border-radius: 8px;
+    font-size: 13.5px; font-weight: 500; letter-spacing: -.01em; line-height: 1.35;
+    color: var(--text-dim); white-space: nowrap; user-select: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: color .2s var(--ease), transform .35s var(--spring);
   }
-  .nav-item:hover { color: #F3F4FA; background: rgba(255,255,255,.04); }
-  .nav-item.active {
-    color: #fff; font-weight: 600;
-    background: linear-gradient(135deg, rgba(124,92,252,.28), rgba(34,211,238,.10));
-    box-shadow: inset 0 0 0 1px rgba(124,92,252,.35);
-  }
-  aside.collapsed .nav-label,
-  aside.collapsed .brand-text { display: none; }
-  aside.collapsed { width: 5.5rem; }
-  aside.collapsed .nav-item { justify-content: center; margin: 0 .5rem; }
+  .nav-item i { display: none; }
+  .nav-item:hover, .nav-item.active { color: var(--text); }
+  .nav-item:active { transform: scale(.96); }
+  /* Fallback, falls der JS-Schieber (noch) nicht läuft */
+  .tabs:not(.has-indicator) .nav-item.active { background: var(--thumb); box-shadow: var(--thumb-shadow); }
 
-  .hex-btn {
-    width: 42px; height: 42px;
-    display: flex; align-items: center; justify-content: center;
-    clip-path: polygon(25% 6%, 75% 6%, 100% 50%, 75% 94%, 25% 94%, 0% 50%);
-    background: rgba(34,211,238,.08);
-    border: 1px solid rgba(34,211,238,.5);
-    color: #22D3EE;
-    box-shadow: 0 0 14px rgba(34,211,238,.25);
-    transition: box-shadow .2s ease, background-color .2s ease;
-    cursor: pointer; flex-shrink: 0;
+  /* Kompaktmodus beim Scrollen (Desktop gleitet zusätzlich) */
+  @media (min-width: 641px) {
+    .app-header.is-compact { transform: translateY(-8px); }
+    .app-header.is-compact .header-inner { transform: translateY(4px); }
+    .app-header.is-compact .brand-mark { transform: scale(.94); }
   }
-  .hex-btn:hover { background: rgba(34,211,238,.16); box-shadow: 0 0 20px rgba(34,211,238,.4); }
 
+  /* Header-Aktionen */
+  .header-actions { grid-column: 3; justify-self: end; display: flex; align-items: center; gap: 8px; }
+  .drive-pill {
+    display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px;
+    border-radius: 999px; background: var(--fill); color: var(--text);
+    font-size: 13px; font-weight: 500; white-space: nowrap;
+    transition: background-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .drive-pill:hover { background: var(--fill-strong); }
+  .drive-pill:active { transform: scale(.97); }
+  #drive-sync-icon { margin: 0; color: var(--text-dim); }
+  #drive-sync-icon.fa-circle-check { color: var(--green); }
+  #drive-sync-icon.fa-spin { color: var(--accent); }
+
+  .icon-btn {
+    position: relative; overflow: hidden; flex-shrink: 0;
+    width: 32px; height: 32px; border-radius: 999px;
+    display: inline-grid; place-items: center;
+    background: var(--fill); color: var(--text); font-size: 14px;
+    transition: background-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .icon-btn:hover { background: var(--fill-strong); }
+  .icon-btn:active { transform: scale(.9); }
+
+  /* Hell/Dunkel-Umschalter: Mond und Sonne liegen übereinander */
+  .theme-toggle i {
+    position: absolute; inset: 0; display: grid; place-items: center;
+    transition: transform .5s var(--spring), opacity .3s var(--ease);
+  }
+  .theme-toggle .ico-sun { opacity: 0; transform: rotate(-90deg) scale(.5); }
+  :root[data-theme="dark"] .theme-toggle .ico-sun { opacity: 1; transform: none; }
+  :root[data-theme="dark"] .theme-toggle .ico-moon { opacity: 0; transform: rotate(90deg) scale(.5); }
+
+  /* Popover-Menü (… im Header) */
+  .more-wrap { position: relative; }
+  .popover {
+    position: absolute; top: calc(100% + 8px); right: 0; z-index: 45;
+    min-width: 230px; padding: 6px; border-radius: 14px;
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: blur(40px) saturate(180%);
+    backdrop-filter: blur(40px) saturate(180%);
+    border: 1px solid var(--glass-border); box-shadow: var(--shadow-lg);
+    transform-origin: top right;
+  }
+  .popover.is-entering { animation: popIn .35s var(--spring) both; }
+  .menu-hint { padding: 6px 12px 4px; font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: .04em; color: var(--text-dim); }
+  .menu-item {
+    display: flex; align-items: center; gap: 10px; width: 100%;
+    padding: 9px 12px; border-radius: 9px; font-size: 14px; text-align: left; color: var(--text);
+    transition: background-color .2s var(--ease);
+  }
+  .menu-item:hover { background: var(--fill); }
+  .menu-item.danger { color: var(--red); }
+
+  /* ---------- 5. Hauptnavigation Handy: iOS-Tab-Leiste unten ---------- */
+  @media (max-width: 640px) {
+    :root { --gutter: 16px; }
+    .header-inner { grid-template-columns: minmax(0, 1fr) auto; }
+    .header-actions { grid-column: 2; }
+    .tabs {
+      position: fixed; left: 0; right: 0; bottom: 0; z-index: 35;
+      display: flex; justify-content: space-around; gap: 0;
+      padding: 6px 6px calc(6px + env(safe-area-inset-bottom));
+      border-radius: 0; background: var(--glass-strong);
+      -webkit-backdrop-filter: blur(20px) saturate(180%);
+      backdrop-filter: blur(20px) saturate(180%);
+      border-top: 1px solid var(--separator);
+    }
+    .tabs-indicator { display: none; }
+    .tabs:not(.has-indicator) .nav-item.active { background: none; box-shadow: none; }
+    .nav-item {
+      flex: 1 1 0; flex-direction: column; gap: 3px; padding: 4px 0;
+      font-size: 10px; font-weight: 500; letter-spacing: 0; color: var(--text-dim);
+    }
+    .nav-item i { display: block; font-size: 22px; line-height: 26px; height: 26px; }
+    .nav-item:hover { color: var(--text-dim); }
+    .nav-item.active { color: var(--accent); }
+    .nav-item i.tab-bounce { animation: tabBounce .5s var(--spring); }
+    main#app { padding-bottom: calc(92px + env(safe-area-inset-bottom)); }
+  }
+  /* Querformat mit geringer Höhe: Tab-Leiste nicht fixieren */
+  @media (max-width: 640px) and (max-height: 500px) {
+    .tabs { position: static; grid-column: 1 / -1; border: 0; border-radius: 11px; background: var(--fill); padding: 3px; -webkit-backdrop-filter: none; backdrop-filter: none; }
+    .nav-item { flex-direction: row; font-size: 12px; padding: 6px 0; }
+    .nav-item i { font-size: 14px; height: auto; line-height: 1; }
+    main#app { padding-bottom: 24px; }
+  }
+
+  /* ---------- 6. Ansichten ---------- */
+  .view { display: none; }
+  .view.active { display: block; }
+  main#app { position: relative; }
+  main#app:focus { outline: none; }   /* Fokusziel des Skip-Links, ohne Rahmen */
+  main#app.view-enter { animation: viewFadeIn .45s var(--ease) both; }
+
+  /* ---------- 7. Hero (Startseite) ---------- */
+  .hero {
+    position: relative; overflow: hidden; isolation: isolate;
+    min-height: 300px; padding: 40px 44px 30px;
+    display: flex; flex-direction: column; justify-content: flex-end;
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+    background: #0b1020; color: #fff;
+  }
+  /* "Foto"-Ebene. Eigenes Bild: auf .hero  --hero-image: url('…');  setzen */
+  .hero::before {
+    content: ''; position: absolute; inset: -8% 0; z-index: -2;
+    background-image:
+      var(--hero-image, none),
+      radial-gradient(55% 75% at 82% 16%, rgba(94,92,230,.95), transparent 62%),
+      radial-gradient(50% 70% at 16% 90%, rgba(10,132,255,.9), transparent 60%),
+      radial-gradient(38% 55% at 60% 104%, rgba(191,90,242,.75), transparent 64%),
+      radial-gradient(30% 40% at 40% 18%, rgba(100,210,255,.45), transparent 70%),
+      linear-gradient(135deg, #0a1f44, #170b33);
+    background-size: cover; background-position: center;
+    transform: translate3d(0, calc(var(--hero-p, 0) * 70px), 0) scale(1.06);
+    will-change: transform;
+  }
+  /* Abdunklung: radial + linear, oben .35 → unten .88 */
+  .hero::after {
+    content: ''; position: absolute; inset: 0; z-index: -1;
+    background:
+      radial-gradient(120% 90% at 0% 100%, rgba(0,0,0,.45), transparent 60%),
+      linear-gradient(180deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.88) 100%);
+  }
+  .hero-eyebrow { color: rgba(255,255,255,.72); }
+  .hero-title {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(34px, 4.4vw, 56px); letter-spacing: -.03em; line-height: 1.05;
+    margin-top: 8px;
+    transform-origin: left bottom;
+    transform: scale(calc(1 - var(--hero-p, 0) * .08));
+    opacity: calc(1 - var(--hero-p, 0) * .5);
+  }
+  /* Verlaufstext: padding-bottom .12em, sonst werden g/y/p abgeschnitten */
+  .grad-text {
+    display: inline-block; padding-bottom: .12em;
+    background: linear-gradient(100deg, #fff, #f5f5f7 38%, #cfe3ff 72%, #e9d9ff);
+    -webkit-background-clip: text; background-clip: text;
+    color: transparent; -webkit-text-fill-color: transparent;
+  }
+  .hero-clock {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 15px; color: rgba(255,255,255,.78); font-variant-numeric: tabular-nums;
+  }
+  .live-dot { width: 8px; height: 8px; border-radius: 50%; background: #30d158; animation: startPulse 2s infinite; flex-shrink: 0; }
+  .hero-foot { margin-top: 22px; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .hero-status { display: flex; min-width: 0; }
+  .status-pill {
+    display: inline-flex; align-items: center; gap: 9px; min-width: 0;
+    padding: 7px 14px; border-radius: 999px;
+    font-size: 13.5px; font-weight: 500; color: #e9fbee;
+    background: rgba(48,209,88,.18);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+  }
+  .status-pill.has-action { padding-right: 6px; }
+  .status-pill i { color: #30d158; }
+  .status-pill.is-warn { background: rgba(255,159,10,.22); color: #fff4e0; }
+  .status-pill.is-warn i { color: #ffb340; }
+  .status-pill.is-bad { background: rgba(255,69,58,.24); color: #ffecea; }
+  .status-pill.is-bad i { color: #ff6961; }
+  .status-text { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .status-action {
+    flex-shrink: 0; padding: 4px 12px; border-radius: 999px;
+    background: rgba(255,255,255,.16); color: #fff; font-size: 12.5px; font-weight: 600;
+    transition: background-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .status-action:hover { background: rgba(255,255,255,.28); }
+  .status-action:active { transform: scale(.97); }
+  .hero-actions { display: flex; gap: 8px; }
+  .hero-action {
+    display: inline-flex; align-items: center; justify-content: center; gap: 7px;
+    padding: 9px 16px; border-radius: 999px; white-space: nowrap;
+    font-size: 13.5px; font-weight: 500; color: #fff;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.14);
+    -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
+    transition: background-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .hero-action:hover { background: rgba(255,255,255,.24); }
+  .hero-action:active { transform: scale(.97); }
+  .hero-action.primary { background: #fff; color: #1d1d1f; border-color: transparent; }
+  .hero-action.primary:hover { background: #f0f0f3; }
+
+  /* ---------- 8. Karten, Kennzahlen, Listen ---------- */
   .card {
-    background: rgba(255,255,255,.035);
-    border: 1px solid rgba(255,255,255,.08);
-    border-radius: 1.1rem;
-    backdrop-filter: blur(6px);
-    transition: border-color .18s ease, transform .18s ease, box-shadow .18s ease;
+    background: var(--bg-panel);
+    border: 1px solid var(--panel-border);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow-sm);
+    transition: transform .5s var(--spring), box-shadow .3s var(--ease), background-color .25s var(--ease);
   }
-  .card.hoverable:hover {
-    border-color: rgba(124,92,252,.55);
-    box-shadow: 0 0 0 1px rgba(124,92,252,.2), 0 8px 24px rgba(0,0,0,.35);
-    transform: translateY(-1px);
+  @media (hover: hover) {
+    .card.hoverable:hover { transform: translateY(-3px); box-shadow: var(--shadow-md); }
   }
+  .card.hoverable:active { transform: scale(.98); }
 
+  .kpi-tile { padding: 20px 22px; }
+  .kpi-value {
+    font-family: var(--font-display); font-weight: 700;
+    font-size: clamp(28px, 2.6vw, 34px); letter-spacing: -.03em; line-height: 1.1;
+    margin-top: 6px; font-variant-numeric: tabular-nums;
+  }
+  .kpi-sub { font-size: 13px; color: var(--text-dim); margin-top: 2px; }
+
+  /* Projekt-Vorschaubild: Verlauf (vom JS) + Glanzlicht; zoomt beim Hover langsam */
   .thumb {
-    position: relative; height: 6.5rem; border-radius: 1.1rem 1.1rem 0 0; overflow: hidden;
+    position: relative; height: 7rem; overflow: hidden;
+    border-radius: var(--radius) var(--radius) 0 0;
     background-size: cover;
+  }
+  .thumb::before {
+    content: ''; position: absolute; inset: 0;
+    background: inherit; background-size: cover;
+    transition: transform .7s var(--ease);
   }
   .thumb::after {
     content: ''; position: absolute; inset: 0;
-    background-image: radial-gradient(rgba(255,255,255,.35) 1px, transparent 1.3px);
-    background-size: 16px 16px;
-    opacity: .18;
+    background:
+      radial-gradient(120% 90% at 15% 0%, rgba(255,255,255,.32), transparent 55%),
+      linear-gradient(180deg, transparent 55%, rgba(0,0,0,.12));
+  }
+  @media (hover: hover) {
+    .card.hoverable:hover .thumb::before { transform: scale(1.06); }
   }
   .thumb-badge {
-    position: absolute; top: .55rem; right: .55rem; z-index: 1;
-    width: 1.9rem; height: 1.9rem; border-radius: .6rem;
-    display: flex; align-items: center; justify-content: center;
-    background: rgba(10,10,19,.55); backdrop-filter: blur(4px);
-    border: 1px solid rgba(255,255,255,.12);
-    font-size: .8rem;
+    position: absolute; top: 10px; right: 10px; z-index: 1;
+    width: 30px; height: 30px; border-radius: 999px;
+    display: grid; place-items: center; font-size: 12px;
+    background: rgba(255,255,255,.85);
+    -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+    box-shadow: 0 2px 8px rgba(0,0,0,.12);
   }
+  :root[data-theme="dark"] .thumb-badge { background: rgba(28,28,30,.75); }
 
-  .btn-primary {
-    background: linear-gradient(135deg, #7C5CFC, #5B3FE0);
-    color: #fff; font-weight: 600; border-radius: .8rem;
-    box-shadow: 0 4px 18px rgba(124,92,252,.35);
-    transition: filter .15s ease, transform .15s ease;
-  }
-  .btn-primary:hover { filter: brightness(1.08); transform: translateY(-1px); }
+  /* Fortschrittsbalken (Breite setzt das JS; animiert wird nur scaleX) */
+  .pbar { height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; }
+  .pbar-fill { height: 100%; border-radius: 999px; width: 0%; transform-origin: left center; }
+  .pbar-fill.bar-grow { animation: barGrow 1.1s var(--ease) .2s both; }
 
-  .btn-ghost {
-    border: 1px solid rgba(255,255,255,.12); color: #F3F4FA; font-weight: 500;
-    background: rgba(255,255,255,.03); border-radius: .8rem;
-    transition: border-color .15s ease, background-color .15s ease;
-  }
-  .btn-ghost:hover { background: rgba(255,255,255,.07); border-color: rgba(255,255,255,.25); }
-
+  /* Tags / Badges als Pille */
   .tag {
-    font-size: .68rem; font-weight: 600; letter-spacing: .01em;
-    padding: .22rem .55rem; border-radius: 999px;
-    display: inline-flex; align-items: center; gap: .3rem;
+    font-size: 11.5px; font-weight: 600; letter-spacing: 0; line-height: 1.4;
+    padding: 3px 9px; border-radius: 999px; white-space: nowrap;
+    display: inline-flex; align-items: center; gap: 5px;
     border: 1px solid transparent;
   }
+  /* Sterne: kräftiges Apple-Orange statt Text-Orange */
+  .fa-star.text-amber { color: var(--amber-fill); }
+  #nf-rating-stars i:hover { color: var(--amber-fill); }
 
+  /* ---------- 9. Buttons & Chips (Pillen) ---------- */
+  .btn-md { padding: 9px 18px; font-size: 14px; line-height: 1.3; }
+  .btn-primary {
+    background: var(--accent-fill); color: #fff; font-weight: 500;
+    border-radius: 999px;
+    transition: background-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .btn-primary:hover { background: #0077ed; }
+  .btn-primary:active { transform: scale(.97); }
+  .btn-ghost {
+    border: 1px solid var(--separator); color: var(--text); font-weight: 500;
+    background: transparent; border-radius: 999px;
+    transition: background-color .2s var(--ease), border-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .btn-ghost:hover { background: var(--fill); }
+  .btn-ghost:active { transform: scale(.97); }
+
+  .filter-chip {
+    border: 1px solid var(--separator); background: transparent; color: var(--text);
+    border-radius: 999px; font-weight: 500;
+    transition: background-color .2s var(--ease), color .2s var(--ease), border-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .filter-chip:hover { background: var(--fill); }
+  .filter-chip:active { transform: scale(.96); }
+  .filter-chip.chip-active,
+  .filter-chip.chip-active:hover { background: var(--inverse-bg); color: var(--inverse-text); border-color: transparent; }
+  .filter-chip.chip-pop { animation: thumbIn .4s var(--spring); }
+
+  .close-btn {
+    width: 30px; height: 30px; border-radius: 999px; flex-shrink: 0;
+    display: inline-grid; place-items: center;
+    background: var(--fill); color: var(--text-dim);
+    transition: background-color .2s var(--ease), color .2s var(--ease), transform .35s var(--spring);
+  }
+  .close-btn:hover { background: var(--fill-strong); color: var(--text); }
+  .close-btn:active { transform: scale(.9); }
+
+  /* ---------- 10. Formularfelder ---------- */
   input, textarea, select {
-    background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.1); color: #F3F4FA;
-    font-family: 'Inter', sans-serif; border-radius: .7rem;
+    background-color: var(--fill); border: 1px solid transparent; color: var(--text);
+    font-family: var(--font-text); border-radius: 10px;
+    transition: border-color .2s var(--ease), box-shadow .2s var(--ease), background-color .2s var(--ease);
   }
-  input::placeholder, textarea::placeholder { color: #565B80; }
+  input::placeholder, textarea::placeholder { color: var(--text-faint); }
   input:focus, textarea:focus, select:focus {
-    outline: none; border-color: #7C5CFC; box-shadow: 0 0 0 3px rgba(124,92,252,.18);
+    outline: none; border-color: var(--accent);
+    box-shadow: 0 0 0 4px var(--accent-dim);
+    background-color: var(--bg-panel);
   }
-  select option { background: #14131F; color: #F3F4FA; }
-
-  ::selection { background: #7C5CFC; color: #fff; }
-
-  a:focus-visible, button:focus-visible, [tabindex]:focus-visible {
-    outline: 2px solid #22D3EE; outline-offset: 2px;
+  select {
+    -webkit-appearance: none; appearance: none;
+    background-image: var(--select-chevron); background-repeat: no-repeat;
+    background-position: right 11px center; background-size: 10px 7px;
+    padding-right: 30px !important;
   }
+  select option { background: var(--bg-panel); color: var(--text); }
+  .field-label { font-size: 12.5px; font-weight: 500; color: var(--text-dim); }
 
-  @media (prefers-reduced-motion: reduce) {
-    * { transition: none !important; animation: none !important; }
-  }
-
-  .view { display: none; }
-  .view.active { display: block; }
-
-  .modal-backdrop { background: rgba(4,4,10,.68); backdrop-filter: blur(2px); }
-
-  .checkbox-custom {
-    width: 1.5rem; height: 1.5rem; border-radius: .5rem;
-    border: 2px solid rgba(255,255,255,.3); flex-shrink: 0;
-    display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
-    transition: background-color .15s ease, border-color .15s ease, transform .1s ease;
-  }
-  .checkbox-custom:hover { border-color: rgba(255,255,255,.55); transform: scale(1.06); }
-  .checkbox-custom.checked { background: linear-gradient(135deg, #7C5CFC, #22D3EE); border-color: transparent; }
-
+  /* ---------- 11. Aufgaben (Apple-Erinnerungen-Stil) ---------- */
   .task-card {
-    display: flex; align-items: center; gap: .9rem;
-    padding: .9rem 1.1rem;
-    background: rgba(255,255,255,.045);
-    border: 1px solid rgba(255,255,255,.09);
-    border-left: 4px solid var(--task-accent, rgba(255,255,255,.2));
-    border-radius: .85rem;
-    box-shadow: 0 4px 14px rgba(0,0,0,.22);
-    transition: border-color .15s ease, transform .15s ease, box-shadow .15s ease;
+    position: relative; display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px 11px 18px;
+    background: var(--bg-card); border-radius: 14px;
+    transition: transform .35s var(--spring), opacity .25s var(--ease), background-color .2s var(--ease);
   }
-  .task-card:hover { transform: translateX(2px); box-shadow: 0 6px 18px rgba(0,0,0,.3); }
-  .task-card.done {
-    opacity: .5; background: rgba(255,255,255,.02); border-left-color: rgba(255,255,255,.12);
-    box-shadow: none;
+  /* --task-accent (vom JS gesetzt) als feiner Prioritätsstreifen */
+  .task-card::before {
+    content: ''; position: absolute; left: 7px; top: 12px; bottom: 12px; width: 3px;
+    border-radius: 3px; background: var(--task-accent, var(--fill-strong));
   }
-  .task-card.done:hover { transform: none; }
+  @media (hover: hover) { .task-card:hover { background: var(--bg-card-hover); } }
+  .task-card.done { opacity: .55; }
+  .task-card.done::before { background: var(--fill-strong); }
 
-  .strike { text-decoration: line-through; color: #565B80; }
-
-  .fade-in { animation: fadeIn .5s ease both; }
-  @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
-
-  .kpi-figure { font-variant-numeric: tabular-nums; }
-
-  .filter-chip.chip-active {
-    background: linear-gradient(135deg, rgba(124,92,252,.9), rgba(91,63,224,.9));
-    border-color: transparent; color: #fff;
+  /* Erledigt-Kreis wie in der Erinnerungen-App */
+  .checkbox-custom {
+    width: 22px; height: 22px; border-radius: 999px; flex-shrink: 0;
+    border: 1.5px solid var(--text-faint);
+    display: inline-grid; place-items: center; cursor: pointer;
+    transition: background-color .2s var(--ease), border-color .2s var(--ease), transform .35s var(--spring);
   }
+  .checkbox-custom:hover { border-color: var(--accent); }
+  .checkbox-custom:active { transform: scale(.88); }
+  .checkbox-custom.checked { background: var(--accent-fill); border-color: var(--accent-fill); }
+  .checkbox-custom.checked i { font-size: 11px; }
+  .checkbox-custom.just-checked { animation: checkPop .45s var(--spring); }
+  .strike { text-decoration: line-through; color: var(--text-faint); }
+
+  /* ---------- 12. Modals ---------- */
+  .modal-backdrop {
+    background: var(--backdrop);
+    -webkit-backdrop-filter: blur(6px); backdrop-filter: blur(6px);
+  }
+  .modal-backdrop.is-entering { animation: fadeIn .35s var(--ease) both; }
+  .modal-backdrop.is-entering > .modal-box { animation: sheetIn .55s var(--spring) both; }
+  .modal-box {
+    width: 100%; margin: auto;   /* margin:auto zentriert und schneidet bei Überlänge nichts ab */
+    background: var(--bg-panel); border: 1px solid var(--panel-border);
+    border-radius: var(--radius-lg); box-shadow: var(--shadow-lg);
+  }
+  .modal-detail, .modal-form {
+    display: flex; flex-direction: column; overflow: hidden;
+    max-height: calc(100vh - 48px); max-height: calc(100dvh - 48px);
+  }
+  .modal-head { flex-shrink: 0; }
+  .modal-body { flex: 1 1 auto; min-height: 0; overflow-y: auto; overscroll-behavior: contain; }
+  .modal-form .modal-body { padding: 26px 28px 20px; }
+  .modal-footer {
+    flex-shrink: 0; padding: 14px 24px calc(14px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--separator); background: var(--bg-panel);
+  }
+  .modal-form .modal-footer { padding-left: 28px; padding-right: 28px; }
+
+  /* ---------- 13. Toast ---------- */
+  #toast {
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 60;
+    transform: translateX(-50%);
+    max-width: calc(100vw - 32px); padding: 11px 20px; border-radius: 999px;
+    background: var(--inverse-bg); color: var(--inverse-text);
+    font-size: 14px; font-weight: 500; text-align: center;
+    box-shadow: var(--shadow-lg);
+  }
+  #toast.is-entering { animation: toastIn .55s var(--spring) both; }
+
+  /* ---------- 14. Responsiv ---------- */
+  @media (max-width: 980px) {
+    .brand-sub { display: none; }
+    .nav-item { padding: 6px 13px; }
+  }
+  @media (max-width: 800px) {
+    #drive-sync-label { display: none; }
+    .drive-pill { width: 32px; padding: 0; justify-content: center; }
+  }
+  @media (min-width: 641px) and (max-width: 800px) {
+    .brand-text { display: none; }
+    .nav-item { padding: 6px 11px; }
+  }
+  @media (max-width: 640px) {
+    .hero { padding: 22px 16px 16px; border-radius: 24px; min-height: 250px; }
+    .hero-title { font-size: 27px; }
+    .hero-clock-extra { display: none; }
+    .hero-foot { flex-direction: column; align-items: stretch; gap: 10px; margin-top: 16px; }
+    .hero-status, .status-pill { width: 100%; }
+    .status-pill { border-radius: 14px; }
+    .status-action { margin-left: auto; }
+    .hero-actions { flex-wrap: nowrap; }
+    .hero-action { flex: 1 1 0; min-width: 0; padding: 9px 8px; font-size: 13px; }
+    .kpi-tile { padding: 16px 16px; }
+    .modal-backdrop { padding: calc(10px + env(safe-area-inset-top)) 10px calc(10px + env(safe-area-inset-bottom)) !important; }
+    .modal-box { border-radius: 22px; }
+    .modal-detail, .modal-form {
+      max-height: calc(100vh - 20px);
+      max-height: calc(100dvh - 20px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    }
+    .modal-form .modal-body { padding: 22px 18px 16px; }
+    .modal-footer, .modal-form .modal-footer { padding: 12px 18px; }
+    #toast { bottom: calc(76px + env(safe-area-inset-bottom)); }
+  }
+
+  /* ---------- 15. Scroll-Reveal (nur bei Ansichtswechsel, per JS gesetzt) ---------- */
+  .reveal { opacity: 0 !important; transform: translate3d(0, 24px, 0) !important; }
+  .reveal.is-visible {
+    opacity: 1 !important; transform: none !important;
+    transition: opacity .8s var(--ease), transform .9s var(--ease);
+  }
+
+  /* ---------- 16. Hell/Dunkel-Wechsel per View Transitions API ---------- */
+  :root.theme-vt::view-transition-new(root) { animation: none; }
+  :root.theme-vt::view-transition-old(root) { z-index: 1; animation: themeOut .6s cubic-bezier(.4, 0, .2, 1) both; }
+
+  /* ---------- 17. Keyframes (nur transform/opacity) ---------- */
+  @keyframes viewFadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+  @keyframes fadeIn     { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes sheetIn    { from { opacity: 0; transform: translateY(40px) scale(.97); } to { opacity: 1; transform: none; } }
+  @keyframes popIn      { from { opacity: 0; transform: scale(.92) translateY(-4px); } to { opacity: 1; transform: none; } }
+  @keyframes toastIn    { from { opacity: 0; transform: translateX(-50%) translateY(24px) scale(.94); } to { opacity: 1; transform: translateX(-50%); } }
+  @keyframes thumbIn    { from { opacity: .6; transform: scale(.92); } to { opacity: 1; transform: none; } }
+  @keyframes tabBounce  { from { transform: scale(.8); } to { transform: scale(1); } }
+  @keyframes barGrow    { from { transform: scaleX(0); } to { transform: scaleX(1); } }
+  @keyframes checkPop   { from { transform: scale(.6); } to { transform: scale(1); } }
+  @keyframes themeOut   { from { opacity: 1; } to { opacity: 0; } }
+  @keyframes themeIn    { from { opacity: .55; } to { opacity: 1; } }
+  @keyframes startPulse {
+    0%   { box-shadow: 0 0 0 0 rgba(48,209,88,.55); }
+    70%  { box-shadow: 0 0 0 8px rgba(48,209,88,0); }
+    100% { box-shadow: 0 0 0 0 rgba(48,209,88,0); }
+  }
+
+  /* ---------- 18. Barrierefreiheit, Druck ---------- */
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: .01ms !important; animation-iteration-count: 1 !important;
+      animation-delay: 0ms !important;
+      transition-duration: .01ms !important; transition-delay: 0ms !important;
+      scroll-behavior: auto !important;
+    }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    .hero { --hero-p: 0 !important; }
+  }
+  @media (forced-colors: active) {
+    .card, .modal-box, .popover, .status-pill, .filter-chip, .btn-primary, .btn-ghost, .task-card { border: 1px solid CanvasText; }
+    .tabs-indicator { background: Highlight; }
+    .ambient, .hero::before, .hero::after, .thumb::after { display: none; }
+    .grad-text { background: none; color: CanvasText; -webkit-text-fill-color: CanvasText; }
+    .checkbox-custom.checked { background: Highlight; }
+  }
+  @media print {
+    .ambient, .app-header, #toast, .skip-link, .hero-actions { display: none !important; }
+    .reveal { opacity: 1 !important; transform: none !important; }
+    html, body { background: #fff !important; }
+    .card { box-shadow: none !important; border: 1px solid #ddd !important; }
+    .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+</style>
+<style id="jmb-global-primary-themes">
+/* =====================================================================
+   JMB GLOBAL PRIMARY THEMES · Quelle/Identität: Trading Journal
+   Master-Auswahl: Trading Journal · Primärgruppe 1
+   dark / neon / rte / sakura / cosmic / glass / apple / apple-dark
+   ===================================================================== */
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#070605;--bg-panel:#12100c;--bg-card:#1a1711;--bg-card-hover:#231e15;
+  --panel-border:rgba(217,171,69,.16);--card-line:rgba(217,171,69,.14);--hero-line:rgba(232,190,95,.26);
+  --fill:rgba(217,171,69,.10);--fill-strong:rgba(217,171,69,.18);--glass:rgba(18,16,12,.76);--glass-strong:rgba(24,21,15,.92);--glass-border:rgba(217,171,69,.18);--separator:rgba(217,171,69,.20);
+  --text:#f6efdf;--text-dim:#b4a88e;--text-faint:#7c7059;
+  --accent:#d9ab45;--accent-fill:#c8942e;--accent-fill-hover:#e1b448;--accent-dim:rgba(217,171,69,.18);--focus:#e8be5f;
+  --green:#5fd09c;--green-dim:#13302a;--red:#ef6f5e;--red-dim:#3a1914;--amber:#f0c060;--amber-fill:#f0c060;--amber-dim:#3a2c10;
+  --inverse-bg:#e6c15f;--inverse-text:#1c1405;--thumb:#2c2517;--thumb-shadow:0 3px 12px rgba(0,0,0,.45),inset 0 0 0 1px rgba(232,190,95,.22);--backdrop:rgba(0,0,0,.62);--toast-link:#f3dc9a;
+  --ambient-a:rgba(217,171,69,.13);--ambient-b:rgba(201,128,60,.09);
+  --radius-lg:24px;--radius:20px;--radius-sm:14px;--radius-xs:9px;
+  --shadow-sm:0 2px 8px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,228,160,.05);--shadow-md:0 16px 36px -22px rgba(0,0,0,.92);--shadow-lg:0 28px 70px -30px rgba(0,0,0,.95);
+  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Cinzel",Georgia,serif;
+  --jmb-on-accent:#1c1405;--jmb-brand-gradient:linear-gradient(135deg,#fff1bd 0%,#f1ca60 22%,#c8942e 52%,#f7d981 76%,#a5752a 100%);
+  --jmb-hero-base:#0c0a08;--jmb-hero-art:radial-gradient(55% 75% at 82% 10%,rgba(217,171,69,.36),transparent 63%),radial-gradient(45% 60% at 12% 90%,rgba(201,128,60,.24),transparent 66%),linear-gradient(160deg,#18150f,#070605 72%);
+}
+:root[data-theme="neon"]{
+  color-scheme:dark;
+  --bg:#090a12;--bg-panel:#10121d;--bg-card:#131725;--bg-card-hover:#181e30;--panel-border:#22283c;--card-line:#22283c;--hero-line:rgba(139,123,255,.22);
+  --fill:rgba(139,123,255,.11);--fill-strong:rgba(139,123,255,.20);--glass:rgba(12,15,26,.76);--glass-strong:rgba(16,18,29,.92);--glass-border:rgba(139,123,255,.20);--separator:rgba(111,127,180,.22);
+  --text:#edf2ff;--text-dim:#97a1bb;--text-faint:#68738e;
+  --accent:#8b7bff;--accent-fill:#6a58f5;--accent-fill-hover:#7968ff;--accent-dim:rgba(139,123,255,.20);--focus:#8b7bff;
+  --green:#31d0a8;--green-dim:#173a34;--red:#f87171;--red-dim:#3a2230;--amber:#f5b544;--amber-fill:#f5b544;--amber-dim:#3a2c10;
+  --inverse-bg:#8b7bff;--inverse-text:#fff;--thumb:#171b2c;--thumb-shadow:0 0 0 1px rgba(139,123,255,.22),0 8px 22px rgba(0,0,0,.32);--backdrop:rgba(3,5,12,.66);--toast-link:#31d5ee;
+  --ambient-a:rgba(139,123,255,.18);--ambient-b:rgba(49,213,238,.12);
+  --radius-lg:20px;--radius:13px;--radius-sm:8px;--radius-xs:7px;--shadow-sm:inset 0 1px 0 rgba(108,130,255,.055),0 8px 24px -18px rgba(0,0,0,.9);--shadow-md:0 18px 42px -28px rgba(49,213,238,.18);--shadow-lg:0 30px 80px -36px rgba(0,0,0,.95);
+  --font-text:Inter,Arial,sans-serif;--font-display:Inter,Arial,sans-serif;
+  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(135deg,#7768ff,#6a58f5 48%,#31d5ee 118%);
+  --jmb-hero-base:#090a12;--jmb-hero-art:linear-gradient(rgba(139,123,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(49,213,238,.05) 1px,transparent 1px),radial-gradient(60% 70% at 82% 15%,rgba(139,123,255,.42),transparent 64%),linear-gradient(145deg,#131725,#090a12 72%);--jmb-hero-size:22px 22px,22px 22px,auto,auto;
+}
+:root[data-theme="rte"]{
+  color-scheme:dark;
+  --bg:#050505;--bg-panel:#0c0c0d;--bg-card:#121213;--bg-card-hover:#19191b;--panel-border:#232325;--card-line:#232325;--hero-line:rgba(220,220,226,.18);
+  --fill:rgba(220,220,226,.08);--fill-strong:rgba(220,220,226,.15);--glass:rgba(8,8,9,.78);--glass-strong:rgba(14,14,15,.94);--glass-border:rgba(220,220,226,.14);--separator:rgba(220,220,226,.15);
+  --text:#ededef;--text-dim:#a7a7ac;--text-faint:#6e6e74;
+  --accent:#dcdce0;--accent-fill:#cfcfd3;--accent-fill-hover:#ededf0;--accent-dim:rgba(220,220,226,.16);--focus:#f2f2f4;
+  --green:#5fd4a0;--green-dim:#10302a;--red:#ff6b6b;--red-dim:#3a1616;--amber:#e6c877;--amber-fill:#e6c877;--amber-dim:#352c14;
+  --inverse-bg:#f2f2f4;--inverse-text:#0a0a0b;--thumb:#262628;--thumb-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 24px rgba(0,0,0,.42);--backdrop:rgba(0,0,0,.72);--toast-link:#dcdce0;
+  --ambient-a:rgba(220,220,226,.10);--ambient-b:rgba(135,140,150,.07);
+  --radius-lg:18px;--radius:10px;--radius-sm:8px;--radius-xs:6px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.055),0 10px 28px -20px rgba(0,0,0,.95);--shadow-md:0 18px 40px -26px rgba(0,0,0,.95);--shadow-lg:0 32px 80px -32px rgba(0,0,0,.98);
+  --font-text:"Outfit",Inter,Arial,sans-serif;--font-display:"Outfit",Inter,Arial,sans-serif;
+  --jmb-on-accent:#0a0a0b;--jmb-brand-gradient:linear-gradient(135deg,#fbfbfb 0%,#cfcfd3 34%,#8c8c92 56%,#e8e8eb 100%);
+  --jmb-hero-base:#050505;--jmb-hero-art:radial-gradient(58% 78% at 82% 12%,rgba(240,240,244,.18),transparent 62%),linear-gradient(160deg,#171719,#050505 76%);
+}
+:root[data-theme="sakura"]{
+  color-scheme:light;
+  --bg:#fdf8f9;--bg-panel:#ffffff;--bg-card:#fff6f8;--bg-card-hover:#fdeaf0;--panel-border:#f5dfe6;--card-line:#f5dfe6;--hero-line:rgba(229,115,154,.18);
+  --fill:rgba(229,115,154,.09);--fill-strong:rgba(229,115,154,.16);--glass:rgba(255,252,253,.76);--glass-strong:rgba(255,255,255,.92);--glass-border:rgba(229,115,154,.14);--separator:rgba(201,96,138,.18);
+  --text:#3b2a31;--text-dim:#7d6770;--text-faint:#b097a1;
+  --accent:#e5739a;--accent-fill:#e2678f;--accent-fill-hover:#ec7aa1;--accent-dim:rgba(229,115,154,.16);--focus:#e5739a;
+  --green:#2f9e7a;--green-dim:#def3ea;--red:#d9485f;--red-dim:#fbe1e6;--amber:#c98a1b;--amber-fill:#d89a28;--amber-dim:#f8ecd2;
+  --inverse-bg:#3b2a31;--inverse-text:#fff8fa;--thumb:#ffffff;--thumb-shadow:0 4px 14px rgba(203,91,133,.13);--backdrop:rgba(75,42,56,.25);--toast-link:#c9608a;
+  --ambient-a:rgba(244,143,181,.18);--ambient-b:rgba(255,194,214,.20);
+  --radius-lg:28px;--radius:20px;--radius-sm:14px;--radius-xs:9px;--shadow-sm:0 6px 18px -14px rgba(203,91,133,.28);--shadow-md:0 16px 36px -25px rgba(203,91,133,.36);--shadow-lg:0 30px 70px -34px rgba(203,91,133,.40);
+  --font-text:Inter,Arial,sans-serif;--font-display:Inter,Arial,sans-serif;
+  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(135deg,#ffc2d6 0%,#f48fb5 45%,#e2678f 100%);
+  --jmb-hero-base:#7f3554;--jmb-hero-art:radial-gradient(circle at 84% 18%,rgba(255,230,239,.92),transparent 24%),radial-gradient(circle at 70% 35%,rgba(255,194,214,.55),transparent 28%),linear-gradient(145deg,#dc6f96,#7f3554 78%);
+}
+:root[data-theme="cosmic"]{
+  color-scheme:dark;
+  --bg:#04030d;--bg-panel:#0b0920;--bg-card:#110e2b;--bg-card-hover:#181438;--panel-border:#1d1940;--card-line:#1d1940;--hero-line:rgba(168,152,255,.20);
+  --fill:rgba(168,152,255,.10);--fill-strong:rgba(168,152,255,.18);--glass:rgba(9,7,28,.72);--glass-strong:rgba(13,10,34,.92);--glass-border:rgba(168,152,255,.16);--separator:rgba(163,159,201,.18);
+  --text:#ece9ff;--text-dim:#a39fc9;--text-faint:#6b6795;
+  --accent:#a898ff;--accent-fill:#8d7af0;--accent-fill-hover:#aa98ff;--accent-dim:rgba(168,152,255,.20);--focus:#b8aaff;
+  --green:#6ef2c0;--green-dim:#10302f;--red:#ff7390;--red-dim:#35142a;--amber:#ffd38a;--amber-fill:#ffd38a;--amber-dim:#352a18;
+  --inverse-bg:#d9d2ff;--inverse-text:#0c0822;--thumb:#211b4d;--thumb-shadow:0 0 0 1px rgba(168,152,255,.18),0 10px 26px rgba(0,0,0,.42);--backdrop:rgba(3,2,12,.7);--toast-link:#c9c0ff;
+  --ambient-a:rgba(168,152,255,.19);--ambient-b:rgba(240,140,255,.12);
+  --radius-lg:28px;--radius:20px;--radius-sm:14px;--radius-xs:9px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.05),0 12px 30px -24px rgba(0,0,0,.9);--shadow-md:0 20px 44px -26px rgba(0,0,0,.9);--shadow-lg:0 34px 86px -34px rgba(0,0,0,.96);
+  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Cinzel",Georgia,serif;
+  --jmb-on-accent:#0c0822;--jmb-brand-gradient:linear-gradient(135deg,#d9d2ff 0%,#a898ff 46%,#6a55e0 100%);
+  --jmb-hero-base:#09051d;--jmb-hero-art:radial-gradient(circle at 20% 18%,rgba(143,200,255,.40),transparent 16%),radial-gradient(circle at 76% 22%,rgba(240,140,255,.34),transparent 24%),radial-gradient(circle at 52% 75%,rgba(168,152,255,.30),transparent 30%),linear-gradient(150deg,#130c38,#04030d 78%);
+}
+:root[data-theme="glass"]{
+  color-scheme:dark;
+  --bg:#090b11;--bg-panel:#12151d;--bg-card:#171b25;--bg-card-hover:#1e2330;--panel-border:rgba(255,255,255,.08);--card-line:rgba(255,255,255,.07);--hero-line:rgba(212,222,245,.16);
+  --fill:rgba(212,222,245,.09);--fill-strong:rgba(212,222,245,.16);--glass:rgba(18,21,29,.58);--glass-strong:rgba(23,27,37,.76);--glass-border:rgba(255,255,255,.12);--separator:rgba(212,222,245,.14);
+  --text:#eef1f7;--text-dim:#a2a9ba;--text-faint:#6b7285;
+  --accent:#d4def5;--accent-fill:#aebdde;--accent-fill-hover:#cad5ed;--accent-dim:rgba(212,222,245,.16);--focus:#d4def5;
+  --green:#74e0b3;--green-dim:#15302a;--red:#ff8a8a;--red-dim:#3a1c20;--amber:#f2cf8a;--amber-fill:#f2cf8a;--amber-dim:#3a3020;
+  --inverse-bg:#eaf0ff;--inverse-text:#0b1020;--thumb:rgba(255,255,255,.14);--thumb-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 28px rgba(0,0,0,.35);--backdrop:rgba(0,0,0,.58);--toast-link:#d4def5;
+  --ambient-a:rgba(184,200,234,.13);--ambient-b:rgba(196,181,232,.11);
+  --radius-lg:30px;--radius:22px;--radius-sm:16px;--radius-xs:10px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.10),0 12px 30px -24px rgba(0,0,0,.88);--shadow-md:inset 0 1px 0 rgba(255,255,255,.12),0 24px 50px -28px rgba(0,0,0,.9);--shadow-lg:0 36px 90px -34px rgba(0,0,0,.94);
+  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Manrope",Inter,Arial,sans-serif;
+  --jmb-on-accent:#0b1020;--jmb-brand-gradient:linear-gradient(135deg,rgba(255,255,255,.95),#d4def5 45%,#9aabd6 100%);
+  --jmb-hero-base:#0b0f18;--jmb-hero-art:radial-gradient(55% 70% at 82% 12%,rgba(212,222,245,.28),transparent 64%),radial-gradient(42% 58% at 18% 82%,rgba(196,181,232,.18),transparent 66%),linear-gradient(145deg,#202735,#090b11 78%);
+}
+:root[data-theme="apple"]{
+  color-scheme:light;
+  --bg:#f5f5f7;--bg-panel:#ffffff;--bg-card:#f5f5f7;--bg-card-hover:#e8e8ed;--panel-border:transparent;--card-line:transparent;--hero-line:transparent;
+  --fill:rgba(118,118,128,.12);--fill-strong:rgba(118,118,128,.2);--glass:rgba(255,255,255,.72);--glass-strong:rgba(255,255,255,.86);--glass-border:rgba(0,0,0,.08);--separator:rgba(60,60,67,.14);
+  --text:#1d1d1f;--text-dim:#6e6e73;--text-faint:#86868b;--accent:#0066cc;--accent-fill:#0071e3;--accent-fill-hover:#0077ed;--accent-dim:rgba(0,113,227,.18);--focus:#0071e3;
+  --green:#1a7f37;--green-dim:rgba(52,199,89,.14);--red:#d70015;--red-dim:rgba(255,59,48,.1);--amber:#b25000;--amber-fill:#ff9f0a;--amber-dim:rgba(255,159,10,.14);
+  --inverse-bg:#1d1d1f;--inverse-text:#fff;--thumb:#fff;--thumb-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);--backdrop:rgba(0,0,0,.28);--toast-link:#2997ff;
+  --ambient-a:rgba(0,113,227,.10);--ambient-b:rgba(175,82,222,.08);--radius-lg:28px;--radius:18px;--radius-sm:12px;--radius-xs:8px;--shadow-sm:0 1px 2px rgba(0,0,0,.04),0 1px 1px rgba(0,0,0,.02);--shadow-md:0 4px 14px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);--shadow-lg:0 24px 60px rgba(0,0,0,.14),0 6px 18px rgba(0,0,0,.06);
+  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Helvetica Neue",Arial,sans-serif;--font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,"Helvetica Neue",Arial,sans-serif;
+  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(145deg,#0a84ff,#5e5ce6);--jmb-hero-base:#0b0b12;--jmb-hero-art:radial-gradient(55% 75% at 14% 12%,#3d5afe 0%,rgba(61,90,254,0) 70%),radial-gradient(50% 70% at 86% 18%,#a24bff 0%,rgba(162,75,255,0) 70%),radial-gradient(45% 65% at 66% 95%,#00a8ff 0%,rgba(0,168,255,0) 70%),linear-gradient(160deg,#161a33,#07070c);
+}
+:root[data-theme="apple-dark"]{
+  color-scheme:dark;
+  --bg:#000;--bg-panel:#1c1c1e;--bg-card:#2c2c2e;--bg-card-hover:#3a3a3c;--panel-border:rgba(255,255,255,.06);--card-line:rgba(255,255,255,.06);--hero-line:rgba(255,255,255,.09);
+  --fill:rgba(118,118,128,.24);--fill-strong:rgba(118,118,128,.36);--glass:rgba(22,22,23,.72);--glass-strong:rgba(28,28,30,.88);--glass-border:rgba(255,255,255,.08);--separator:rgba(84,84,88,.6);
+  --text:#f5f5f7;--text-dim:#a1a1a6;--text-faint:#8e8e93;--accent:#2997ff;--accent-fill:#0071e3;--accent-fill-hover:#0077ed;--accent-dim:rgba(41,151,255,.26);--focus:#2997ff;
+  --green:#30d158;--green-dim:rgba(48,209,88,.16);--red:#ff6961;--red-dim:rgba(255,69,58,.16);--amber:#ffb340;--amber-fill:#ffb340;--amber-dim:rgba(255,159,10,.18);
+  --inverse-bg:#f5f5f7;--inverse-text:#1d1d1f;--thumb:#636366;--thumb-shadow:0 3px 8px rgba(0,0,0,.3),0 3px 1px rgba(0,0,0,.12);--backdrop:rgba(0,0,0,.5);--toast-link:#0066cc;
+  --ambient-a:rgba(41,151,255,.14);--ambient-b:rgba(191,90,242,.11);--radius-lg:28px;--radius:18px;--radius-sm:12px;--radius-xs:8px;--shadow-sm:0 1px 2px rgba(0,0,0,.5),0 1px 1px rgba(0,0,0,.3);--shadow-md:0 8px 24px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);--shadow-lg:0 30px 80px rgba(0,0,0,.7),0 10px 26px rgba(0,0,0,.5);
+  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Helvetica Neue",Arial,sans-serif;--font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,"Helvetica Neue",Arial,sans-serif;
+  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(145deg,#0a84ff,#5e5ce6);--jmb-hero-base:#08090f;--jmb-hero-art:radial-gradient(55% 75% at 14% 12%,rgba(61,90,254,.82),transparent 70%),radial-gradient(50% 70% at 86% 18%,rgba(162,75,255,.72),transparent 70%),linear-gradient(160deg,#101326,#050507);
+}
+
+/* Komponenten-Brücke: vorhandene Apps behalten ihre Struktur, nutzen aber dieselbe Identität. */
+html[data-jmb-theme] body{background:radial-gradient(1000px 700px at 8% -8%,var(--ambient-a),transparent 62%),radial-gradient(900px 650px at 94% 10%,var(--ambient-b),transparent 58%),var(--bg)!important;color:var(--text);font-family:var(--font-text);}
+html[data-jmb-theme] :is(.page-title,.section-title,.modal-title,.brand-title,.brand-name,.hero-title,.hero__title,.kpi-value,.kpi .val){font-family:var(--font-display)!important;}
+html[data-jmb-theme] :is(.brand-mark,.logo,.logo-badge){background:var(--jmb-brand-gradient)!important;color:var(--jmb-on-accent)!important;}
+html[data-jmb-theme] :is(.btn-primary,.btn.primary){background:var(--accent-fill)!important;color:var(--jmb-on-accent)!important;}
+html[data-jmb-theme] :is(.btn-primary,.btn.primary):hover{background:var(--accent-fill)!important;filter:brightness(1.08);}
+html[data-jmb-theme] :is(.tabs-indicator){background:var(--thumb)!important;box-shadow:var(--thumb-shadow)!important;}
+html[data-jmb-theme] :is(.hero){background:var(--jmb-hero-base)!important;outline-color:var(--hero-line)!important;}
+html[data-jmb-theme] :is(.hero)::before{background-image:var(--jmb-hero-art)!important;background-size:var(--jmb-hero-size,cover)!important;background-position:center!important;}
+html[data-jmb-theme] :is(.hero-title,.hero__title,.grad-text){color:#fff!important;-webkit-text-fill-color:#fff!important;background:none!important;text-shadow:0 2px 18px rgba(0,0,0,.32);}
+html[data-theme="sakura"] :is(.hero-title,.hero__title,.grad-text){color:#fff!important;-webkit-text-fill-color:#fff!important;}
+html[data-jmb-theme] :is(.ambient){background:radial-gradient(38% 34% at 84% 8%,var(--ambient-a),transparent 70%),radial-gradient(42% 40% at 8% 42%,var(--ambient-b),transparent 70%)!important;}
+html[data-jmb-theme] .ambient::before{background:radial-gradient(circle,var(--ambient-a),transparent 65%)!important;}
+html[data-jmb-theme] .ambient::after{background:radial-gradient(circle,var(--ambient-b),transparent 65%)!important;}
+html[data-jmb-theme] :is(.card,.kpi,.task-card,.sidebar,.topbar,.modal-box,.dlg,.popover,.menu,.more-sheet){border-color:var(--panel-border,var(--glass-border))!important;}
+html[data-jmb-theme] :is(input,textarea,select){caret-color:var(--accent);}
+html[data-jmb-theme] :is(.pbar-fill,.bar i:not(.alt)){background:var(--accent-fill)!important;}
+html[data-jmb-theme] :is(.checkbox-custom.checked){background:var(--accent-fill)!important;border-color:var(--accent-fill)!important;}
+html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s ease;}
 </style>
 </head>
 <body class="min-h-screen text-ink antialiased">
 
-<div class="flex min-h-screen">
+<!-- Apple-Design: Skip-Link + driftendes Umgebungslicht hinter der App -->
+<a href="#app" class="skip-link">Zum Inhalt springen</a>
+<div class="ambient" aria-hidden="true"></div>
 
-  <!-- ============ SIDEBAR ============ -->
-  <aside id="sidebar" class="hidden lg:flex w-64 shrink-0 flex-col border-r border-line py-5 transition-[width] duration-200">
-    <div class="px-4 flex items-center gap-3 mb-6" style="margin-top:64px;">
-      <!-- margin-top: Platz für den fest positionierten Zurück-Pfeil der JMB-Headquarter-
-           Startseite (index.html, oben links bei top:18/left:18, 52px hoch), der sonst
-           genau auf dem Collapse-Button läge. Vertikaler statt horizontaler Abstand, damit
-           das auch im eingeklappten Sidebar-Zustand (5.5rem Breite) nicht bricht. -->
-      <button id="btn-collapse-sidebar" class="hex-btn" title="Sidebar ein-/ausklappen">
-        <i class="fa-solid fa-chevron-left text-sm"></i>
-      </button>
-      <div class="brand-text min-w-0">
-        <p class="font-display text-lg font-semibold leading-tight truncate">Werkbank</p>
-        <p class="text-[11px] text-inksoft truncate">Projekte &amp; Wissen</p>
+<div id="appShell">
+
+  <!-- ============ HEADER ============
+       Apple-Design: ersetzt Sidebar + mobile Top-Bar. Dieselben .nav-item-Links
+       (gleiche data-view-Werte) sind am Desktop ein Segmented Control und
+       werden am Handy (≤ 640 px) per CSS zur Tab-Leiste unten. -->
+  <header id="appHeader" class="app-header">
+    <div class="header-inner">
+      <div class="brand">
+        <div class="brand-mark" aria-hidden="true"><i class="fa-solid fa-screwdriver-wrench"></i></div>
+        <div class="brand-text">
+          <p class="brand-title truncate">Werkbank</p>
+          <p class="brand-sub truncate">Projekte &amp; Wissen</p>
+        </div>
+      </div>
+
+      <nav id="nav-list" class="tabs" aria-label="Hauptnavigation">
+        <span class="tabs-indicator" aria-hidden="true"></span>
+        <a href="#" data-view="dashboard" class="nav-item active" title="Übersicht">
+          <i class="fa-solid fa-table-cells-large" aria-hidden="true"></i><span class="nav-label">Übersicht</span>
+        </a>
+        <a href="#" data-view="projects" class="nav-item" title="Projekte">
+          <i class="fa-solid fa-diagram-project" aria-hidden="true"></i><span class="nav-label">Projekte</span>
+        </a>
+        <a href="#" data-view="notes" class="nav-item" title="Notizen">
+          <i class="fa-solid fa-note-sticky" aria-hidden="true"></i><span class="nav-label">Notizen</span>
+        </a>
+        <a href="#" data-view="learning" class="nav-item" title="Lernmaterial">
+          <i class="fa-solid fa-book-open" aria-hidden="true"></i><span class="nav-label">Lernen</span>
+        </a>
+      </nav>
+
+      <div class="header-actions">
+        <!-- Drive-Button: IDs unverändert, das JS (updateDriveButton) setzt Icon + Text -->
+        <button id="btn-drive-sync" class="drive-pill" type="button" title="Google-Drive-Sicherung" aria-label="Google-Drive-Sicherung">
+          <i class="fa-solid fa-cloud mr-1" id="drive-sync-icon"></i> <span id="drive-sync-label">Google Drive verbinden</span>
+        </button>
+        <button id="btn-theme" class="icon-btn theme-toggle" type="button" aria-label="Hell/Dunkel umschalten" title="Hell/Dunkel">
+          <i class="fa-solid fa-moon ico-moon" aria-hidden="true"></i><i class="fa-solid fa-sun ico-sun" aria-hidden="true"></i>
+        </button>
+        <div class="more-wrap">
+          <button id="btn-more" class="icon-btn" type="button" aria-label="Weitere Aktionen" aria-haspopup="menu" aria-expanded="false" title="Mehr">
+            <i class="fa-solid fa-ellipsis" aria-hidden="true"></i>
+          </button>
+          <div id="more-menu" class="popover" role="menu" hidden>
+            <p class="menu-hint">Daten</p>
+            <!-- ID unverändert: das JS bindet den Zurücksetzen-Dialog daran -->
+            <button id="btn-reset-data" class="menu-item danger" type="button" role="menuitem">
+              <i class="fa-solid fa-arrow-rotate-left w-4 text-center" aria-hidden="true"></i> Daten zurücksetzen
+            </button>
+          </div>
+        </div>
       </div>
     </div>
-
-    <nav class="flex-1 flex flex-col gap-1" id="nav-list">
-      <a href="#" data-view="dashboard" class="nav-item active" title="Übersicht">
-        <i class="fa-solid fa-table-cells-large w-4 text-center"></i> <span class="nav-label">Übersicht</span>
-      </a>
-      <a href="#" data-view="projects" class="nav-item" title="Projekte">
-        <i class="fa-solid fa-diagram-project w-4 text-center"></i> <span class="nav-label">Projekte</span>
-      </a>
-      <a href="#" data-view="notes" class="nav-item" title="Notizen">
-        <i class="fa-solid fa-note-sticky w-4 text-center"></i> <span class="nav-label">Notizen</span>
-      </a>
-      <a href="#" data-view="learning" class="nav-item" title="Lernmaterial">
-        <i class="fa-solid fa-book-open w-4 text-center"></i> <span class="nav-label">Lernmaterial</span>
-      </a>
-    </nav>
-
-    <div class="px-5 pt-4 border-t border-line flex flex-col gap-2">
-      <button id="btn-drive-sync" class="nav-label text-xs text-inksoft hover:text-cyan transition-colors text-left">
-        <i class="fa-solid fa-cloud mr-1" id="drive-sync-icon"></i> <span id="drive-sync-label">Google Drive verbinden</span>
-      </button>
-      <button id="btn-reset-data" class="nav-label text-xs text-inksoft hover:text-red transition-colors text-left">
-        <i class="fa-solid fa-arrow-rotate-left mr-1"></i> Daten zurücksetzen
-      </button>
-    </div>
-  </aside>
-
-  <!-- ============ MOBILE TOP BAR ============ -->
-  <div class="lg:hidden fixed top-0 inset-x-0 z-30 bg-[#0A0A13]/90 backdrop-blur border-b border-line">
-    <div class="flex items-center justify-between px-4 py-3">
-      <div class="flex items-center gap-3" style="margin-left:88px;">
-        <!-- margin-left: siehe Kommentar bei der Desktop-Sidebar oben — hier reicht
-             horizontaler Abstand, da die mobile Topbar keinen eingeklappten Zustand hat. -->
-        <div class="hex-btn"><i class="fa-solid fa-bolt text-sm"></i></div>
-        <span class="font-display text-lg font-semibold">Werkbank</span>
-      </div>
-      <button id="btn-mobile-menu" class="w-9 h-9 flex items-center justify-center border border-line rounded-lg">
-        <i class="fa-solid fa-bars"></i>
-      </button>
-    </div>
-    <nav id="mobile-nav" class="hidden border-t border-line flex flex-col py-2">
-      <a href="#" data-view="dashboard" class="nav-item active px-4">
-        <i class="fa-solid fa-table-cells-large w-4 text-center"></i> <span class="nav-label">Übersicht</span>
-      </a>
-      <a href="#" data-view="projects" class="nav-item px-4">
-        <i class="fa-solid fa-diagram-project w-4 text-center"></i> <span class="nav-label">Projekte</span>
-      </a>
-      <a href="#" data-view="notes" class="nav-item px-4">
-        <i class="fa-solid fa-note-sticky w-4 text-center"></i> <span class="nav-label">Notizen</span>
-      </a>
-      <a href="#" data-view="learning" class="nav-item px-4">
-        <i class="fa-solid fa-book-open w-4 text-center"></i> <span class="nav-label">Lernmaterial</span>
-      </a>
-    </nav>
-  </div>
+  </header>
 
   <!-- ============ MAIN ============ -->
-  <main class="flex-1 min-w-0 pt-20 lg:pt-0">
-    <div class="max-w-6xl mx-auto px-5 sm:px-8 py-8">
+  <main id="app" class="min-w-0" tabindex="-1">
+    <div class="max-w-6xl mx-auto px-5 sm:px-8 pt-6 pb-10">
 
       <!-- ---------- DASHBOARD ---------- -->
-      <section id="view-dashboard" class="view active fade-in">
-        <header class="mb-8">
-          <h1 class="font-display text-3xl sm:text-4xl font-semibold">Übersicht</h1>
-          <p class="text-inksoft mt-1">Der aktuelle Stand deiner Arbeit, auf einen Blick.</p>
-        </header>
+      <section id="view-dashboard" class="view active">
 
-        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-10">
-          <div class="card p-4 sm:p-5">
-            <p class="text-xs text-inksoft font-medium">Aktive Projekte</p>
-            <p id="kpi-active-projects" class="kpi-figure font-display text-3xl mt-1">0</p>
+        <!-- Apple-Design: Hero mit Datum, Begrüßung, Live-Uhr, Status-Pille und Schnellaktionen -->
+        <div id="hero" class="hero">
+          <p id="hero-date" class="eyebrow hero-eyebrow">&nbsp;</p>
+          <h1 class="hero-title"><span id="hero-greeting" class="grad-text">Hallo, Julian.</span></h1>
+          <p class="hero-clock">
+            <span class="live-dot" aria-hidden="true"></span>
+            <span id="hero-clock">--:--</span>
+            <span class="hero-clock-extra">· Der aktuelle Stand deiner Arbeit</span>
+          </p>
+          <div class="hero-foot">
+            <div id="hero-status" class="hero-status"></div>
+            <div class="hero-actions">
+              <button type="button" class="hero-action primary" data-quick="btn-new-project"><i class="fa-solid fa-plus" aria-hidden="true"></i>Projekt</button>
+              <button type="button" class="hero-action" data-quick="btn-new-note"><i class="fa-solid fa-note-sticky" aria-hidden="true"></i>Notiz</button>
+              <button type="button" class="hero-action" data-quick="btn-new-resource"><i class="fa-solid fa-book-open" aria-hidden="true"></i>Ressource</button>
+            </div>
           </div>
-          <div class="card p-4 sm:p-5">
-            <p class="text-xs text-inksoft font-medium">Offene Aufgaben</p>
-            <p id="kpi-open-tasks" class="kpi-figure font-display text-3xl mt-1">0</p>
+        </div>
+
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-6 sm:mt-8 mb-10">
+          <div class="card kpi-tile">
+            <p class="eyebrow">Aktive Projekte</p>
+            <p id="kpi-active-projects" class="kpi-figure kpi-value">0</p>
+            <p class="kpi-sub">nicht abgeschlossen</p>
           </div>
-          <div class="card p-4 sm:p-5">
-            <p class="text-xs text-inksoft font-medium">Notizen</p>
-            <p id="kpi-notes" class="kpi-figure font-display text-3xl mt-1">0</p>
+          <div class="card kpi-tile">
+            <p class="eyebrow">Offene Aufgaben</p>
+            <p id="kpi-open-tasks" class="kpi-figure kpi-value">0</p>
+            <p class="kpi-sub">über alle Projekte</p>
           </div>
-          <div class="card p-4 sm:p-5">
-            <p class="text-xs text-inksoft font-medium">Ressourcen</p>
-            <p id="kpi-resources" class="kpi-figure font-display text-3xl mt-1">0</p>
+          <div class="card kpi-tile">
+            <p class="eyebrow">Notizen</p>
+            <p id="kpi-notes" class="kpi-figure kpi-value">0</p>
+            <p class="kpi-sub">in der Wissenssammlung</p>
+          </div>
+          <div class="card kpi-tile">
+            <p class="eyebrow">Ressourcen</p>
+            <p id="kpi-resources" class="kpi-figure kpi-value">0</p>
+            <p class="kpi-sub">zum Nachschlagen</p>
           </div>
         </div>
 
         <div class="grid lg:grid-cols-5 gap-8">
           <div class="lg:col-span-3">
-            <h2 class="font-display text-xl font-semibold mb-4">Projektfortschritt</h2>
+            <h2 class="section-title">Projektfortschritt</h2>
             <div id="dashboard-progress-list" class="flex flex-col gap-3"></div>
           </div>
           <div class="lg:col-span-2">
-            <h2 class="font-display text-xl font-semibold mb-4">Nächste Fälligkeiten</h2>
+            <h2 class="section-title">Nächste Fälligkeiten</h2>
             <div id="dashboard-deadlines-list" class="flex flex-col gap-2"></div>
           </div>
         </div>
       </section>
 
       <!-- ---------- PROJECTS ---------- -->
-      <section id="view-projects" class="view fade-in">
+      <section id="view-projects" class="view">
         <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 class="font-display text-3xl sm:text-4xl font-semibold">Projekte</h1>
-            <p id="projects-subline" class="text-inksoft mt-1">Alle Projekte, ihr Status und Fortschritt.</p>
+            <h1 class="page-title">Projekte</h1>
+            <p id="projects-subline" class="page-sub">Alle Projekte, ihr Status und Fortschritt.</p>
           </div>
-          <button id="btn-new-project" class="btn-primary px-4 py-2.5 text-sm">
+          <button id="btn-new-project" class="btn-primary btn-md">
             <i class="fa-solid fa-plus mr-1.5"></i>Neues Projekt
           </button>
         </header>
@@ -345,10 +1128,10 @@
             <input id="project-search" type="text" placeholder="Projekt suchen…" class="pl-8 pr-3 py-2 text-sm w-full">
           </div>
           <div id="project-status-filters" class="flex gap-2 flex-wrap">
-            <button data-status="all" class="filter-chip btn-ghost px-3 py-2 text-xs">Alle</button>
-            <button data-status="Geplant" class="filter-chip btn-ghost px-3 py-2 text-xs">Geplant</button>
-            <button data-status="In Bearbeitung" class="filter-chip btn-ghost px-3 py-2 text-xs">In Bearbeitung</button>
-            <button data-status="Abgeschlossen" class="filter-chip btn-ghost px-3 py-2 text-xs">Abgeschlossen</button>
+            <button data-status="all" class="filter-chip btn-ghost px-3.5 py-2 text-xs">Alle</button>
+            <button data-status="Geplant" class="filter-chip btn-ghost px-3.5 py-2 text-xs">Geplant</button>
+            <button data-status="In Bearbeitung" class="filter-chip btn-ghost px-3.5 py-2 text-xs">In Bearbeitung</button>
+            <button data-status="Abgeschlossen" class="filter-chip btn-ghost px-3.5 py-2 text-xs">Abgeschlossen</button>
           </div>
         </div>
 
@@ -360,13 +1143,13 @@
       </section>
 
       <!-- ---------- NOTES ---------- -->
-      <section id="view-notes" class="view fade-in">
+      <section id="view-notes" class="view">
         <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 class="font-display text-3xl sm:text-4xl font-semibold">Wissen &amp; Notizen</h1>
-            <p id="notes-subline" class="text-inksoft mt-1">Bücher, Artikel, Themen und Erkenntnisse an einem Ort.</p>
+            <h1 class="page-title">Wissen &amp; Notizen</h1>
+            <p id="notes-subline" class="page-sub">Bücher, Artikel, Themen und Erkenntnisse an einem Ort.</p>
           </div>
-          <button id="btn-new-note" class="btn-primary px-4 py-2.5 text-sm">
+          <button id="btn-new-note" class="btn-primary btn-md">
             <i class="fa-solid fa-plus mr-1.5"></i>Neue Notiz
           </button>
         </header>
@@ -397,13 +1180,13 @@
       </section>
 
       <!-- ---------- LEARNING ---------- -->
-      <section id="view-learning" class="view fade-in">
+      <section id="view-learning" class="view">
         <header class="mb-6 flex flex-wrap items-end justify-between gap-4">
           <div>
-            <h1 class="font-display text-3xl sm:text-4xl font-semibold">Lernmaterial</h1>
-            <p class="text-inksoft mt-1">Artikel, Videos und Dokumentationen zum Nachschlagen.</p>
+            <h1 class="page-title">Lernmaterial</h1>
+            <p class="page-sub">Artikel, Videos und Dokumentationen zum Nachschlagen.</p>
           </div>
-          <button id="btn-new-resource" class="btn-primary px-4 py-2.5 text-sm">
+          <button id="btn-new-resource" class="btn-primary btn-md">
             <i class="fa-solid fa-plus mr-1.5"></i>Ressource hinzufügen
           </button>
         </header>
@@ -414,11 +1197,11 @@
             <input id="resource-search" type="text" placeholder="Ressourcen durchsuchen…" class="pl-8 pr-3 py-2 text-sm w-full">
           </div>
           <div id="resource-type-filters" class="flex gap-2 flex-wrap">
-            <button data-type="all" class="filter-chip btn-ghost px-3 py-2 text-xs">Alle</button>
-            <button data-type="Artikel" class="filter-chip btn-ghost px-3 py-2 text-xs">Artikel</button>
-            <button data-type="Video" class="filter-chip btn-ghost px-3 py-2 text-xs">Video</button>
-            <button data-type="PDF" class="filter-chip btn-ghost px-3 py-2 text-xs">PDF</button>
-            <button data-type="Dokumentation" class="filter-chip btn-ghost px-3 py-2 text-xs">Dokumentation</button>
+            <button data-type="all" class="filter-chip btn-ghost px-3.5 py-2 text-xs">Alle</button>
+            <button data-type="Artikel" class="filter-chip btn-ghost px-3.5 py-2 text-xs">Artikel</button>
+            <button data-type="Video" class="filter-chip btn-ghost px-3.5 py-2 text-xs">Video</button>
+            <button data-type="PDF" class="filter-chip btn-ghost px-3.5 py-2 text-xs">PDF</button>
+            <button data-type="Dokumentation" class="filter-chip btn-ghost px-3.5 py-2 text-xs">Dokumentation</button>
           </div>
         </div>
 
@@ -433,185 +1216,195 @@
   </main>
 </div>
 
-<!-- ============ PROJECT DETAIL MODAL ============ -->
-<div id="modal-project-detail" class="hidden fixed inset-0 z-40 modal-backdrop flex items-start sm:items-center justify-center p-0 sm:p-6 overflow-y-auto">
-  <div class="bg-[#0F0E1A] border border-line w-full sm:max-w-2xl sm:my-10 min-h-full sm:min-h-0 sm:rounded-2xl">
-    <div class="flex items-start justify-between border-b border-line px-6 py-5 sticky top-0 bg-[#0F0E1A] sm:rounded-t-2xl">
+<!-- ============ PROJECT DETAIL MODAL ============
+     Apple-Design: Kopf fest, Aufgabenliste scrollt innen, "Neue Aufgabe" bleibt
+     als Footer unten erreichbar. Alle IDs unverändert. -->
+<div id="modal-project-detail" class="hidden fixed inset-0 z-40 modal-backdrop flex p-6" role="dialog" aria-modal="true" aria-labelledby="pd-title">
+  <div class="modal-box modal-detail sm:max-w-2xl">
+    <div class="modal-head flex items-start justify-between gap-4 px-6 pt-6 pb-4">
       <div class="min-w-0">
         <p id="pd-status-tag" class="tag inline-flex mb-2"></p>
-        <h2 id="pd-title" class="font-display text-2xl font-semibold truncate"></h2>
+        <h2 id="pd-title" class="modal-title truncate"></h2>
         <p id="pd-description" class="text-sm text-inksoft mt-1"></p>
       </div>
-      <button class="modal-close text-inksoft hover:text-ink px-2 py-1 text-lg"><i class="fa-solid fa-xmark"></i></button>
+      <button class="modal-close close-btn" aria-label="Schließen"><i class="fa-solid fa-xmark"></i></button>
     </div>
 
-    <div class="px-6 py-5">
+    <div class="modal-body px-6 pb-5">
       <div class="flex items-center gap-3 mb-1">
         <div class="pbar flex-1"><div id="pd-progress-fill" class="pbar-fill"></div></div>
-        <span id="pd-progress-label" class="text-sm font-semibold w-10 text-right">0%</span>
+        <span id="pd-progress-label" class="kpi-figure text-sm font-semibold w-10 text-right">0%</span>
       </div>
       <p class="text-xs text-inksoft mb-6">Fortschritt basierend auf erledigten Aufgaben</p>
 
       <div class="flex items-center justify-between mb-3">
-        <h3 class="font-display text-xl font-bold flex items-center gap-2"><i class="fa-solid fa-list-check text-cyan"></i>Aufgaben</h3>
-        <button id="btn-project-edit" class="text-xs text-inksoft hover:text-cyan"><i class="fa-solid fa-pen mr-1"></i>Projekt bearbeiten</button>
+        <h3 class="section-title !mb-0 flex items-center gap-2"><i class="fa-solid fa-list-check text-cyan text-lg"></i>Aufgaben</h3>
+        <button id="btn-project-edit" class="text-xs font-medium text-cyan hover:underline"><i class="fa-solid fa-pen mr-1"></i>Projekt bearbeiten</button>
       </div>
 
-      <div id="pd-task-list" class="flex flex-col gap-2.5 mb-4"></div>
+      <div id="pd-task-list" class="flex flex-col gap-2"></div>
 
-      <form id="form-add-task" class="flex flex-wrap gap-2 items-center border-t border-line pt-4">
-        <input id="task-text" type="text" placeholder="Neue Aufgabe…" required class="px-3 py-2 text-sm flex-1 min-w-[140px]">
-        <select id="task-priority" class="px-2 py-2 text-sm">
-          <option value="Hoch">Hoch</option>
-          <option value="Mittel" selected>Mittel</option>
-          <option value="Niedrig">Niedrig</option>
-        </select>
-        <input id="task-deadline" type="date" class="px-2 py-2 text-sm">
-        <button type="submit" class="btn-primary px-3 py-2 text-sm"><i class="fa-solid fa-plus"></i></button>
-      </form>
-
-      <div class="border-t border-line mt-6 pt-4 flex justify-between">
-        <button id="btn-project-delete" class="text-xs text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Projekt löschen</button>
+      <div class="mt-6">
+        <button id="btn-project-delete" class="text-xs font-medium text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Projekt löschen</button>
       </div>
     </div>
+
+    <form id="form-add-task" class="modal-footer flex flex-wrap gap-2 items-center">
+      <input id="task-text" type="text" placeholder="Neue Aufgabe…" required class="px-3 py-2 text-sm flex-1 min-w-[140px]">
+      <select id="task-priority" class="px-3 py-2 text-sm">
+        <option value="Hoch">Hoch</option>
+        <option value="Mittel" selected>Mittel</option>
+        <option value="Niedrig">Niedrig</option>
+      </select>
+      <input id="task-deadline" type="date" class="px-3 py-2 text-sm">
+      <button type="submit" class="btn-primary w-9 h-9 grid place-items-center" aria-label="Aufgabe hinzufügen"><i class="fa-solid fa-plus"></i></button>
+    </form>
   </div>
 </div>
 
 <!-- ============ PROJECT FORM MODAL ============ -->
-<div id="modal-project-form" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-  <form id="form-project" class="bg-[#0F0E1A] border border-line rounded-2xl w-full max-w-md p-6">
-    <h2 id="pf-heading" class="font-display text-xl font-semibold mb-4">Neues Projekt</h2>
-    <input type="hidden" id="pf-id">
-    <div class="flex flex-col gap-3">
-      <div>
-        <label class="text-xs font-medium text-inksoft">Projektname</label>
-        <input id="pf-name" type="text" required class="w-full px-3 py-2 text-sm mt-1">
-      </div>
-      <div>
-        <label class="text-xs font-medium text-inksoft">Beschreibung</label>
-        <textarea id="pf-desc" rows="3" class="w-full px-3 py-2 text-sm mt-1"></textarea>
-      </div>
-      <div>
-        <label class="text-xs font-medium text-inksoft">Status</label>
-        <select id="pf-status" class="w-full px-3 py-2 text-sm mt-1">
-          <option>Geplant</option>
-          <option>In Bearbeitung</option>
-          <option>Abgeschlossen</option>
-        </select>
+<div id="modal-project-form" class="hidden fixed inset-0 z-50 modal-backdrop flex p-6" role="dialog" aria-modal="true" aria-labelledby="pf-heading">
+  <form id="form-project" class="modal-box modal-form max-w-md">
+    <div class="modal-body">
+      <h2 id="pf-heading" class="modal-title mb-5">Neues Projekt</h2>
+      <input type="hidden" id="pf-id">
+      <div class="flex flex-col gap-4">
+        <div>
+          <label class="field-label" for="pf-name">Projektname</label>
+          <input id="pf-name" type="text" required class="w-full px-3 py-2.5 text-sm mt-1.5">
+        </div>
+        <div>
+          <label class="field-label" for="pf-desc">Beschreibung</label>
+          <textarea id="pf-desc" rows="3" class="w-full px-3 py-2.5 text-sm mt-1.5"></textarea>
+        </div>
+        <div>
+          <label class="field-label" for="pf-status">Status</label>
+          <select id="pf-status" class="w-full px-3 py-2.5 text-sm mt-1.5">
+            <option>Geplant</option>
+            <option>In Bearbeitung</option>
+            <option>Abgeschlossen</option>
+          </select>
+        </div>
       </div>
     </div>
-    <div class="flex justify-end gap-2 mt-6">
-      <button type="button" class="modal-close btn-ghost px-4 py-2 text-sm">Abbrechen</button>
-      <button type="submit" class="btn-primary px-4 py-2 text-sm">Speichern</button>
+    <div class="modal-footer flex justify-end gap-2">
+      <button type="button" class="modal-close btn-ghost btn-md">Abbrechen</button>
+      <button type="submit" class="btn-primary btn-md">Speichern</button>
     </div>
   </form>
 </div>
 
 <!-- ============ NOTE FORM MODAL ============ -->
-<div id="modal-note-form" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-  <form id="form-note" class="bg-[#0F0E1A] border border-line rounded-2xl w-[95vw] max-w-[1400px] p-6 max-h-[95vh] overflow-y-auto">
-    <h2 id="nf-heading" class="font-display text-xl font-semibold mb-4">Neue Notiz</h2>
-    <input type="hidden" id="nf-id">
-    <div class="grid sm:grid-cols-2 gap-3">
-      <div class="sm:col-span-2">
-        <label class="text-xs font-medium text-inksoft">Titel</label>
-        <input id="nf-title" type="text" required placeholder="z. B. Titel des Buchs oder Artikels" class="w-full px-3 py-2 text-sm mt-1">
-      </div>
-      <div>
-        <label class="text-xs font-medium text-inksoft">Notiztyp</label>
-        <select id="nf-type" class="w-full px-3 py-2 text-sm mt-1">
-          <option value="Buch">Buch</option>
-          <option value="Artikel">Artikel</option>
-          <option value="Zusammenfassung">Zusammenfassung</option>
-          <option value="Erkenntnis">Erkenntnis</option>
-          <option value="Thema">Thema</option>
-          <option value="Sonstiges">Sonstiges</option>
-        </select>
-      </div>
-      <div>
-        <label class="text-xs font-medium text-inksoft">Datum</label>
-        <input id="nf-date" type="date" required class="w-full px-3 py-2 text-sm mt-1">
-      </div>
-      <div>
-        <label class="text-xs font-medium text-inksoft">Autor / Quelle <span class="text-inkfaint">(optional)</span></label>
-        <input id="nf-author" type="text" placeholder="z. B. Autorenname, Verlag, Website" class="w-full px-3 py-2 text-sm mt-1">
-      </div>
-      <div>
-        <label class="text-xs font-medium text-inksoft">Bewertung <span class="text-inkfaint">(optional)</span></label>
-        <div id="nf-rating-stars" class="flex items-center gap-1 mt-2 text-base">
-          <i class="fa-regular fa-star cursor-pointer text-inkfaint hover:text-amber transition-colors" data-star="1"></i>
-          <i class="fa-regular fa-star cursor-pointer text-inkfaint hover:text-amber transition-colors" data-star="2"></i>
-          <i class="fa-regular fa-star cursor-pointer text-inkfaint hover:text-amber transition-colors" data-star="3"></i>
-          <i class="fa-regular fa-star cursor-pointer text-inkfaint hover:text-amber transition-colors" data-star="4"></i>
-          <i class="fa-regular fa-star cursor-pointer text-inkfaint hover:text-amber transition-colors" data-star="5"></i>
+<div id="modal-note-form" class="hidden fixed inset-0 z-50 modal-backdrop flex p-6" role="dialog" aria-modal="true" aria-labelledby="nf-heading">
+  <form id="form-note" class="modal-box modal-form max-w-[1400px]">
+    <div class="modal-body">
+      <h2 id="nf-heading" class="modal-title mb-5">Neue Notiz</h2>
+      <input type="hidden" id="nf-id">
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="field-label" for="nf-title">Titel</label>
+          <input id="nf-title" type="text" required placeholder="z. B. Titel des Buchs oder Artikels" class="w-full px-3 py-2.5 text-sm mt-1.5">
         </div>
-        <input type="hidden" id="nf-rating" value="0">
-      </div>
-      <div class="sm:col-span-2">
-        <label class="text-xs font-medium text-inksoft">Tags <span class="text-inkfaint">(optional, mit Komma trennen)</span></label>
-        <input id="nf-tags" type="text" placeholder="z. B. Produktivität, Psychologie" class="w-full px-3 py-2 text-sm mt-1">
-      </div>
-      <div class="sm:col-span-2">
-        <label class="text-xs font-medium text-inksoft">Zugehöriges Projekt <span class="text-inkfaint">(optional)</span></label>
-        <select id="nf-project" class="w-full px-3 py-2 text-sm mt-1">
-          <option value="">— Kein Projekt —</option>
-        </select>
-      </div>
-      <div class="sm:col-span-2">
-        <label class="text-xs font-medium text-inksoft">Inhalt — Zusammenfassung, Kernaussagen, Zitate, eigene Gedanken</label>
-        <textarea id="nf-content" rows="30" class="w-full px-3 py-2 text-sm mt-1"></textarea>
+        <div>
+          <label class="field-label" for="nf-type">Notiztyp</label>
+          <select id="nf-type" class="w-full px-3 py-2.5 text-sm mt-1.5">
+            <option value="Buch">Buch</option>
+            <option value="Artikel">Artikel</option>
+            <option value="Zusammenfassung">Zusammenfassung</option>
+            <option value="Erkenntnis">Erkenntnis</option>
+            <option value="Thema">Thema</option>
+            <option value="Sonstiges">Sonstiges</option>
+          </select>
+        </div>
+        <div>
+          <label class="field-label" for="nf-date">Datum</label>
+          <input id="nf-date" type="date" required class="w-full px-3 py-2.5 text-sm mt-1.5">
+        </div>
+        <div>
+          <label class="field-label" for="nf-author">Autor / Quelle <span class="text-inkfaint">(optional)</span></label>
+          <input id="nf-author" type="text" placeholder="z. B. Autorenname, Verlag, Website" class="w-full px-3 py-2.5 text-sm mt-1.5">
+        </div>
+        <div>
+          <span class="field-label">Bewertung <span class="text-inkfaint">(optional)</span></span>
+          <div id="nf-rating-stars" class="flex items-center gap-1.5 mt-2.5 text-lg">
+            <i class="fa-regular fa-star cursor-pointer text-inkfaint transition-colors" data-star="1"></i>
+            <i class="fa-regular fa-star cursor-pointer text-inkfaint transition-colors" data-star="2"></i>
+            <i class="fa-regular fa-star cursor-pointer text-inkfaint transition-colors" data-star="3"></i>
+            <i class="fa-regular fa-star cursor-pointer text-inkfaint transition-colors" data-star="4"></i>
+            <i class="fa-regular fa-star cursor-pointer text-inkfaint transition-colors" data-star="5"></i>
+          </div>
+          <input type="hidden" id="nf-rating" value="0">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="nf-tags">Tags <span class="text-inkfaint">(optional, mit Komma trennen)</span></label>
+          <input id="nf-tags" type="text" placeholder="z. B. Produktivität, Psychologie" class="w-full px-3 py-2.5 text-sm mt-1.5">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="nf-project">Zugehöriges Projekt <span class="text-inkfaint">(optional)</span></label>
+          <select id="nf-project" class="w-full px-3 py-2.5 text-sm mt-1.5">
+            <option value="">— Kein Projekt —</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="nf-content">Inhalt — Zusammenfassung, Kernaussagen, Zitate, eigene Gedanken</label>
+          <textarea id="nf-content" rows="30" class="w-full px-3 py-2.5 text-sm mt-1.5 leading-relaxed"></textarea>
+        </div>
       </div>
     </div>
-    <div class="flex justify-between items-center mt-6">
-      <button type="button" id="nf-delete" class="hidden text-xs text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Löschen</button>
+    <div class="modal-footer flex justify-between items-center gap-2">
+      <button type="button" id="nf-delete" class="hidden text-xs font-medium text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Löschen</button>
       <div class="flex gap-2 ml-auto">
-        <button type="button" class="modal-close btn-ghost px-4 py-2 text-sm">Abbrechen</button>
-        <button type="submit" class="btn-primary px-4 py-2 text-sm">Speichern</button>
+        <button type="button" class="modal-close btn-ghost btn-md">Abbrechen</button>
+        <button type="submit" class="btn-primary btn-md">Speichern</button>
       </div>
     </div>
   </form>
 </div>
 
 <!-- ============ RESOURCE FORM MODAL ============ -->
-<div id="modal-resource-form" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
-  <form id="form-resource" class="bg-[#0F0E1A] border border-line rounded-2xl w-full max-w-lg p-6">
-    <h2 id="rf-heading" class="font-display text-xl font-semibold mb-4">Ressource hinzufügen</h2>
-    <input type="hidden" id="rf-id">
-    <div class="grid sm:grid-cols-2 gap-3">
-      <div class="sm:col-span-2">
-        <label class="text-xs font-medium text-inksoft">Titel</label>
-        <input id="rf-title" type="text" required class="w-full px-3 py-2 text-sm mt-1">
-      </div>
-      <div class="sm:col-span-2">
-        <label class="text-xs font-medium text-inksoft">URL</label>
-        <input id="rf-url" type="url" required placeholder="https://…" class="w-full px-3 py-2 text-sm mt-1">
-      </div>
-      <div>
-        <label class="text-xs font-medium text-inksoft">Typ</label>
-        <select id="rf-type" class="w-full px-3 py-2 text-sm mt-1">
-          <option>Artikel</option>
-          <option>Video</option>
-          <option>PDF</option>
-          <option>Dokumentation</option>
-        </select>
-      </div>
-      <div class="sm:col-span-2">
-        <label class="text-xs font-medium text-inksoft">Beschreibung</label>
-        <textarea id="rf-desc" rows="3" class="w-full px-3 py-2 text-sm mt-1"></textarea>
+<div id="modal-resource-form" class="hidden fixed inset-0 z-50 modal-backdrop flex p-6" role="dialog" aria-modal="true" aria-labelledby="rf-heading">
+  <form id="form-resource" class="modal-box modal-form max-w-lg">
+    <div class="modal-body">
+      <h2 id="rf-heading" class="modal-title mb-5">Ressource hinzufügen</h2>
+      <input type="hidden" id="rf-id">
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="sm:col-span-2">
+          <label class="field-label" for="rf-title">Titel</label>
+          <input id="rf-title" type="text" required class="w-full px-3 py-2.5 text-sm mt-1.5">
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="rf-url">URL</label>
+          <input id="rf-url" type="url" required placeholder="https://…" class="w-full px-3 py-2.5 text-sm mt-1.5">
+        </div>
+        <div>
+          <label class="field-label" for="rf-type">Typ</label>
+          <select id="rf-type" class="w-full px-3 py-2.5 text-sm mt-1.5">
+            <option>Artikel</option>
+            <option>Video</option>
+            <option>PDF</option>
+            <option>Dokumentation</option>
+          </select>
+        </div>
+        <div class="sm:col-span-2">
+          <label class="field-label" for="rf-desc">Beschreibung</label>
+          <textarea id="rf-desc" rows="3" class="w-full px-3 py-2.5 text-sm mt-1.5"></textarea>
+        </div>
       </div>
     </div>
-    <div class="flex justify-between items-center mt-6">
-      <button type="button" id="rf-delete" class="hidden text-xs text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Löschen</button>
+    <div class="modal-footer flex justify-between items-center gap-2">
+      <button type="button" id="rf-delete" class="hidden text-xs font-medium text-red hover:underline"><i class="fa-solid fa-trash mr-1"></i>Löschen</button>
       <div class="flex gap-2 ml-auto">
-        <button type="button" class="modal-close btn-ghost px-4 py-2 text-sm">Abbrechen</button>
-        <button type="submit" class="btn-primary px-4 py-2 text-sm">Speichern</button>
+        <button type="button" class="modal-close btn-ghost btn-md">Abbrechen</button>
+        <button type="submit" class="btn-primary btn-md">Speichern</button>
       </div>
     </div>
   </form>
 </div>
 
-<!-- ============ TOAST ============ -->
-<div id="toast" class="hidden fixed bottom-5 left-1/2 -translate-x-1/2 bg-[#171626] border border-line text-white text-sm px-4 py-2.5 z-[60] rounded-xl shadow-lg"></div>
+<!-- ============ TOAST ============
+     Apple-Design: Position/Look kommen jetzt aus dem CSS (#toast), damit die
+     toastIn-Animation das translateX(-50%) nicht überschreibt. -->
+<div id="toast" class="hidden" role="status" aria-live="polite"></div>
 
 <script>
 /* ==========================================================================
@@ -940,17 +1733,19 @@
 
   function statusMeta(status) {
     switch (status) {
-      case 'In Bearbeitung': return { bg: 'bg-cyan-soft', text: 'text-cyan', bar: '#22D3EE', icon: 'fa-solid fa-bolt' };
-      case 'Abgeschlossen':  return { bg: 'bg-green-soft', text: 'text-green', bar: '#34D399', icon: 'fa-solid fa-check' };
-      default:                return { bg: 'bg-slate2-soft', text: 'text-slate2', bar: '#8B90B3', icon: 'fa-solid fa-hourglass-half' }; // Geplant
+      // Apple-Design: Balkenfarben als Design-Tokens (wechseln mit Hell/Dunkel)
+      case 'In Bearbeitung': return { bg: 'bg-cyan-soft', text: 'text-cyan', bar: 'var(--accent-fill)', icon: 'fa-solid fa-bolt' };
+      case 'Abgeschlossen':  return { bg: 'bg-green-soft', text: 'text-green', bar: 'var(--green-fill)', icon: 'fa-solid fa-check' };
+      default:                return { bg: 'bg-slate2-soft', text: 'text-slate2', bar: 'var(--text-faint)', icon: 'fa-solid fa-hourglass-half' }; // Geplant
     }
   }
 
   function priorityMeta(priority) {
     switch (priority) {
-      case 'Hoch':   return { text: 'text-red', bg: 'bg-red-soft', dot: '#F76E6E' };
-      case 'Niedrig':return { text: 'text-slate2',  bg: 'bg-slate2-soft', dot: '#8B90B3' };
-      default:        return { text: 'text-amber',  bg: 'bg-amber-soft', dot: '#F5A623' }; // Mittel
+      // Apple-Design: Prioritätsfarben als Design-Tokens
+      case 'Hoch':   return { text: 'text-red', bg: 'bg-red-soft', dot: 'var(--red)' };
+      case 'Niedrig':return { text: 'text-slate2',  bg: 'bg-slate2-soft', dot: 'var(--text-faint)' };
+      default:        return { text: 'text-amber',  bg: 'bg-amber-soft', dot: 'var(--amber-fill)' }; // Mittel
     }
   }
 
@@ -990,14 +1785,15 @@
   }
 
   // Deterministische Verlaufs-Farbpalette für Projekt-Thumbnails (kein Bild-Upload nötig)
+  // Apple-Design: Paletten im Stil der Apple-Systemfarben (gleiche Anzahl, Zuordnung bleibt deterministisch)
   const THUMB_PALETTES = [
-    ['#4C1D95', '#0EA5E9'],
-    ['#7C3AED', '#DB2777'],
-    ['#0E7490', '#0F172A'],
-    ['#1E1B4B', '#7C3AED'],
-    ['#065F46', '#22D3EE'],
-    ['#9333EA', '#22D3EE'],
-    ['#B91C1C', '#7C3AED'],
+    ['#0A84FF', '#5E5CE6'],
+    ['#FF375F', '#FF9F0A'],
+    ['#30D158', '#64D2FF'],
+    ['#5E5CE6', '#BF5AF2'],
+    ['#FF9F0A', '#FFD60A'],
+    ['#64D2FF', '#0A84FF'],
+    ['#BF5AF2', '#FF375F'],
   ];
   function thumbGradient(id) {
     let hash = 0;
@@ -1221,6 +2017,33 @@
             <span class="text-xs font-medium ${dueClass} whitespace-nowrap">${dueLabel}</span>
           </button>`;
       }).join('');
+    }
+
+    // Apple-Design: Status-Pille im Hero. Reine Darstellung — nutzt die oben bereits
+    // berechneten deadlineTasks, ändert nichts an Daten oder Berechnungen.
+    const heroStatus = document.getElementById('hero-status');
+    if (heroStatus) {
+      const overdue = deadlineTasks.filter(t => daysUntil(t.deadline) < 0);
+      const dueToday = deadlineTasks.filter(t => daysUntil(t.deadline) === 0);
+      let tone = 'is-ok', icon = 'fa-solid fa-circle-check', text, target = null;
+      if (overdue.length) {
+        tone = 'is-bad'; icon = 'fa-solid fa-triangle-exclamation'; target = overdue[0];
+        text = `${overdue.length} Aufgabe${overdue.length === 1 ? '' : 'n'} überfällig`;
+      } else if (dueToday.length) {
+        tone = 'is-warn'; icon = 'fa-solid fa-clock'; target = dueToday[0];
+        text = `${dueToday.length} Aufgabe${dueToday.length === 1 ? '' : 'n'} heute fällig`;
+      } else if (deadlineTasks.length) {
+        target = deadlineTasks[0];
+        const d = daysUntil(target.deadline);
+        text = `Nichts überfällig · nächste Fälligkeit in ${d} Tag${d === 1 ? '' : 'en'}`;
+      } else {
+        text = 'Keine offenen Fälligkeiten';
+      }
+      heroStatus.innerHTML = `
+        <div class="status-pill ${tone}${target ? ' has-action' : ''}">
+          <i class="${icon}"></i><span class="status-text">${escapeHtml(text)}</span>
+          ${target ? `<button type="button" class="status-action" data-open-project="${target.projectId}">Öffnen</button>` : ''}
+        </div>`;
     }
   }
 
@@ -1666,7 +2489,7 @@
     document.querySelectorAll('.nav-item').forEach(n => {
       n.classList.toggle('active', n.dataset.view === viewName);
     });
-    document.getElementById('mobile-nav').classList.add('hidden');
+    // Apple-Design: kein aufklappbares Mobile-Menü mehr (am Handy gibt es die Tab-Leiste unten)
     window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
   }
 
@@ -1689,16 +2512,8 @@
         switchView(item.dataset.view);
       });
     });
-    document.getElementById('btn-mobile-menu').addEventListener('click', () => {
-      document.getElementById('mobile-nav').classList.toggle('hidden');
-    });
-    document.getElementById('btn-collapse-sidebar').addEventListener('click', () => {
-      const aside = document.getElementById('sidebar');
-      aside.classList.toggle('collapsed');
-      const icon = document.querySelector('#btn-collapse-sidebar i');
-      icon.classList.toggle('fa-chevron-left');
-      icon.classList.toggle('fa-chevron-right');
-    });
+    // Apple-Design: Sidebar (ein-/ausklappen) und mobiles Burger-Menü entfallen —
+    // die Navigation sitzt jetzt im Header bzw. am Handy in der Tab-Leiste.
 
     // Modal schließen (Backdrop-Klick, X-Buttons, Escape)
     document.querySelectorAll('.modal-close').forEach(btn => {
@@ -1753,6 +2568,11 @@
     document.getElementById('dashboard-deadlines-list').addEventListener('click', (e) => {
       const card = e.target.closest('[data-open-project]');
       if (card) openProjectDetail(card.dataset.openProject);
+    });
+    // Apple-Design: "Öffnen" in der Hero-Statuspille öffnet das betroffene Projekt
+    document.getElementById('hero-status').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-open-project]');
+      if (btn) openProjectDetail(btn.dataset.openProject);
     });
 
     document.getElementById('pd-task-list').addEventListener('click', (e) => {
@@ -1857,6 +2677,443 @@
     applyChipDefaults();
     initDriveSync();
   });
+})();
+</script>
+
+<script>
+/* ==========================================================================
+   APPLE-DESIGN — Bewegungs- & Oberflächen-Schicht
+   Eigenständige IIFE. Sie beobachtet per MutationObserver, was die App oben
+   ohnehin rendert (Ansichten, Modals, Toast, Aufgabenliste), und reagiert nur
+   darauf. Sie liest und schreibt KEINEN App-State, keine Speicherung, keinen Sync.
+   Inhalt:
+   a) Hell/Dunkel-Umschalter (View Transitions API, Fallback ohne)
+   b) Header-Kompaktmodus + Hero-Parallax (Scroll, rAF-gebündelt)
+   c) Hero: Datum, Begrüßung nach Tageszeit, Live-Uhr, Schnellaktionen
+   d) Popover-Menü im Header
+   e) Gleitender Schieber im Segmented Control (FLIP) + Tab-Bounce am Handy
+   f) Ansichtswechsel: View-Fade, gestaffeltes Scroll-Reveal, Count-up, Balken
+   g) Modals, Toast, Aufgaben-Haken, Filter-Chips: Einblend-Animationen
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  const root = document.documentElement;
+  const THEME_KEY = 'wb_theme_v1';
+  const HERO_NAME = 'Julian';
+  const mqReduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+  const mqMobile = window.matchMedia('(max-width: 640px)');
+  const reduced = () => mqReduce.matches;
+  const $ = (id) => document.getElementById(id);
+
+  /** Animationsklasse einmal abspielen und danach wieder entfernen.
+   *  endEl: Element, dessen animationend das Ende markiert (Standard: el selbst). */
+  function playOnce(el, cls, fallbackMs, endEl) {
+    if (!el || reduced()) return;
+    const target = endEl || el;
+    clearTimeout(el['_po_' + cls]);
+    el.classList.remove(cls);
+    void el.offsetWidth; // Reflow, damit die Animation neu startet
+    el.classList.add(cls);
+    const done = () => {
+      clearTimeout(el['_po_' + cls]);
+      el.classList.remove(cls);
+      target.removeEventListener('animationend', onEnd);
+    };
+    const onEnd = (e) => { if (e.target === target) done(); };
+    target.addEventListener('animationend', onEnd);
+    el['_po_' + cls] = setTimeout(done, fallbackMs || 1200);
+  }
+
+  /* ---------------------------------------------------------------
+   * a) HELL/DUNKEL
+   * ------------------------------------------------------------- */
+  const shell = $('appShell');
+  const themeBtn = $('btn-theme');
+  let themeVT = null;
+
+  function applyTheme(t) {
+    root.setAttribute('data-theme', t);
+    try { localStorage.setItem(THEME_KEY, t); } catch (e) {}
+    const meta = $('meta-theme-color');
+    if (meta) meta.setAttribute('content', t === 'dark' ? '#000000' : '#f5f5f7');
+    syncThemeLabel();
+  }
+  function syncThemeLabel() {
+    if (!themeBtn) return;
+    const dark = root.getAttribute('data-theme') === 'dark';
+    themeBtn.setAttribute('aria-label', dark ? 'Hellen Modus einschalten' : 'Dunklen Modus einschalten');
+    themeBtn.setAttribute('title', dark ? 'Hell' : 'Dunkel');
+  }
+  function toggleTheme() {
+    const next = root.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    // Fallback: sofort umschalten, App kurz einblenden — keine Farb-Transitions auf allen Elementen
+    if (reduced() || typeof document.startViewTransition !== 'function') {
+      applyTheme(next);
+      playOnce(shell, 'theme-in', 600);
+      return;
+    }
+    if (themeVT) { try { themeVT.skipTransition(); } catch (e) {} }
+    root.classList.add('theme-vt');
+    const vt = document.startViewTransition(() => applyTheme(next));
+    themeVT = vt;
+    vt.finished.finally(() => {
+      if (themeVT === vt) { root.classList.remove('theme-vt'); themeVT = null; }
+    });
+  }
+  if (themeBtn) themeBtn.addEventListener('click', toggleTheme);
+
+  /* ---------------------------------------------------------------
+   * b) SCROLL: Header-Kompaktmodus + Hero-Parallax
+   * ------------------------------------------------------------- */
+  const header = $('appHeader');
+  const hero = $('hero');
+  let ticking = false;
+
+  function updateScroll() {
+    ticking = false;
+    const y = window.scrollY || window.pageYOffset || 0;
+    if (header) header.classList.toggle('is-compact', y > 8);
+    if (hero) {
+      if (reduced() || hero.offsetParent === null) {
+        hero.style.setProperty('--hero-p', '0');
+      } else {
+        const h = hero.offsetHeight || 1;
+        const p = Math.min(Math.max(y / h, 0), 1);
+        hero.style.setProperty('--hero-p', p.toFixed(3));
+      }
+    }
+  }
+  window.addEventListener('scroll', () => {
+    if (!ticking) { ticking = true; requestAnimationFrame(updateScroll); }
+  }, { passive: true });
+
+  /* ---------------------------------------------------------------
+   * c) HERO: Datum, Begrüßung, Live-Uhr, Schnellaktionen
+   * ------------------------------------------------------------- */
+  function setText(el, text) { if (el && el.textContent !== text) el.textContent = text; }
+  function updateHeroClock() {
+    const now = new Date();
+    const h = now.getHours();
+    const greet = (h >= 5 && h < 12) ? 'Guten Morgen' : (h >= 12 && h < 18) ? 'Guten Nachmittag' : 'Guten Abend';
+    setText($('hero-greeting'), `${greet}, ${HERO_NAME}.`);
+    setText($('hero-date'), now.toLocaleDateString('de-DE', { weekday: 'long', day: 'numeric', month: 'long' }));
+    setText($('hero-clock'), now.toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) + ' Uhr');
+  }
+  // Schnellaktionen lösen nur die vorhandenen Buttons aus (gleiche Funktion wie bisher)
+  document.addEventListener('click', (e) => {
+    const quick = e.target.closest && e.target.closest('[data-quick]');
+    if (!quick) return;
+    const btn = $(quick.dataset.quick);
+    if (btn) btn.click();
+  });
+
+  /* ---------------------------------------------------------------
+   * d) POPOVER-MENÜ (…)
+   * ------------------------------------------------------------- */
+  const moreBtn = $('btn-more');
+  const menu = $('more-menu');
+  function openMenu() {
+    menu.hidden = false;
+    moreBtn.setAttribute('aria-expanded', 'true');
+    playOnce(menu, 'is-entering', 600);
+  }
+  function closeMenu() {
+    if (menu.hidden) return;
+    menu.hidden = true;
+    moreBtn.setAttribute('aria-expanded', 'false');
+  }
+  if (moreBtn && menu) {
+    moreBtn.addEventListener('click', (e) => { e.stopPropagation(); menu.hidden ? openMenu() : closeMenu(); });
+    // Schließen NACH der eigentlichen Aktion (die hängt direkt am Menüpunkt)
+    menu.addEventListener('click', (e) => { if (e.target.closest('.menu-item')) closeMenu(); });
+    document.addEventListener('click', (e) => { if (!e.target.closest('.more-wrap')) closeMenu(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeMenu(); });
+  }
+
+  /* ---------------------------------------------------------------
+   * e) SEGMENTED CONTROL: gleitender Schieber (FLIP) + Tab-Bounce
+   * ------------------------------------------------------------- */
+  const nav = $('nav-list');
+  const indicator = nav ? nav.querySelector('.tabs-indicator') : null;
+  let lastTab = null;
+  let lastRect = null;
+
+  function placeIndicator(animate) {
+    if (!nav || !indicator) return;
+    const tab = nav.querySelector('.nav-item.active');
+    if (!tab || getComputedStyle(indicator).display === 'none') { lastRect = null; return; }
+    nav.classList.add('has-indicator');
+    const next = { x: tab.offsetLeft, y: tab.offsetTop, w: tab.offsetWidth, h: tab.offsetHeight };
+    if (!next.w) return;
+    // 1. Endzustand direkt setzen (ohne Transition)
+    indicator.style.transition = 'none';
+    indicator.style.left = next.x + 'px';
+    indicator.style.top = next.y + 'px';
+    indicator.style.width = next.w + 'px';
+    indicator.style.height = next.h + 'px';
+    if (animate && lastRect && !reduced()) {
+      // 2. Invertieren: optisch zurück an die alte Position/Breite
+      indicator.style.transform =
+        `translate(${lastRect.x - next.x}px, ${lastRect.y - next.y}px) scaleX(${lastRect.w / next.w})`;
+      void indicator.offsetWidth; // 3. Reflow erzwingen
+      indicator.style.transition = '';   // 4. Transition wieder an …
+      indicator.style.transform = '';    // … und losgleiten lassen
+    } else {
+      indicator.style.transform = '';
+      void indicator.offsetWidth;
+      indicator.style.transition = '';
+    }
+    lastRect = next;
+  }
+
+  function onNavChange() {
+    if (!nav) return;
+    const tab = nav.querySelector('.nav-item.active');
+    nav.querySelectorAll('.nav-item').forEach((n) => {
+      if (n === tab) n.setAttribute('aria-current', 'page'); else n.removeAttribute('aria-current');
+    });
+    if (tab === lastTab) return;
+    lastTab = tab;
+    placeIndicator(true);
+    if (mqMobile.matches && tab) playOnce(tab.querySelector('i'), 'tab-bounce', 800);
+  }
+  if (nav) {
+    new MutationObserver(onNavChange).observe(nav, { subtree: true, attributes: true, attributeFilter: ['class'] });
+  }
+  let resizeTimer = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { placeIndicator(false); updateScroll(); }, 180);
+  });
+  if (mqMobile.addEventListener) mqMobile.addEventListener('change', () => placeIndicator(false));
+
+  /* ---------------------------------------------------------------
+   * f) ANSICHTSWECHSEL: View-Fade, Reveal, Count-up, Balken
+   *    Läuft NUR, wenn sich der View-Schlüssel ändert — nicht bei jedem
+   *    Neu-Rendern nach Speichern, Filtern oder Drive-Sync.
+   * ------------------------------------------------------------- */
+  const app = $('app');
+  const REVEAL_SEL = '.hero, .card, .task-card';
+  const MAX_REVEAL = 60;
+  let lastViewKey = null;
+  let revealObserver = null;
+  const pendingReveals = new Set();
+
+  function viewKey() {
+    const v = document.querySelector('.view.active');
+    return v ? v.id : '';
+  }
+
+  function finishReveal(el) {
+    clearTimeout(el._revealT);
+    el._revealT = null;
+    el.classList.remove('reveal', 'is-visible');
+    el.style.transitionDelay = '';
+    pendingReveals.delete(el);
+  }
+
+  function growBar(bar, delay) {
+    if (!bar || reduced()) return;
+    bar.style.animationDelay = (delay + 200) + 'ms';
+    playOnce(bar, 'bar-grow', 1700 + delay);
+    setTimeout(() => { if (!bar.classList.contains('bar-grow')) bar.style.animationDelay = ''; }, 1750 + delay);
+  }
+
+  // Zahl im deutschen Format zerlegen: Präfix, Wert, Nachkommastellen, Suffix
+  function parseNumber(text) {
+    const m = /^([^\d\-−]*?)([−-]?\d[\d.]*(?:,\d+)?)([\s\S]*)$/.exec(text);
+    if (!m) return null;
+    const raw = m[2].replace('−', '-');
+    const decimals = raw.includes(',') ? raw.split(',')[1].length : 0;
+    const value = parseFloat(raw.replace(/\./g, '').replace(',', '.'));
+    return isFinite(value) ? { prefix: m[1], value, decimals, suffix: m[3] } : null;
+  }
+
+  function countUp(el, delay) {
+    if (!el || reduced()) return;
+    const finalText = el.textContent;
+    const p = parseNumber(finalText);
+    if (!p || p.value === 0) return;
+    const fmt = (n) => p.prefix + n.toLocaleString('de-DE', {
+      minimumFractionDigits: p.decimals, maximumFractionDigits: p.decimals,
+    }) + p.suffix;
+    let last = fmt(0);
+    el.textContent = last;
+    let start = null;
+    const step = (ts) => {
+      // Hat die App zwischenzeitlich neu gerendert? Dann nicht mehr anfassen.
+      if (el.textContent !== last) return;
+      if (start === null) start = ts + delay;
+      const t = Math.min(Math.max((ts - start) / 1100, 0), 1);
+      if (t >= 1) { el.textContent = finalText; return; } // Endwert exakt wiederherstellen
+      const eased = 1 - Math.pow(1 - t, 3);                 // ease-out-cubic
+      last = fmt(p.value * eased);
+      el.textContent = last;
+      requestAnimationFrame(step);
+    };
+    requestAnimationFrame(step);
+  }
+
+  function onRevealed(el, delay) {
+    el.querySelectorAll('.kpi-figure').forEach((n) => countUp(n, delay));
+    el.querySelectorAll('.pbar-fill').forEach((b) => growBar(b, delay));
+  }
+
+  function startReveal(container) {
+    // Reveals der vorherigen Ansicht sofort auflösen (nichts bleibt unsichtbar hängen)
+    if (revealObserver) { revealObserver.disconnect(); revealObserver = null; }
+    [...pendingReveals].forEach(finishReveal);
+    if (!container || reduced() || !('IntersectionObserver' in window)) return;
+
+    const items = [...container.querySelectorAll(REVEAL_SEL)].slice(0, MAX_REVEAL);
+    const obs = new IntersectionObserver((entries) => {
+      let i = 0;
+      entries.forEach((entry) => {
+        if (!entry.isIntersecting) return;
+        const el = entry.target;
+        obs.unobserve(el);
+        const delay = Math.min(i++, 8) * 70; // gestaffelt innerhalb des Batches
+        el.style.transitionDelay = delay + 'ms';
+        el.classList.add('is-visible');
+        onRevealed(el, delay);
+        const onEnd = (ev) => {
+          if (ev.target !== el || ev.propertyName !== 'transform') return;
+          el.removeEventListener('transitionend', onEnd);
+          finishReveal(el);
+        };
+        el.addEventListener('transitionend', onEnd);
+        el._revealT = setTimeout(() => { el.removeEventListener('transitionend', onEnd); finishReveal(el); }, 1800 + delay);
+      });
+    }, { rootMargin: '0px 0px -6% 0px', threshold: 0.08 });
+    revealObserver = obs;
+    items.forEach((el) => { el.classList.add('reveal'); pendingReveals.add(el); obs.observe(el); });
+  }
+
+  function onViewChange() {
+    const key = viewKey();
+    if (key === lastViewKey) return;
+    lastViewKey = key;
+    if (app) playOnce(app, 'view-enter', 700);
+    startReveal($(key));
+    updateScroll();
+  }
+  const viewObserver = new MutationObserver(onViewChange);
+  document.querySelectorAll('.view').forEach((v) => viewObserver.observe(v, { attributes: true, attributeFilter: ['class'] }));
+
+  /* ---------------------------------------------------------------
+   * g) OVERLAYS & KLEINE REAKTIONEN
+   * ------------------------------------------------------------- */
+  // Modals: Einblenden nur beim Öffnen (hidden → sichtbar), nicht beim Neu-Rendern des Inhalts
+  document.querySelectorAll('[id^="modal-"]').forEach((m) => {
+    let wasOpen = !m.classList.contains('hidden');
+    new MutationObserver(() => {
+      const open = !m.classList.contains('hidden');
+      if (open && !wasOpen) {
+        const box = m.querySelector('.modal-box');
+        if (box) { const body = box.querySelector('.modal-body'); if (body) body.scrollTop = 0; }
+        playOnce(m, 'is-entering', 900, box || m);
+        m.querySelectorAll('.pbar-fill').forEach((b) => growBar(b, 120));
+      }
+      wasOpen = open;
+    }).observe(m, { attributes: true, attributeFilter: ['class'] });
+  });
+
+  // Toast: federt von unten herein
+  const toast = $('toast');
+  if (toast) {
+    let toastVisible = !toast.classList.contains('hidden');
+    new MutationObserver(() => {
+      const vis = !toast.classList.contains('hidden');
+      if (vis && !toastVisible) playOnce(toast, 'is-entering', 900);
+      toastVisible = vis;
+    }).observe(toast, { attributes: true, attributeFilter: ['class'] });
+  }
+
+  // Aufgabe abgehakt: nur DER gerade geklickte Kreis poppt (die Liste wird komplett neu gerendert)
+  let pendingToggleId = null;
+  document.addEventListener('click', (e) => {
+    const t = e.target.closest && e.target.closest('[data-toggle-task]');
+    if (t) pendingToggleId = t.dataset.toggleTask;
+  }, true);
+  const taskList = $('pd-task-list');
+  if (taskList) {
+    new MutationObserver(() => {
+      if (!pendingToggleId) return;
+      const id = pendingToggleId;
+      pendingToggleId = null;
+      const sel = '[data-toggle-task="' + (window.CSS && CSS.escape ? CSS.escape(id) : id) + '"]';
+      const box = taskList.querySelector(sel);
+      if (box && box.classList.contains('checked')) playOnce(box, 'just-checked', 700);
+    }).observe(taskList, { childList: true });
+  }
+
+  // Filter-Chips: der neu gewählte Chip poppt kurz (auch wenn die Chips neu gerendert wurden)
+  document.addEventListener('click', (e) => {
+    const chip = e.target.closest && e.target.closest('.filter-chip');
+    if (!chip || !chip.parentElement || !chip.parentElement.id) return;
+    const containerId = chip.parentElement.id;
+    requestAnimationFrame(() => {
+      const c = $(containerId);
+      const active = c && c.querySelector('.chip-active');
+      if (active) playOnce(active, 'chip-pop', 700);
+    });
+  });
+
+  /* ---------------------------------------------------------------
+   * INIT — läuft nach dem DOMContentLoaded-Handler der App (Skript steht danach)
+   * ------------------------------------------------------------- */
+  function init() {
+    syncThemeLabel();
+    updateHeroClock();
+    setInterval(updateHeroClock, 1000);
+    onNavChange();
+    placeIndicator(false);
+    onViewChange();
+    updateScroll();
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => placeIndicator(false));
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
+  else init();
+})();
+</script>
+<script id="jmb-global-theme-runtime">
+(function(){
+  'use strict';
+  var hub=window.JMBGlobalTheme;if(!hub)return;
+  function syncToggle(){
+    var t=hub.current();
+    var buttons=[document.getElementById('themeToggle'),document.getElementById('btnThemeToggle'),document.getElementById('btn-theme')].filter(Boolean);
+    buttons.forEach(function(btn){
+      var apple=(t==='apple'||t==='apple-dark');
+      btn.style.display=apple?'':'none';
+      if(apple){
+        var dark=t==='apple-dark';
+        btn.setAttribute('aria-label',dark?'Apple Hell aktivieren':'Apple Dunkel aktivieren');
+        btn.setAttribute('title',dark?'Apple Hell':'Apple Dunkel');
+        btn.setAttribute('aria-pressed',dark?'true':'false');
+      }
+    });
+  }
+  function installToggle(btn){
+    if(!btn)return;
+    btn.addEventListener('click',function(e){
+      var t=hub.current();
+      if(t!=='apple'&&t!=='apple-dark')return;
+      e.preventDefault();e.stopImmediatePropagation();
+      hub.set(t==='apple-dark'?'apple':'apple-dark');
+      syncToggle();
+    },true);
+  }
+  installToggle(document.getElementById('themeToggle'));
+  installToggle(document.getElementById('btnThemeToggle'));
+  installToggle(document.getElementById('btn-theme'));
+  window.addEventListener('jmb-global-theme-change',syncToggle);
+  syncToggle();
+  var frame=document.getElementById('appFrame');
+  if(frame){
+    frame.addEventListener('load',function(){try{frame.contentWindow.postMessage({type:'jmb-global-theme',theme:hub.current()},'*');}catch(e){}});
+  }
 })();
 </script>
 </body>
