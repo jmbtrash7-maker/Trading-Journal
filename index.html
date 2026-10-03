@@ -342,12 +342,26 @@
         </span>
         <span class="hex__accent"></span>
       </button>
+
+      <button class="hex" data-target="budgetplanner" type="button" style="--accent:#22c55e;">
+        <span class="hex__inner">
+          <svg class="hex__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="5" y="12" width="38" height="26" rx="2"/>
+            <path d="M5 19h38"/>
+            <rect x="29" y="25" width="10" height="7" rx="1.2" fill="currentColor" stroke="none"/>
+          </svg>
+          <span class="hex__title">Budgetplanner</span>
+          <span class="hex__sub">Budget & Finanzen</span>
+        </span>
+        <span class="hex__accent"></span>
+      </button>
     </div>
 
     <div class="status-strip">
       <span><span class="status-dot"></span>Kalender bereit</span>
       <span><span class="status-dot"></span>Journal bereit</span>
       <span><span class="status-dot"></span>Projekte bereit</span>
+      <span><span class="status-dot"></span>Budgetplanner bereit</span>
     </div>
   </main>
 
@@ -402,7 +416,8 @@
   const targets = {
     kalender: { src: 'kalender-julian.html', label: 'Kalender wird geladen …' },
     journal:  { src: 'trading-journal-julian.html', label: 'Trading Journal wird geladen …' },
-    projekte: { src: 'projekte-julian.html', label: 'Projekte werden geladen …' }
+    projekte: { src: 'projekte-julian.html', label: 'Projekte werden geladen …' },
+    budgetplanner: { src: 'budgetplanner-julian.html', label: 'Budgetplanner wird geladen …' }
   };
 
   let currentTarget = null;
