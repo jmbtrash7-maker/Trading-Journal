@@ -31,6 +31,26 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=VT323&family=Shippori+Mincho:wght@600;700&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem("tj_theme_v1");if(["cream","sakura","neon","cosmic","glass","aurora","terminal","ocean","zen","alchemy","synthwave","topo","blueprint","matrix","biolum","rte","apple","apple-dark"].indexOf(t)>-1)document.documentElement.setAttribute("data-theme",t);/* Soft-Struktur für Primär-Designs (Gruppe 1 in THEMES, bei Änderung dort mitziehen) */var d=document.documentElement.getAttribute("data-theme")||"dark";if(["dark","neon","rte","sakura","cosmic","glass","apple","apple-dark"].indexOf(d)>-1)document.documentElement.setAttribute("data-feel","soft");}catch(e){}</script>
+<script id="jmb-global-theme-master">
+/* Trading Journal publishes its primary design to the whole JMB suite. */
+(function(){
+  'use strict';
+  var KEY='jmb_global_theme_v1',CHANNEL='jmb-global-theme-v1';
+  var PRIMARY=['dark','neon','rte','sakura','cosmic','glass','apple','apple-dark'];
+  var bc=null;
+  function valid(t){return PRIMARY.indexOf(t)>-1?t:null;}
+  function persist(t){try{localStorage.setItem(KEY,t);}catch(e){}}
+  function post(t){
+    try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'jmb-global-theme',theme:t},'*');}catch(e){}
+    try{if(bc)bc.postMessage({type:'jmb-global-theme',theme:t});}catch(e){}
+  }
+  function publish(t){t=valid(t);if(!t)return false;persist(t);post(t);return true;}
+  try{if('BroadcastChannel'in window)bc=new BroadcastChannel(CHANNEL);}catch(e){}
+  var initial=valid(document.documentElement.getAttribute('data-theme')||'dark');
+  if(initial)persist(initial);
+  window.JMBGlobalThemeMaster=Object.freeze({key:KEY,primary:PRIMARY.slice(),publish:publish});
+})();
+</script>
 <script>/* Layout-Stil (Form/Dichte/Schrift) – unabhängig vom Farb-Design, siehe LAYOUTS */try{var l=localStorage.getItem("tj_layout_v1");if(["bento","swiss","sharp","dense","floating"].indexOf(l)>-1)document.documentElement.setAttribute("data-layout",l);}catch(e){}</script>
 <script>/* Bewegung & Übergänge (Einstellungen → Darstellung) – Standard an, siehe JournalMotion */try{var m=localStorage.getItem("tj_motion_v1");document.documentElement.setAttribute("data-motion",m==="off"?"off":"on");}catch(e){document.documentElement.setAttribute("data-motion","on");}</script>
 <style>
@@ -22727,6 +22747,8 @@ function applyTheme(theme){
   const themeEntry=THEMES.find(x=>x.key===(theme||"dark"));
   if(themeEntry&&themeEntry.group===1) document.documentElement.setAttribute("data-feel","soft");
   else document.documentElement.removeAttribute("data-feel");
+  // Primär-Design hubweit publizieren (Index/Kalender/Projekte/Budgetplaner).
+  try{ window.JMBGlobalThemeMaster && window.JMBGlobalThemeMaster.publish(theme||"dark"); }catch(e){}
   // Statusleisten-Farbe (iPhone/PWA): Apple Hell/Dunkel passend, alle anderen wie bisher
   const themeColorMeta=document.querySelector('meta[name="theme-color"]');
   if(themeColorMeta) themeColorMeta.setAttribute("content", theme==="apple"?"#f5f5f7":theme==="apple-dark"?"#000000":"#0a0a0d");
