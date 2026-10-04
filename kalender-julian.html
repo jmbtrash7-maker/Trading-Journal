@@ -2117,77 +2117,100 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
      ============================================================ */
   const GOOGLE_CLIENT_ID = "273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com";
   const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.events";
-  const LS_CAL_CONNECTED = 'kalenderJulian_calconnected_v1';
+  const LS_CAL_CONNECTED = 'kalenderJulian_calconnected_v1'; // nur noch Legacy-/UI-Kompatibilität
   const LS_CAL_LASTSYNC = 'kalenderJulian_callastsync_v1';
-  const CAL_SYNC_PAST_DAYS = 30;    // wie weit rückwirkend mit Google abgeglichen wird
-  const CAL_SYNC_FUTURE_DAYS = 180; // wie weit im Voraus mit Google abgeglichen wird
-  // Grobe Zuordnung Google-Kalender-Vorschaufarben <-> eigene Kategoriefarben.
+  const JMB_TOKEN_KEY = 'jmb_google_token_v1';
+  const JMB_TOKEN_EXP_KEY = 'jmb_google_token_exp_v1';
+  const JMB_CONNECTED_KEY = 'jmb_google_connected_v1';
+  const CAL_SYNC_PAST_DAYS = 30;
+  const CAL_SYNC_FUTURE_DAYS = 180;
   const GOOGLE_CAL_COLORS = {
     '1':'#7986cb','2':'#33b679','3':'#8e24aa','4':'#e67c73','5':'#f6bf26',
     '6':'#f4511e','7':'#039be5','8':'#616161','9':'#3f51b5','10':'#0b8043','11':'#d50000'
   };
 
-  let calTokenClient = null;
   let calAccessToken = null;
   let calTokenExpiresAt = 0;
   let calConnected = false;
   let calSyncing = false;
   let calSyncTimer = null;
   let calPollTimer = null;
-  const calDirtyIds = new Set(); // lokal geänderte Termine, die noch zu Google hochgeladen werden müssen
+  let calHubTokenWaiters = [];
+  const calDirtyIds = new Set();
 
   function markCalDirty(id){ if(id) calDirtyIds.add(id); }
 
-  // Wartet, bis das nachgeladene Google-Skript bereit ist (async defer im <head>).
-  function initGoogleCalendar(tries){
-    tries = tries || 0;
-    if(window.google && google.accounts && google.accounts.oauth2){
-      calTokenClient = google.accounts.oauth2.initTokenClient({
-        client_id: GOOGLE_CLIENT_ID, scope: CAL_SCOPE, callback: onCalTokenResponse
-      });
-      if(localStorage.getItem(LS_CAL_CONNECTED) === '1'){
-        calTokenClient.requestAccessToken({ prompt: '' }); // stiller Reconnect, falls Google-Session noch aktiv
-      }
-      return;
+  function readSharedGoogleToken(){
+    try{
+      const token=localStorage.getItem(JMB_TOKEN_KEY);
+      const expiresAt=parseInt(localStorage.getItem(JMB_TOKEN_EXP_KEY)||'0',10)||0;
+      if(token&&Date.now()<expiresAt) return {token,expiresAt};
+    }catch(e){}
+    return null;
+  }
+  function resolveCalHubWaiters(token){
+    const waiters=calHubTokenWaiters.splice(0);
+    waiters.forEach(w=>token?w.resolve(token):w.reject(new Error('Google ist im Headquarter nicht verbunden.')));
+  }
+  function acceptHubGoogleToken(token,expiresAt,runSync){
+    if(!token||Date.now()>=(Number(expiresAt)||0)){
+      calAccessToken=null;calTokenExpiresAt=0;calConnected=false;
+      updateCalSyncPanel();resolveCalHubWaiters(null);return false;
     }
-    if(tries < 50) setTimeout(() => initGoogleCalendar(tries+1), 200);
-  }
-
-  function onCalTokenResponse(resp){
-    if(!resp || resp.error){ calConnected = false; updateCalSyncPanel(); return; }
-    calAccessToken = resp.access_token;
-    calTokenExpiresAt = Date.now() + (parseInt(resp.expires_in,10) || 3500) * 1000 - 60000;
-    calConnected = true;
-    localStorage.setItem(LS_CAL_CONNECTED, '1');
+    calAccessToken=token;
+    calTokenExpiresAt=Number(expiresAt)||0;
+    calConnected=true;
+    try{localStorage.setItem(LS_CAL_CONNECTED,'1');}catch(e){}
     updateCalSyncPanel();
-    setTimeout(() => { if(calConnected) calTokenClient.requestAccessToken({ prompt: '' }); }, Math.max(calTokenExpiresAt - Date.now() - 300000, 60000));
-    if(!calPollTimer) calPollTimer = setInterval(() => { if(calConnected) calSyncNow(); }, 120000); // alle 2 Min. nach Änderungen am Handy schauen
-    calSyncNow();
+    resolveCalHubWaiters(token);
+    if(!calPollTimer) calPollTimer=setInterval(()=>{if(calConnected)calSyncNow();},120000);
+    if(runSync) setTimeout(()=>calSyncNow(),0);
+    return true;
   }
-
-  function ensureFreshCalToken(){
-    return new Promise((resolve, reject) => {
-      if(calAccessToken && Date.now() < calTokenExpiresAt){ resolve(calAccessToken); return; }
-      if(!calTokenClient){ reject(new Error('Google-Anmeldung noch nicht bereit')); return; }
-      const prevCallback = calTokenClient.callback;
-      calTokenClient.callback = (resp) => {
-        calTokenClient.callback = prevCallback;
-        onCalTokenResponse(resp);
-        if(resp && !resp.error) resolve(resp.access_token); else reject(new Error('Google-Anmeldung abgelaufen'));
-      };
-      calTokenClient.requestAccessToken({ prompt: '' });
+  function requestHubGoogleToken(){
+    return new Promise((resolve,reject)=>{
+      const cached=readSharedGoogleToken();
+      if(cached){acceptHubGoogleToken(cached.token,cached.expiresAt,false);resolve(cached.token);return;}
+      if(window.parent===window){reject(new Error('Google bitte über den JMB-Index verbinden.'));return;}
+      const waiter={resolve,reject};calHubTokenWaiters.push(waiter);
+      try{window.parent.postMessage({type:'jmb-google-token-request',app:'calendar'},'*');}catch(e){}
+      setTimeout(()=>{
+        const i=calHubTokenWaiters.indexOf(waiter);
+        if(i>=0){calHubTokenWaiters.splice(i,1);reject(new Error('Keine Google-Sitzung vom Headquarter erhalten.'));}
+      },8000);
     });
   }
-
-  function calConnect(){ if(calTokenClient) calTokenClient.requestAccessToken({ prompt: 'consent' }); }
-  function calDisconnect(){
-    if(calAccessToken) google.accounts.oauth2.revoke(calAccessToken, () => {});
-    calAccessToken = null; calTokenExpiresAt = 0; calConnected = false;
-    clearInterval(calPollTimer); calPollTimer = null;
-    localStorage.removeItem(LS_CAL_CONNECTED);
-    updateCalSyncPanel();
-    showToast('Google-Kalender-Verbindung getrennt');
+  function initGoogleCalendar(){
+    const cached=readSharedGoogleToken();
+    if(cached) acceptHubGoogleToken(cached.token,cached.expiresAt,true);
+    else{
+      calConnected=false;updateCalSyncPanel();
+      if(window.parent!==window){try{window.parent.postMessage({type:'jmb-google-token-request',app:'calendar'},'*');}catch(e){}}
+    }
   }
+  function ensureFreshCalToken(){
+    if(calAccessToken&&Date.now()<calTokenExpiresAt) return Promise.resolve(calAccessToken);
+    return requestHubGoogleToken();
+  }
+  function calConnect(){
+    try{if(window.parent!==window)window.parent.postMessage({type:'jmb-google-connect-request',app:'calendar'},'*');}catch(e){}
+    showToast('Google bitte einmal oben im JMB Headquarter verbinden.');
+  }
+  function calDisconnect(){
+    showToast('Die Google-Verbindung wird zentral im JMB Headquarter getrennt.');
+  }
+  window.addEventListener('message',(e)=>{
+    const d=e.data||{};
+    if(d.type==='jmb-google-auth') acceptHubGoogleToken(d.token,d.expiresAt,!!d.token);
+    if(d.type==='jmb-google-sync-now'&&calConnected) calSyncNow();
+  });
+  window.addEventListener('storage',(e)=>{
+    if(e.key===JMB_TOKEN_KEY||e.key===JMB_TOKEN_EXP_KEY||e.key===JMB_CONNECTED_KEY){
+      const cached=readSharedGoogleToken();
+      if(cached) acceptHubGoogleToken(cached.token,cached.expiresAt,false);
+      else acceptHubGoogleToken(null,0,false);
+    }
+  });
 
   // ---------- Farb-/Kategorie-Zuordnung (Google kennt keine eigenen Kategorien) ----------
   function hexToRgb(hex){ hex = (hex||'#808080').replace('#',''); return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)]; }
@@ -2363,10 +2386,10 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       const last = parseInt(localStorage.getItem(LS_CAL_LASTSYNC), 10);
       const label = last ? new Date(last).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' }) : '';
       btn.textContent = '✓ Google Kalender' + (label ? ` · ${label}` : '');
-      btn.title = 'Verbunden mit Google Kalender (beidseitig) — Klick zum Trennen';
+      btn.title = 'Verbunden über JMB Headquarter — Klick synchronisiert jetzt';
     } else {
-      btn.textContent = '🔗 Google Kalender verbinden';
-      btn.title = 'Termine beidseitig mit Google Kalender synchronisieren (auch am Handy sichtbar)';
+      btn.textContent = '☁ Google im Headquarter';
+      btn.title = 'Google einmal zentral im JMB Headquarter verbinden';
     }
   }
 
@@ -2431,11 +2454,8 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
     }
   });
   document.getElementById('btnSync').addEventListener('click', () => {
-    if(calConnected){
-      if(confirm('Verbindung zu Google Kalender trennen? Bereits übertragene Termine bleiben in Google Kalender erhalten.')) calDisconnect();
-    } else {
-      calConnect();
-    }
+    if(calConnected) calSyncNow();
+    else calConnect();
   });
   document.getElementById('btnExport').addEventListener('click', exportData);
   document.getElementById('btnImportTrigger').addEventListener('click', () => document.getElementById('importFileInput').click());

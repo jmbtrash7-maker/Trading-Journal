@@ -1191,6 +1191,155 @@ window.JMBUI=(function(){
     };
   }
 
+  // ---------- Zentrale Google-Drive-Sicherung (Auth-Owner: JMB Headquarter) ----------
+  const BUDGET_DRIVE_FILENAME='budgetplanner-backup.json';
+  const BUDGET_DRIVE_FILEID_KEY='jmb_budget_drivefileid_v1';
+  const BUDGET_DRIVE_LASTSYNC_KEY='jmb_budget_drivelastsync_v1';
+  const JMB_TOKEN_KEY='jmb_google_token_v1';
+  const JMB_TOKEN_EXP_KEY='jmb_google_token_exp_v1';
+  const JMB_CONNECTED_KEY='jmb_google_connected_v1';
+  let budgetDriveToken=null;
+  let budgetDriveExpiresAt=0;
+  let budgetDriveConnected=false;
+  let budgetDriveSyncing=false;
+  let budgetDriveTimer=null;
+  let budgetDriveHydrated=false;
+  let budgetHubWaiters=[];
+
+  function readSharedBudgetToken(){
+    try{
+      const token=localStorage.getItem(JMB_TOKEN_KEY);
+      const expiresAt=parseInt(localStorage.getItem(JMB_TOKEN_EXP_KEY)||'0',10)||0;
+      if(token&&Date.now()<expiresAt)return {token,expiresAt};
+    }catch(e){}
+    return null;
+  }
+  function resolveBudgetHubWaiters(token){
+    const list=budgetHubWaiters.splice(0);
+    list.forEach(w=>token?w.resolve(token):w.reject(new Error('Google ist im Headquarter nicht verbunden.')));
+  }
+  function notifyBudgetTokenInvalid(){
+    budgetDriveToken=null;budgetDriveExpiresAt=0;budgetDriveConnected=false;
+    try{if(window.parent!==window)window.parent.postMessage({type:'jmb-google-token-invalid',app:'budget'},'*');}catch(e){}
+  }
+  function requestBudgetHubToken(){
+    return new Promise((resolve,reject)=>{
+      const cached=readSharedBudgetToken();
+      if(cached){acceptBudgetHubToken(cached.token,cached.expiresAt,false);resolve(cached.token);return;}
+      if(window.parent===window){reject(new Error('Google bitte über den JMB-Index verbinden.'));return;}
+      const waiter={resolve,reject};budgetHubWaiters.push(waiter);
+      try{window.parent.postMessage({type:'jmb-google-token-request',app:'budget'},'*');}catch(e){}
+      setTimeout(()=>{
+        const i=budgetHubWaiters.indexOf(waiter);
+        if(i>=0){budgetHubWaiters.splice(i,1);reject(new Error('Keine Google-Sitzung vom Headquarter erhalten.'));}
+      },8000);
+    });
+  }
+  function ensureBudgetDriveToken(){
+    if(budgetDriveToken&&Date.now()<budgetDriveExpiresAt)return Promise.resolve(budgetDriveToken);
+    return requestBudgetHubToken();
+  }
+  function buildBudgetDriveMultipart(metadata,content){
+    const boundary='jmb_budget_boundary_'+Date.now();
+    return {
+      body:`--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`+
+           `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${content}\r\n`+
+           `--${boundary}--`,
+      contentType:`multipart/related; boundary=${boundary}`
+    };
+  }
+  async function budgetDriveFindFile(){
+    const cached=localStorage.getItem(BUDGET_DRIVE_FILEID_KEY);
+    if(cached){
+      const check=await fetch(`https://www.googleapis.com/drive/v3/files/${cached}?fields=id`,{headers:{Authorization:`Bearer ${budgetDriveToken}`}});
+      if(check.ok)return cached;
+      if(check.status===401)notifyBudgetTokenInvalid();
+      localStorage.removeItem(BUDGET_DRIVE_FILEID_KEY);
+    }
+    const q=encodeURIComponent(`name='${BUDGET_DRIVE_FILENAME}' and trashed=false`);
+    const res=await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`,{headers:{Authorization:`Bearer ${budgetDriveToken}`}});
+    if(res.status===401){notifyBudgetTokenInvalid();throw new Error('Google-Sitzung abgelaufen');}
+    if(!res.ok)throw new Error('Google Drive HTTP '+res.status);
+    const data=await res.json();
+    const id=data&&data.files&&data.files[0]&&data.files[0].id;
+    if(id)localStorage.setItem(BUDGET_DRIVE_FILEID_KEY,id);
+    return id||null;
+  }
+  async function budgetDriveSaveNow(){
+    if(budgetDriveSyncing||!budgetDriveConnected)return false;
+    budgetDriveSyncing=true;
+    if(statusEl)statusEl.textContent='Cloud speichert …';
+    try{
+      await ensureBudgetDriveToken();
+      const fileId=await budgetDriveFindFile();
+      const mp=buildBudgetDriveMultipart({name:BUDGET_DRIVE_FILENAME,mimeType:'application/json'},JSON.stringify(state));
+      const url=fileId?`https://www.googleapis.com/upload/drive/v3/files/${fileId}?uploadType=multipart`:'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+      const res=await fetch(url,{method:fileId?'PATCH':'POST',headers:{Authorization:`Bearer ${budgetDriveToken}`,'Content-Type':mp.contentType},body:mp.body});
+      if(res.status===401){notifyBudgetTokenInvalid();throw new Error('Google-Sitzung abgelaufen');}
+      if(!res.ok)throw new Error('Google Drive HTTP '+res.status);
+      const data=await res.json();if(data.id)localStorage.setItem(BUDGET_DRIVE_FILEID_KEY,data.id);
+      const now=Date.now();localStorage.setItem(BUDGET_DRIVE_LASTSYNC_KEY,String(now));
+      const t=new Date(now);if(statusEl)statusEl.textContent='Cloud gespeichert · '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+      return true;
+    }catch(err){
+      console.error('Budgetplanner: Drive-Sicherung fehlgeschlagen',err);
+      if(statusEl)statusEl.textContent='Lokal gespeichert · Cloud nicht erreichbar';
+      return false;
+    }finally{budgetDriveSyncing=false;}
+  }
+  async function budgetDriveLoadNow(){
+    try{
+      await ensureBudgetDriveToken();
+      const fileId=await budgetDriveFindFile();
+      if(!fileId)return false;
+      const res=await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,{headers:{Authorization:`Bearer ${budgetDriveToken}`}});
+      if(res.status===401){notifyBudgetTokenInvalid();throw new Error('Google-Sitzung abgelaufen');}
+      if(!res.ok)throw new Error('Google Drive HTTP '+res.status);
+      const data=await res.json();
+      if(!data||typeof data!=='object')return false;
+      state=merge(defaults(),data);
+      localStorage.setItem(KEY,JSON.stringify(state));
+      renderAll();
+      const now=Date.now();localStorage.setItem(BUDGET_DRIVE_LASTSYNC_KEY,String(now));
+      if(statusEl)statusEl.textContent='Cloud geladen';
+      return true;
+    }catch(err){console.error('Budgetplanner: Laden aus Drive fehlgeschlagen',err);return false;}
+  }
+  function scheduleBudgetDriveSave(){
+    if(!budgetDriveConnected)return;
+    clearTimeout(budgetDriveTimer);
+    budgetDriveTimer=setTimeout(budgetDriveSaveNow,4000);
+  }
+  async function acceptBudgetHubToken(token,expiresAt,hydrate){
+    if(!token||Date.now()>=(Number(expiresAt)||0)){
+      budgetDriveToken=null;budgetDriveExpiresAt=0;budgetDriveConnected=false;resolveBudgetHubWaiters(null);return false;
+    }
+    budgetDriveToken=token;budgetDriveExpiresAt=Number(expiresAt)||0;budgetDriveConnected=true;resolveBudgetHubWaiters(token);
+    if(hydrate&&!budgetDriveHydrated){
+      budgetDriveHydrated=true;
+      const found=await budgetDriveLoadNow();
+      if(!found)budgetDriveSaveNow();
+    }
+    return true;
+  }
+  function initBudgetDriveSync(){
+    const cached=readSharedBudgetToken();
+    if(cached)acceptBudgetHubToken(cached.token,cached.expiresAt,true);
+    else if(window.parent!==window){try{window.parent.postMessage({type:'jmb-google-token-request',app:'budget'},'*');}catch(e){}}
+  }
+  window.addEventListener('message',e=>{
+    const d=e.data||{};
+    if(d.type==='jmb-google-auth')acceptBudgetHubToken(d.token,d.expiresAt,!!d.token);
+    if(d.type==='jmb-google-sync-now'&&budgetDriveConnected)budgetDriveSaveNow();
+  });
+  window.addEventListener('storage',e=>{
+    if(e.key===JMB_TOKEN_KEY||e.key===JMB_TOKEN_EXP_KEY||e.key===JMB_CONNECTED_KEY){
+      const cached=readSharedBudgetToken();
+      if(cached)acceptBudgetHubToken(cached.token,cached.expiresAt,false);
+      else acceptBudgetHubToken(null,0,false);
+    }
+  });
+
   // ---------- Laden / Speichern ----------
   function load(){
     const d=defaults();
@@ -1219,7 +1368,8 @@ window.JMBUI=(function(){
       try{
         localStorage.setItem(KEY,JSON.stringify(state));
         const t=new Date();
-        statusEl.textContent='Gespeichert · '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+        statusEl.textContent='Lokal gespeichert · '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+        scheduleBudgetDriveSave();
       }catch(e){ statusEl.textContent='Speichern nicht möglich – bitte exportieren'; }
     },300);
   }
@@ -1593,6 +1743,7 @@ window.JMBUI=(function(){
   let startTab='uebersicht';
   try{ startTab=localStorage.getItem(TAB_KEY)||startTab; }catch(e){}
   showTab(startTab);
+  initBudgetDriveSync();
 
   } catch(err){ bootError((err&&err.stack)||String(err)); }
 })();
