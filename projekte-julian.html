@@ -32,73 +32,6 @@
 </script>
 
 <!-- Fonts — Apple-Design: SF Pro über -apple-system; Inter nur noch als Fallback für Nicht-Apple-Geräte -->
-<script id="jmb-global-theme-bridge">
-/* JMB GLOBAL THEME BRIDGE · Trading Journal = Design-Master */
-(function(){
-  'use strict';
-  var KEY='jmb_global_theme_v1';
-  var CHANNEL='jmb-global-theme-v1';
-  var PRIMARY=['dark','neon','rte','sakura','cosmic','glass','apple','apple-dark'];
-  var DARK={dark:1,neon:1,rte:1,cosmic:1,glass:1,'apple-dark':1};
-  var root=document.documentElement;
-  var bc=null;
-  function valid(t){return PRIMARY.indexOf(t)>-1?t:null;}
-  function read(){
-    try{
-      var g=valid(localStorage.getItem(KEY));
-      if(g)return g;
-      var j=valid(localStorage.getItem('tj_theme_v1'));
-      if(j)return j;
-    }catch(e){}
-    return 'dark';
-  }
-  function metaColor(t){
-    if(t==='apple')return '#f5f5f7';
-    if(t==='sakura')return '#fdf8f9';
-    if(t==='apple-dark')return '#000000';
-    if(t==='neon')return '#090a12';
-    if(t==='rte')return '#050505';
-    if(t==='cosmic')return '#04030d';
-    if(t==='glass')return '#090b11';
-    return '#070605';
-  }
-  function apply(t){
-    t=valid(t)||'dark';
-    root.setAttribute('data-theme',t);
-    root.setAttribute('data-jmb-theme',t);
-    root.setAttribute('data-jmb-dark',DARK[t]?'true':'false');
-    var meta=document.querySelector('meta[name="theme-color"]');
-    if(meta)meta.setAttribute('content',metaColor(t));
-    try{window.dispatchEvent(new CustomEvent('jmb-global-theme-change',{detail:{theme:t}}));}catch(e){}
-    return t;
-  }
-  function persist(t){try{localStorage.setItem(KEY,t);}catch(e){}}
-  function postParent(t){
-    try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'jmb-global-theme',theme:t},'*');}catch(e){}
-  }
-  function postFrame(t,except){
-    try{
-      var f=document.getElementById('appFrame');
-      if(f&&f.contentWindow&&f.contentWindow!==except)f.contentWindow.postMessage({type:'jmb-global-theme',theme:t},'*');
-    }catch(e){}
-  }
-  function broadcast(t){try{if(bc)bc.postMessage({type:'jmb-global-theme',theme:t});}catch(e){}}
-  function set(t,opt){
-    opt=opt||{}; t=valid(t); if(!t)return current();
-    apply(t);
-    if(opt.persist!==false)persist(t);
-    if(opt.broadcast!==false)broadcast(t);
-    if(opt.post!==false){postParent(t);postFrame(t,null);}
-    return t;
-  }
-  function current(){return valid(root.getAttribute('data-jmb-theme')||root.getAttribute('data-theme'))||'dark';}
-  try{if('BroadcastChannel'in window){bc=new BroadcastChannel(CHANNEL);bc.onmessage=function(e){var d=e.data||{};if(d.type==='jmb-global-theme'&&valid(d.theme))set(d.theme,{persist:true,broadcast:false,post:false});};}}catch(e){}
-  window.addEventListener('storage',function(e){if(e.key===KEY&&valid(e.newValue))set(e.newValue,{persist:false,broadcast:false,post:false});});
-  window.addEventListener('message',function(e){var d=e.data||{};if(d.type!=='jmb-global-theme'||!valid(d.theme))return;set(d.theme,{persist:true,broadcast:true,post:false});postFrame(d.theme,e.source);});
-  window.JMBGlobalTheme=Object.freeze({key:KEY,primary:PRIMARY.slice(),current:current,set:set,apply:apply});
-  apply(read());
-})();
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -141,7 +74,6 @@
   }
 </script>
 
-<link id="jmb-global-theme-fonts" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* =====================================================================
      APPLE-DESIGN — komplett überarbeitete Darstellung.
@@ -621,6 +553,143 @@
   }
   :root[data-theme="dark"] .thumb-badge { background: rgba(28,28,30,.75); }
 
+  /* Projektbilder: Titelbild auf der Karte liegt über dem Verlauf (Verlauf bleibt als Platzhalter) */
+  .thumb.has-image { height: 8.5rem; }
+  .thumb.has-image::after { background: linear-gradient(180deg, rgba(0,0,0,.18) 0%, transparent 40%, transparent 70%, rgba(0,0,0,.14)); z-index: 0; }
+  .thumb-img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity .4s var(--ease), transform .7s var(--ease);
+  }
+  .thumb-img.is-loaded { opacity: 1; }
+  @media (hover: hover) {
+    .card.hoverable:hover .thumb-img { transform: scale(1.06); }
+  }
+
+  /* ---------- 8b. Projektbilder: Galerie im Projekt-Modal ---------- */
+  .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(104px, 1fr)); gap: 8px; }
+  .g-tile {
+    position: relative; aspect-ratio: 1 / 1; overflow: hidden;
+    border-radius: var(--radius-sm); background: var(--fill);
+    display: grid; place-items: center; color: var(--text-dim);
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .35s var(--spring);
+  }
+  .g-tile:active { transform: scale(.96); }
+  .g-img {
+    position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+    opacity: 0; transition: opacity .35s var(--ease), transform .7s var(--ease);
+  }
+  .g-img.is-loaded { opacity: 1; }
+  @media (hover: hover) { .g-tile:hover .g-img { transform: scale(1.05); } }
+  .g-missing { display: none; flex-direction: column; align-items: center; gap: 4px; font-size: 11px; line-height: 1.2; text-align: center; padding: 6px; }
+  .g-missing i { font-size: 18px; }
+  .g-tile.img-missing .g-missing { display: flex; }
+  .g-flag {
+    position: absolute; z-index: 1; width: 22px; height: 22px; border-radius: 999px;
+    display: grid; place-items: center; font-size: 10px; color: #fff;
+    background: rgba(0,0,0,.45); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px);
+  }
+  .g-flag.cover { top: 6px; left: 6px; color: #ffd60a; }
+  .g-flag.pending { bottom: 6px; right: 6px; }
+  .g-add {
+    aspect-ratio: 1 / 1; border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--separator); color: var(--accent);
+    display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px;
+    font-size: 12.5px; font-weight: 500;
+    transition: background-color .2s var(--ease), border-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .g-add i { font-size: 18px; }
+  .g-add:hover { background: var(--accent-dim); border-color: var(--accent); }
+  .g-add:active { transform: scale(.96); }
+  .g-empty {
+    width: 100%; padding: 22px 16px; border-radius: var(--radius-sm);
+    border: 1.5px dashed var(--separator); color: var(--text-dim);
+    display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; font-size: 13.5px;
+    transition: background-color .2s var(--ease), border-color .2s var(--ease);
+  }
+  .g-empty i { font-size: 22px; color: var(--accent); }
+  .g-empty strong { color: var(--accent); font-weight: 600; }
+  .g-empty:hover { background: var(--accent-dim); border-color: var(--accent); }
+  .g-tile.is-busy i { font-size: 18px; color: var(--text-dim); }
+
+  /* Ablegen per Drag & Drop: Hinweis über dem Projekt-Modal */
+  .modal-detail { position: relative; }
+  .drop-hint {
+    position: absolute; inset: 8px; z-index: 5; pointer-events: none;
+    border: 2px dashed var(--accent); border-radius: 22px;
+    background: color-mix(in srgb, var(--bg-panel) 88%, transparent);
+    display: none; flex-direction: column; align-items: center; justify-content: center; gap: 10px;
+    color: var(--accent); font-weight: 600; font-size: 15px;
+  }
+  .drop-hint i { font-size: 30px; }
+  #modal-project-detail.is-dragover .drop-hint { display: flex; animation: fadeIn .2s var(--ease) both; }
+
+  /* ---------- 8c. Bildansicht (Lightbox) ---------- */
+  .lightbox {
+    position: fixed; inset: 0; z-index: 70;
+    background: rgba(0,0,0,.82);
+    -webkit-backdrop-filter: blur(24px); backdrop-filter: blur(24px);
+    display: flex; align-items: center; justify-content: center;
+    padding: calc(64px + env(safe-area-inset-top)) 72px calc(84px + env(safe-area-inset-bottom));
+    animation: fadeIn .35s var(--ease) both;
+    touch-action: pan-y;
+  }
+  .lightbox.hidden { display: none; }
+  .lb-stage { position: relative; margin: 0; max-width: 100%; max-height: 100%; display: flex; animation: zoomIn .5s var(--spring) both; }
+  .lb-img {
+    display: block; max-width: 100%; max-height: calc(100vh - 148px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    max-height: calc(100dvh - 148px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+    object-fit: contain; border-radius: 14px; box-shadow: 0 30px 80px rgba(0,0,0,.5);
+    background: rgba(255,255,255,.04);
+    user-select: none; -webkit-user-drag: none;
+  }
+  .lb-img.is-swapping { animation: lbSwap .3s var(--ease); }
+  .lb-loading { position: absolute; inset: 0; display: none; place-items: center; color: rgba(255,255,255,.7); font-size: 22px; }
+  .lightbox.is-loading .lb-loading { display: grid; }
+  .lb-btn {
+    position: absolute; z-index: 2; width: 40px; height: 40px; border-radius: 999px;
+    display: grid; place-items: center; color: #fff; font-size: 16px;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.12);
+    -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+    transition: background-color .2s var(--ease), transform .35s var(--spring), opacity .2s var(--ease);
+  }
+  .lb-btn:hover { background: rgba(255,255,255,.24); }
+  .lb-btn:active { transform: scale(.9); }
+  .lb-btn[disabled] { opacity: 0; pointer-events: none; }
+  .lb-close { top: calc(16px + env(safe-area-inset-top)); right: 16px; }
+  .lb-prev { left: 16px; top: 50%; margin-top: -20px; }
+  .lb-next { right: 16px; top: 50%; margin-top: -20px; }
+  .lb-title {
+    position: absolute; top: calc(22px + env(safe-area-inset-top)); left: 20px; right: 72px;
+    color: rgba(255,255,255,.88); font-size: 14px; font-weight: 500;
+    overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  }
+  .lb-bar {
+    position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+    padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+  }
+  .lb-counter { color: rgba(255,255,255,.7); font-size: 13px; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .lb-actions { display: flex; gap: 8px; }
+  .lb-pill {
+    display: inline-flex; align-items: center; gap: 7px; padding: 8px 14px; border-radius: 999px;
+    color: #fff; font-size: 13px; font-weight: 500; white-space: nowrap;
+    background: rgba(255,255,255,.14); border: 1px solid rgba(255,255,255,.12);
+    -webkit-backdrop-filter: blur(20px) saturate(180%); backdrop-filter: blur(20px) saturate(180%);
+    transition: background-color .2s var(--ease), transform .35s var(--spring);
+  }
+  .lb-pill:hover { background: rgba(255,255,255,.24); }
+  .lb-pill:active { transform: scale(.97); }
+  .lb-pill.is-on i { color: #ffd60a; }
+  .lb-pill.danger { color: #ff6961; }
+  @media (max-width: 640px) {
+    .gallery { grid-template-columns: repeat(auto-fill, minmax(86px, 1fr)); gap: 6px; }
+    .lightbox { padding: calc(60px + env(safe-area-inset-top)) 8px calc(76px + env(safe-area-inset-bottom)); }
+    .lb-prev, .lb-next { display: none; }      /* am Handy wird gewischt */
+    .lb-pill span { display: none; }           /* nur Icons */
+    .lb-pill { width: 40px; height: 40px; padding: 0; justify-content: center; }
+  }
+
   /* Fortschrittsbalken (Breite setzt das JS; animiert wird nur scaleX) */
   .pbar { height: 6px; border-radius: 999px; background: var(--fill); overflow: hidden; }
   .pbar-fill { height: 100%; border-radius: 999px; width: 0%; transform-origin: left center; }
@@ -752,7 +821,7 @@
 
   /* ---------- 13. Toast ---------- */
   #toast {
-    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 60;
+    position: fixed; left: 50%; bottom: calc(24px + env(safe-area-inset-bottom)); z-index: 80; /* über der Bildansicht */
     transform: translateX(-50%);
     max-width: calc(100vw - 32px); padding: 11px 20px; border-radius: 999px;
     background: var(--inverse-bg); color: var(--inverse-text);
@@ -817,6 +886,8 @@
   @keyframes tabBounce  { from { transform: scale(.8); } to { transform: scale(1); } }
   @keyframes barGrow    { from { transform: scaleX(0); } to { transform: scaleX(1); } }
   @keyframes checkPop   { from { transform: scale(.6); } to { transform: scale(1); } }
+  @keyframes zoomIn     { from { opacity: 0; transform: scale(.88); } to { opacity: 1; transform: none; } }
+  @keyframes lbSwap     { from { opacity: .35; } to { opacity: 1; } }
   @keyframes themeOut   { from { opacity: 1; } to { opacity: 0; } }
   @keyframes themeIn    { from { opacity: .55; } to { opacity: 1; } }
   @keyframes startPulse {
@@ -844,147 +915,12 @@
     .checkbox-custom.checked { background: Highlight; }
   }
   @media print {
-    .ambient, .app-header, #toast, .skip-link, .hero-actions { display: none !important; }
+    .ambient, .app-header, #toast, .skip-link, .hero-actions, .lightbox { display: none !important; }
     .reveal { opacity: 1 !important; transform: none !important; }
     html, body { background: #fff !important; }
     .card { box-shadow: none !important; border: 1px solid #ddd !important; }
     .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
-</style>
-<style id="jmb-global-primary-themes">
-/* =====================================================================
-   JMB GLOBAL PRIMARY THEMES · Quelle/Identität: Trading Journal
-   Master-Auswahl: Trading Journal · Primärgruppe 1
-   dark / neon / rte / sakura / cosmic / glass / apple / apple-dark
-   ===================================================================== */
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#070605;--bg-panel:#12100c;--bg-card:#1a1711;--bg-card-hover:#231e15;
-  --panel-border:rgba(217,171,69,.16);--card-line:rgba(217,171,69,.14);--hero-line:rgba(232,190,95,.26);
-  --fill:rgba(217,171,69,.10);--fill-strong:rgba(217,171,69,.18);--glass:rgba(18,16,12,.76);--glass-strong:rgba(24,21,15,.92);--glass-border:rgba(217,171,69,.18);--separator:rgba(217,171,69,.20);
-  --text:#f6efdf;--text-dim:#b4a88e;--text-faint:#7c7059;
-  --accent:#d9ab45;--accent-fill:#c8942e;--accent-fill-hover:#e1b448;--accent-dim:rgba(217,171,69,.18);--focus:#e8be5f;
-  --green:#5fd09c;--green-dim:#13302a;--red:#ef6f5e;--red-dim:#3a1914;--amber:#f0c060;--amber-fill:#f0c060;--amber-dim:#3a2c10;
-  --inverse-bg:#e6c15f;--inverse-text:#1c1405;--thumb:#2c2517;--thumb-shadow:0 3px 12px rgba(0,0,0,.45),inset 0 0 0 1px rgba(232,190,95,.22);--backdrop:rgba(0,0,0,.62);--toast-link:#f3dc9a;
-  --ambient-a:rgba(217,171,69,.13);--ambient-b:rgba(201,128,60,.09);
-  --radius-lg:24px;--radius:20px;--radius-sm:14px;--radius-xs:9px;
-  --shadow-sm:0 2px 8px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,228,160,.05);--shadow-md:0 16px 36px -22px rgba(0,0,0,.92);--shadow-lg:0 28px 70px -30px rgba(0,0,0,.95);
-  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Cinzel",Georgia,serif;
-  --jmb-on-accent:#1c1405;--jmb-brand-gradient:linear-gradient(135deg,#fff1bd 0%,#f1ca60 22%,#c8942e 52%,#f7d981 76%,#a5752a 100%);
-  --jmb-hero-base:#0c0a08;--jmb-hero-art:radial-gradient(55% 75% at 82% 10%,rgba(217,171,69,.36),transparent 63%),radial-gradient(45% 60% at 12% 90%,rgba(201,128,60,.24),transparent 66%),linear-gradient(160deg,#18150f,#070605 72%);
-}
-:root[data-theme="neon"]{
-  color-scheme:dark;
-  --bg:#090a12;--bg-panel:#10121d;--bg-card:#131725;--bg-card-hover:#181e30;--panel-border:#22283c;--card-line:#22283c;--hero-line:rgba(139,123,255,.22);
-  --fill:rgba(139,123,255,.11);--fill-strong:rgba(139,123,255,.20);--glass:rgba(12,15,26,.76);--glass-strong:rgba(16,18,29,.92);--glass-border:rgba(139,123,255,.20);--separator:rgba(111,127,180,.22);
-  --text:#edf2ff;--text-dim:#97a1bb;--text-faint:#68738e;
-  --accent:#8b7bff;--accent-fill:#6a58f5;--accent-fill-hover:#7968ff;--accent-dim:rgba(139,123,255,.20);--focus:#8b7bff;
-  --green:#31d0a8;--green-dim:#173a34;--red:#f87171;--red-dim:#3a2230;--amber:#f5b544;--amber-fill:#f5b544;--amber-dim:#3a2c10;
-  --inverse-bg:#8b7bff;--inverse-text:#fff;--thumb:#171b2c;--thumb-shadow:0 0 0 1px rgba(139,123,255,.22),0 8px 22px rgba(0,0,0,.32);--backdrop:rgba(3,5,12,.66);--toast-link:#31d5ee;
-  --ambient-a:rgba(139,123,255,.18);--ambient-b:rgba(49,213,238,.12);
-  --radius-lg:20px;--radius:13px;--radius-sm:8px;--radius-xs:7px;--shadow-sm:inset 0 1px 0 rgba(108,130,255,.055),0 8px 24px -18px rgba(0,0,0,.9);--shadow-md:0 18px 42px -28px rgba(49,213,238,.18);--shadow-lg:0 30px 80px -36px rgba(0,0,0,.95);
-  --font-text:Inter,Arial,sans-serif;--font-display:Inter,Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(135deg,#7768ff,#6a58f5 48%,#31d5ee 118%);
-  --jmb-hero-base:#090a12;--jmb-hero-art:linear-gradient(rgba(139,123,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(49,213,238,.05) 1px,transparent 1px),radial-gradient(60% 70% at 82% 15%,rgba(139,123,255,.42),transparent 64%),linear-gradient(145deg,#131725,#090a12 72%);--jmb-hero-size:22px 22px,22px 22px,auto,auto;
-}
-:root[data-theme="rte"]{
-  color-scheme:dark;
-  --bg:#050505;--bg-panel:#0c0c0d;--bg-card:#121213;--bg-card-hover:#19191b;--panel-border:#232325;--card-line:#232325;--hero-line:rgba(220,220,226,.18);
-  --fill:rgba(220,220,226,.08);--fill-strong:rgba(220,220,226,.15);--glass:rgba(8,8,9,.78);--glass-strong:rgba(14,14,15,.94);--glass-border:rgba(220,220,226,.14);--separator:rgba(220,220,226,.15);
-  --text:#ededef;--text-dim:#a7a7ac;--text-faint:#6e6e74;
-  --accent:#dcdce0;--accent-fill:#cfcfd3;--accent-fill-hover:#ededf0;--accent-dim:rgba(220,220,226,.16);--focus:#f2f2f4;
-  --green:#5fd4a0;--green-dim:#10302a;--red:#ff6b6b;--red-dim:#3a1616;--amber:#e6c877;--amber-fill:#e6c877;--amber-dim:#352c14;
-  --inverse-bg:#f2f2f4;--inverse-text:#0a0a0b;--thumb:#262628;--thumb-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 24px rgba(0,0,0,.42);--backdrop:rgba(0,0,0,.72);--toast-link:#dcdce0;
-  --ambient-a:rgba(220,220,226,.10);--ambient-b:rgba(135,140,150,.07);
-  --radius-lg:18px;--radius:10px;--radius-sm:8px;--radius-xs:6px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.055),0 10px 28px -20px rgba(0,0,0,.95);--shadow-md:0 18px 40px -26px rgba(0,0,0,.95);--shadow-lg:0 32px 80px -32px rgba(0,0,0,.98);
-  --font-text:"Outfit",Inter,Arial,sans-serif;--font-display:"Outfit",Inter,Arial,sans-serif;
-  --jmb-on-accent:#0a0a0b;--jmb-brand-gradient:linear-gradient(135deg,#fbfbfb 0%,#cfcfd3 34%,#8c8c92 56%,#e8e8eb 100%);
-  --jmb-hero-base:#050505;--jmb-hero-art:radial-gradient(58% 78% at 82% 12%,rgba(240,240,244,.18),transparent 62%),linear-gradient(160deg,#171719,#050505 76%);
-}
-:root[data-theme="sakura"]{
-  color-scheme:light;
-  --bg:#fdf8f9;--bg-panel:#ffffff;--bg-card:#fff6f8;--bg-card-hover:#fdeaf0;--panel-border:#f5dfe6;--card-line:#f5dfe6;--hero-line:rgba(229,115,154,.18);
-  --fill:rgba(229,115,154,.09);--fill-strong:rgba(229,115,154,.16);--glass:rgba(255,252,253,.76);--glass-strong:rgba(255,255,255,.92);--glass-border:rgba(229,115,154,.14);--separator:rgba(201,96,138,.18);
-  --text:#3b2a31;--text-dim:#7d6770;--text-faint:#b097a1;
-  --accent:#e5739a;--accent-fill:#e2678f;--accent-fill-hover:#ec7aa1;--accent-dim:rgba(229,115,154,.16);--focus:#e5739a;
-  --green:#2f9e7a;--green-dim:#def3ea;--red:#d9485f;--red-dim:#fbe1e6;--amber:#c98a1b;--amber-fill:#d89a28;--amber-dim:#f8ecd2;
-  --inverse-bg:#3b2a31;--inverse-text:#fff8fa;--thumb:#ffffff;--thumb-shadow:0 4px 14px rgba(203,91,133,.13);--backdrop:rgba(75,42,56,.25);--toast-link:#c9608a;
-  --ambient-a:rgba(244,143,181,.18);--ambient-b:rgba(255,194,214,.20);
-  --radius-lg:28px;--radius:20px;--radius-sm:14px;--radius-xs:9px;--shadow-sm:0 6px 18px -14px rgba(203,91,133,.28);--shadow-md:0 16px 36px -25px rgba(203,91,133,.36);--shadow-lg:0 30px 70px -34px rgba(203,91,133,.40);
-  --font-text:Inter,Arial,sans-serif;--font-display:Inter,Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(135deg,#ffc2d6 0%,#f48fb5 45%,#e2678f 100%);
-  --jmb-hero-base:#7f3554;--jmb-hero-art:radial-gradient(circle at 84% 18%,rgba(255,230,239,.92),transparent 24%),radial-gradient(circle at 70% 35%,rgba(255,194,214,.55),transparent 28%),linear-gradient(145deg,#dc6f96,#7f3554 78%);
-}
-:root[data-theme="cosmic"]{
-  color-scheme:dark;
-  --bg:#04030d;--bg-panel:#0b0920;--bg-card:#110e2b;--bg-card-hover:#181438;--panel-border:#1d1940;--card-line:#1d1940;--hero-line:rgba(168,152,255,.20);
-  --fill:rgba(168,152,255,.10);--fill-strong:rgba(168,152,255,.18);--glass:rgba(9,7,28,.72);--glass-strong:rgba(13,10,34,.92);--glass-border:rgba(168,152,255,.16);--separator:rgba(163,159,201,.18);
-  --text:#ece9ff;--text-dim:#a39fc9;--text-faint:#6b6795;
-  --accent:#a898ff;--accent-fill:#8d7af0;--accent-fill-hover:#aa98ff;--accent-dim:rgba(168,152,255,.20);--focus:#b8aaff;
-  --green:#6ef2c0;--green-dim:#10302f;--red:#ff7390;--red-dim:#35142a;--amber:#ffd38a;--amber-fill:#ffd38a;--amber-dim:#352a18;
-  --inverse-bg:#d9d2ff;--inverse-text:#0c0822;--thumb:#211b4d;--thumb-shadow:0 0 0 1px rgba(168,152,255,.18),0 10px 26px rgba(0,0,0,.42);--backdrop:rgba(3,2,12,.7);--toast-link:#c9c0ff;
-  --ambient-a:rgba(168,152,255,.19);--ambient-b:rgba(240,140,255,.12);
-  --radius-lg:28px;--radius:20px;--radius-sm:14px;--radius-xs:9px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.05),0 12px 30px -24px rgba(0,0,0,.9);--shadow-md:0 20px 44px -26px rgba(0,0,0,.9);--shadow-lg:0 34px 86px -34px rgba(0,0,0,.96);
-  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Cinzel",Georgia,serif;
-  --jmb-on-accent:#0c0822;--jmb-brand-gradient:linear-gradient(135deg,#d9d2ff 0%,#a898ff 46%,#6a55e0 100%);
-  --jmb-hero-base:#09051d;--jmb-hero-art:radial-gradient(circle at 20% 18%,rgba(143,200,255,.40),transparent 16%),radial-gradient(circle at 76% 22%,rgba(240,140,255,.34),transparent 24%),radial-gradient(circle at 52% 75%,rgba(168,152,255,.30),transparent 30%),linear-gradient(150deg,#130c38,#04030d 78%);
-}
-:root[data-theme="glass"]{
-  color-scheme:dark;
-  --bg:#090b11;--bg-panel:#12151d;--bg-card:#171b25;--bg-card-hover:#1e2330;--panel-border:rgba(255,255,255,.08);--card-line:rgba(255,255,255,.07);--hero-line:rgba(212,222,245,.16);
-  --fill:rgba(212,222,245,.09);--fill-strong:rgba(212,222,245,.16);--glass:rgba(18,21,29,.58);--glass-strong:rgba(23,27,37,.76);--glass-border:rgba(255,255,255,.12);--separator:rgba(212,222,245,.14);
-  --text:#eef1f7;--text-dim:#a2a9ba;--text-faint:#6b7285;
-  --accent:#d4def5;--accent-fill:#aebdde;--accent-fill-hover:#cad5ed;--accent-dim:rgba(212,222,245,.16);--focus:#d4def5;
-  --green:#74e0b3;--green-dim:#15302a;--red:#ff8a8a;--red-dim:#3a1c20;--amber:#f2cf8a;--amber-fill:#f2cf8a;--amber-dim:#3a3020;
-  --inverse-bg:#eaf0ff;--inverse-text:#0b1020;--thumb:rgba(255,255,255,.14);--thumb-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 28px rgba(0,0,0,.35);--backdrop:rgba(0,0,0,.58);--toast-link:#d4def5;
-  --ambient-a:rgba(184,200,234,.13);--ambient-b:rgba(196,181,232,.11);
-  --radius-lg:30px;--radius:22px;--radius-sm:16px;--radius-xs:10px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.10),0 12px 30px -24px rgba(0,0,0,.88);--shadow-md:inset 0 1px 0 rgba(255,255,255,.12),0 24px 50px -28px rgba(0,0,0,.9);--shadow-lg:0 36px 90px -34px rgba(0,0,0,.94);
-  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Manrope",Inter,Arial,sans-serif;
-  --jmb-on-accent:#0b1020;--jmb-brand-gradient:linear-gradient(135deg,rgba(255,255,255,.95),#d4def5 45%,#9aabd6 100%);
-  --jmb-hero-base:#0b0f18;--jmb-hero-art:radial-gradient(55% 70% at 82% 12%,rgba(212,222,245,.28),transparent 64%),radial-gradient(42% 58% at 18% 82%,rgba(196,181,232,.18),transparent 66%),linear-gradient(145deg,#202735,#090b11 78%);
-}
-:root[data-theme="apple"]{
-  color-scheme:light;
-  --bg:#f5f5f7;--bg-panel:#ffffff;--bg-card:#f5f5f7;--bg-card-hover:#e8e8ed;--panel-border:transparent;--card-line:transparent;--hero-line:transparent;
-  --fill:rgba(118,118,128,.12);--fill-strong:rgba(118,118,128,.2);--glass:rgba(255,255,255,.72);--glass-strong:rgba(255,255,255,.86);--glass-border:rgba(0,0,0,.08);--separator:rgba(60,60,67,.14);
-  --text:#1d1d1f;--text-dim:#6e6e73;--text-faint:#86868b;--accent:#0066cc;--accent-fill:#0071e3;--accent-fill-hover:#0077ed;--accent-dim:rgba(0,113,227,.18);--focus:#0071e3;
-  --green:#1a7f37;--green-dim:rgba(52,199,89,.14);--red:#d70015;--red-dim:rgba(255,59,48,.1);--amber:#b25000;--amber-fill:#ff9f0a;--amber-dim:rgba(255,159,10,.14);
-  --inverse-bg:#1d1d1f;--inverse-text:#fff;--thumb:#fff;--thumb-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);--backdrop:rgba(0,0,0,.28);--toast-link:#2997ff;
-  --ambient-a:rgba(0,113,227,.10);--ambient-b:rgba(175,82,222,.08);--radius-lg:28px;--radius:18px;--radius-sm:12px;--radius-xs:8px;--shadow-sm:0 1px 2px rgba(0,0,0,.04),0 1px 1px rgba(0,0,0,.02);--shadow-md:0 4px 14px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);--shadow-lg:0 24px 60px rgba(0,0,0,.14),0 6px 18px rgba(0,0,0,.06);
-  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Helvetica Neue",Arial,sans-serif;--font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,"Helvetica Neue",Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(145deg,#0a84ff,#5e5ce6);--jmb-hero-base:#0b0b12;--jmb-hero-art:radial-gradient(55% 75% at 14% 12%,#3d5afe 0%,rgba(61,90,254,0) 70%),radial-gradient(50% 70% at 86% 18%,#a24bff 0%,rgba(162,75,255,0) 70%),radial-gradient(45% 65% at 66% 95%,#00a8ff 0%,rgba(0,168,255,0) 70%),linear-gradient(160deg,#161a33,#07070c);
-}
-:root[data-theme="apple-dark"]{
-  color-scheme:dark;
-  --bg:#000;--bg-panel:#1c1c1e;--bg-card:#2c2c2e;--bg-card-hover:#3a3a3c;--panel-border:rgba(255,255,255,.06);--card-line:rgba(255,255,255,.06);--hero-line:rgba(255,255,255,.09);
-  --fill:rgba(118,118,128,.24);--fill-strong:rgba(118,118,128,.36);--glass:rgba(22,22,23,.72);--glass-strong:rgba(28,28,30,.88);--glass-border:rgba(255,255,255,.08);--separator:rgba(84,84,88,.6);
-  --text:#f5f5f7;--text-dim:#a1a1a6;--text-faint:#8e8e93;--accent:#2997ff;--accent-fill:#0071e3;--accent-fill-hover:#0077ed;--accent-dim:rgba(41,151,255,.26);--focus:#2997ff;
-  --green:#30d158;--green-dim:rgba(48,209,88,.16);--red:#ff6961;--red-dim:rgba(255,69,58,.16);--amber:#ffb340;--amber-fill:#ffb340;--amber-dim:rgba(255,159,10,.18);
-  --inverse-bg:#f5f5f7;--inverse-text:#1d1d1f;--thumb:#636366;--thumb-shadow:0 3px 8px rgba(0,0,0,.3),0 3px 1px rgba(0,0,0,.12);--backdrop:rgba(0,0,0,.5);--toast-link:#0066cc;
-  --ambient-a:rgba(41,151,255,.14);--ambient-b:rgba(191,90,242,.11);--radius-lg:28px;--radius:18px;--radius-sm:12px;--radius-xs:8px;--shadow-sm:0 1px 2px rgba(0,0,0,.5),0 1px 1px rgba(0,0,0,.3);--shadow-md:0 8px 24px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);--shadow-lg:0 30px 80px rgba(0,0,0,.7),0 10px 26px rgba(0,0,0,.5);
-  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Helvetica Neue",Arial,sans-serif;--font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,"Helvetica Neue",Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(145deg,#0a84ff,#5e5ce6);--jmb-hero-base:#08090f;--jmb-hero-art:radial-gradient(55% 75% at 14% 12%,rgba(61,90,254,.82),transparent 70%),radial-gradient(50% 70% at 86% 18%,rgba(162,75,255,.72),transparent 70%),linear-gradient(160deg,#101326,#050507);
-}
-
-/* Komponenten-Brücke: vorhandene Apps behalten ihre Struktur, nutzen aber dieselbe Identität. */
-html[data-jmb-theme] body{background:radial-gradient(1000px 700px at 8% -8%,var(--ambient-a),transparent 62%),radial-gradient(900px 650px at 94% 10%,var(--ambient-b),transparent 58%),var(--bg)!important;color:var(--text);font-family:var(--font-text);}
-html[data-jmb-theme] :is(.page-title,.section-title,.modal-title,.brand-title,.brand-name,.hero-title,.hero__title,.kpi-value,.kpi .val){font-family:var(--font-display)!important;}
-html[data-jmb-theme] :is(.brand-mark,.logo,.logo-badge){background:var(--jmb-brand-gradient)!important;color:var(--jmb-on-accent)!important;}
-html[data-jmb-theme] :is(.btn-primary,.btn.primary){background:var(--accent-fill)!important;color:var(--jmb-on-accent)!important;}
-html[data-jmb-theme] :is(.btn-primary,.btn.primary):hover{background:var(--accent-fill)!important;filter:brightness(1.08);}
-html[data-jmb-theme] :is(.tabs-indicator){background:var(--thumb)!important;box-shadow:var(--thumb-shadow)!important;}
-html[data-jmb-theme] :is(.hero){background:var(--jmb-hero-base)!important;outline-color:var(--hero-line)!important;}
-html[data-jmb-theme] :is(.hero)::before{background-image:var(--jmb-hero-art)!important;background-size:var(--jmb-hero-size,cover)!important;background-position:center!important;}
-html[data-jmb-theme] :is(.hero-title,.hero__title,.grad-text){color:#fff!important;-webkit-text-fill-color:#fff!important;background:none!important;text-shadow:0 2px 18px rgba(0,0,0,.32);}
-html[data-theme="sakura"] :is(.hero-title,.hero__title,.grad-text){color:#fff!important;-webkit-text-fill-color:#fff!important;}
-html[data-jmb-theme] :is(.ambient){background:radial-gradient(38% 34% at 84% 8%,var(--ambient-a),transparent 70%),radial-gradient(42% 40% at 8% 42%,var(--ambient-b),transparent 70%)!important;}
-html[data-jmb-theme] .ambient::before{background:radial-gradient(circle,var(--ambient-a),transparent 65%)!important;}
-html[data-jmb-theme] .ambient::after{background:radial-gradient(circle,var(--ambient-b),transparent 65%)!important;}
-html[data-jmb-theme] :is(.card,.kpi,.task-card,.sidebar,.topbar,.modal-box,.dlg,.popover,.menu,.more-sheet){border-color:var(--panel-border,var(--glass-border))!important;}
-html[data-jmb-theme] :is(input,textarea,select){caret-color:var(--accent);}
-html[data-jmb-theme] :is(.pbar-fill,.bar i:not(.alt)){background:var(--accent-fill)!important;}
-html[data-jmb-theme] :is(.checkbox-custom.checked){background:var(--accent-fill)!important;border-color:var(--accent-fill)!important;}
-html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s ease;}
 </style>
 </head>
 <body class="min-h-screen text-ink antialiased">
@@ -1237,6 +1173,15 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       </div>
       <p class="text-xs text-inksoft mb-6">Fortschritt basierend auf erledigten Aufgaben</p>
 
+      <!-- Projektbilder: Galerie (JS rendert die Kacheln), Auswahl per Button,
+           Drag & Drop aufs Modal oder Einfügen aus der Zwischenablage -->
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="section-title !mb-0 flex items-center gap-2"><i class="fa-solid fa-images text-cyan text-lg"></i>Bilder <span id="pd-image-count" class="kpi-figure text-inksoft font-medium text-base"></span></h3>
+        <button id="btn-add-images" type="button" class="text-xs font-medium text-cyan hover:underline"><i class="fa-solid fa-plus mr-1"></i>Bilder hinzufügen</button>
+      </div>
+      <div id="pd-gallery" class="gallery mb-7"></div>
+      <input id="pd-image-input" type="file" accept="image/*" multiple hidden>
+
       <div class="flex items-center justify-between mb-3">
         <h3 class="section-title !mb-0 flex items-center gap-2"><i class="fa-solid fa-list-check text-cyan text-lg"></i>Aufgaben</h3>
         <button id="btn-project-edit" class="text-xs font-medium text-cyan hover:underline"><i class="fa-solid fa-pen mr-1"></i>Projekt bearbeiten</button>
@@ -1259,6 +1204,30 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       <input id="task-deadline" type="date" class="px-3 py-2 text-sm">
       <button type="submit" class="btn-primary w-9 h-9 grid place-items-center" aria-label="Aufgabe hinzufügen"><i class="fa-solid fa-plus"></i></button>
     </form>
+
+    <div class="drop-hint" aria-hidden="true"><i class="fa-solid fa-images"></i>Bilder hier ablegen</div>
+  </div>
+</div>
+
+<!-- ============ BILDANSICHT (Lightbox) ============
+     Bewusst KEIN "modal-"-Präfix: Escape schließt so nur die Bildansicht,
+     das Projekt-Modal darunter bleibt offen. -->
+<div id="lightbox" class="lightbox hidden" role="dialog" aria-modal="true" aria-label="Bildansicht">
+  <p id="lb-title" class="lb-title"></p>
+  <figure class="lb-stage">
+    <img id="lb-img" class="lb-img" alt="" draggable="false">
+    <span class="lb-loading" aria-hidden="true"><i class="fa-solid fa-spinner fa-spin"></i></span>
+  </figure>
+  <button type="button" class="lb-btn lb-close" data-lb="close" aria-label="Bildansicht schließen"><i class="fa-solid fa-xmark"></i></button>
+  <button type="button" class="lb-btn lb-prev" data-lb="prev" aria-label="Vorheriges Bild"><i class="fa-solid fa-chevron-left"></i></button>
+  <button type="button" class="lb-btn lb-next" data-lb="next" aria-label="Nächstes Bild"><i class="fa-solid fa-chevron-right"></i></button>
+  <div class="lb-bar">
+    <span id="lb-counter" class="lb-counter"></span>
+    <div class="lb-actions">
+      <button type="button" class="lb-pill" data-lb="cover" id="lb-cover" title="Als Titelbild der Projektkarte verwenden"><i class="fa-regular fa-star"></i><span>Titelbild</span></button>
+      <button type="button" class="lb-pill" data-lb="download" title="Bild speichern"><i class="fa-solid fa-arrow-down"></i><span>Sichern</span></button>
+      <button type="button" class="lb-pill danger" data-lb="delete" title="Bild löschen"><i class="fa-solid fa-trash"></i><span>Löschen</span></button>
+    </div>
   </div>
 </div>
 
@@ -1455,15 +1424,32 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       console.warn('Werkbank: Konnte gespeicherte Daten nicht laden, verwende Beispieldaten.', e);
     }
     state = buildSeedData();
-    saveState();
+    // Drive-Abgleich: Beispieldaten bekommen den Zeitstempel 0 und gelten nie als
+    // "ungesicherte lokale Änderung" — sie können ein vorhandenes Drive-Backup
+    // beim Abgleich also nicht überstimmen. (Upload-Verhalten sonst wie bisher.)
+    state.updatedAt = 0;
+    persistLocal();
+    scheduleDriveSave();
   }
 
-  function saveState() {
+  function persistLocal() {
     try {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
     } catch (e) {
       console.error('Werkbank: Speichern fehlgeschlagen.', e);
       showToast('Speichern fehlgeschlagen — Browser-Speicher evtl. voll.');
+    }
+  }
+
+  function saveState() {
+    // Zeitstempel der letzten Änderung (für den Drive-Abgleich, s. driveLoadNow)
+    state.updatedAt = Date.now();
+    persistLocal();
+    // War Drive schon einmal verbunden, gilt die Änderung bis zum erfolgreichen
+    // Upload als "ungesichert" — auch über ein Neuladen der Seite hinweg.
+    if (localStorage.getItem(LS_DRIVE_CONNECTED) === '1') {
+      localStorage.setItem(LS_DRIVE_DIRTY, '1');
+      driveLocalRev += 1;
     }
     scheduleDriveSave();
   }
@@ -1485,30 +1471,39 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
    * nötigen Cookies zunehmend) — das ist eine echte Grenze von reinem
    * Frontend-Code ohne eigenen Server, siehe Absprache mit Julian.
    * ------------------------------------------------------------------ */
+  const DRIVE_CLIENT_ID = '273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com';
   const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
   const DRIVE_FILENAME = 'werkbank-backup.json';
   const LS_DRIVE_FILEID = 'wb_drivefileid_v1';
+  const LS_DRIVE_CONNECTED = 'wb_driveconnected_v1';
   const LS_DRIVE_LASTSYNC = 'wb_drivelastsync_v1';
-  const JMB_TOKEN_KEY = 'jmb_google_token_v1';
-  const JMB_TOKEN_EXP_KEY = 'jmb_google_token_exp_v1';
-  const JMB_CONNECTED_KEY = 'jmb_google_connected_v1';
+  const LS_DRIVE_TOKEN = 'wb_drivetoken_v1';
+  const LS_DRIVE_TOKEN_EXPIRY = 'wb_drivetokenexpiry_v1';
+  const LS_DRIVE_DIRTY = 'wb_drivedirty_v1';          // lokale Änderung noch nicht in Drive
+  const DRIVE_IMG_FOLDER = 'Werkbank-Bilder';          // Ordner für Projektbilder im Drive
+  const LS_DRIVE_IMGFOLDER = 'wb_driveimgfolder_v1';
+  const LS_DRIVE_IMGTRASH = 'wb_driveimgtrash_v1';     // gelöschte Bilder, die in Drive noch weg müssen
 
+  let driveTokenClient = null;
   let driveAccessToken = null;
   let driveTokenExpiresAt = 0;
   let driveConnected = false;
   let driveSyncing = false;
   let driveSaveTimer = null;
-  let driveHydratedFromCloud = false;
-  let driveHubWaiters = [];
+  let driveSaveQueued = false;   // Änderung kam WÄHREND eines Uploads -> danach erneut hochladen
+  let driveLocalRev = 0;         // zählt lokale Änderungen, um den Dirty-Status sauber zu löschen
 
-  function readSharedDriveToken() {
-    try {
-      const token = localStorage.getItem(JMB_TOKEN_KEY);
-      const expiresAt = parseInt(localStorage.getItem(JMB_TOKEN_EXP_KEY) || '0', 10) || 0;
-      if (token && Date.now() < expiresAt) return { token, expiresAt };
-    } catch (e) {}
-    return null;
-  }
+  // Beim Skriptstart direkt prüfen, ob noch ein gültiges, zwischengespeichertes
+  // Access-Token vorliegt — falls ja, sofort übernehmen, keine Google-Anfrage nötig.
+  (function restoreCachedDriveToken() {
+    const cachedToken = localStorage.getItem(LS_DRIVE_TOKEN);
+    const cachedExpiry = parseInt(localStorage.getItem(LS_DRIVE_TOKEN_EXPIRY) || '0', 10);
+    if (cachedToken && Date.now() < cachedExpiry) {
+      driveAccessToken = cachedToken;
+      driveTokenExpiresAt = cachedExpiry;
+      driveConnected = true;
+    }
+  })();
 
   function updateDriveButton() {
     const icon = document.getElementById('drive-sync-icon');
@@ -1523,7 +1518,7 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       label.textContent = 'Google Drive' + (ts ? ' · ' + new Date(parseInt(ts, 10)).toLocaleTimeString('de-DE', { hour: '2-digit', minute: '2-digit' }) : '');
     } else {
       icon.className = 'fa-solid fa-cloud mr-1';
-      label.textContent = 'Google im Headquarter';
+      label.textContent = 'Google Drive verbinden';
     }
   }
 
@@ -1543,15 +1538,12 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
         headers: { Authorization: `Bearer ${driveAccessToken}` },
       });
       if (check.ok) return cachedId;
-      if (check.status === 401) notifyHubTokenInvalid();
       localStorage.removeItem(LS_DRIVE_FILEID);
     }
     const q = encodeURIComponent(`name='${DRIVE_FILENAME}' and trashed=false`);
     const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name)`, {
       headers: { Authorization: `Bearer ${driveAccessToken}` },
     });
-    if (res.status === 401) notifyHubTokenInvalid();
-    if (!res.ok) throw new Error('Google Drive HTTP ' + res.status);
     const data = await res.json();
     if (data.files && data.files.length > 0) {
       localStorage.setItem(LS_DRIVE_FILEID, data.files[0].id);
@@ -1560,35 +1552,25 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
     return null;
   }
 
-  function resolveDriveWaiters(token) {
-    const waiters = driveHubWaiters.splice(0);
-    waiters.forEach(w => token ? w.resolve(token) : w.reject(new Error('Google ist im Headquarter nicht verbunden.')));
-  }
-  function notifyHubTokenInvalid(){
-    driveAccessToken=null;driveTokenExpiresAt=0;driveConnected=false;updateDriveButton();
-    try{ if(window.parent!==window) window.parent.postMessage({type:'jmb-google-token-invalid',app:'projects'},'*'); }catch(e){}
-  }
-  function requestHubDriveToken() {
-    return new Promise((resolve, reject) => {
-      const cached = readSharedDriveToken();
-      if (cached) { acceptSharedDriveToken(cached.token, cached.expiresAt, false); resolve(cached.token); return; }
-      if (window.parent === window) { reject(new Error('Google bitte über den JMB-Index verbinden.')); return; }
-      const waiter = { resolve, reject }; driveHubWaiters.push(waiter);
-      try { window.parent.postMessage({type:'jmb-google-token-request',app:'projects'}, '*'); } catch (e) {}
-      setTimeout(() => {
-        const i = driveHubWaiters.indexOf(waiter);
-        if (i >= 0) { driveHubWaiters.splice(i,1); reject(new Error('Keine Google-Sitzung vom Headquarter erhalten.')); }
-      }, 8000);
-    });
-  }
   function driveEnsureFreshToken() {
-    if (driveAccessToken && Date.now() < driveTokenExpiresAt) return Promise.resolve(driveAccessToken);
-    return requestHubDriveToken();
+    return new Promise((resolve, reject) => {
+      if (driveAccessToken && Date.now() < driveTokenExpiresAt) { resolve(driveAccessToken); return; }
+      if (!driveTokenClient) { reject(new Error('Google-Anmeldung noch nicht bereit')); return; }
+      const prevCallback = driveTokenClient.callback;
+      driveTokenClient.callback = (resp) => {
+        driveTokenClient.callback = prevCallback;
+        onDriveTokenResponse(resp);
+        if (resp && !resp.error) resolve(resp.access_token); else reject(new Error('Google-Anmeldung abgelaufen'));
+      };
+      driveTokenClient.requestAccessToken({ prompt: '' });
+    });
   }
 
   async function driveSaveNow() {
-    if (driveSyncing || !driveConnected) return;
-    driveSyncing = true; updateDriveButton();
+    // Läuft schon ein Upload, wird die Änderung NICHT mehr verworfen, sondern danach hochgeladen
+    if (driveSyncing) { driveSaveQueued = true; return; }
+    driveSyncing = true; driveSaveQueued = false; updateDriveButton();
+    const rev = driveLocalRev;
     try {
       await driveEnsureFreshToken();
       const content = JSON.stringify(state);
@@ -1602,18 +1584,23 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
         headers: { Authorization: `Bearer ${driveAccessToken}`, 'Content-Type': contentType },
         body,
       });
-      if (res.status === 401) { notifyHubTokenInvalid(); throw new Error('Google-Sitzung abgelaufen'); }
-      if (!res.ok) throw new Error('Google Drive HTTP ' + res.status);
+      // Fehlerhafte Antworten (z. B. 401) zählen jetzt als Fehler statt als "gesichert"
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       if (data.id) localStorage.setItem(LS_DRIVE_FILEID, data.id);
       localStorage.setItem(LS_DRIVE_LASTSYNC, String(Date.now()));
+      if (rev === driveLocalRev) localStorage.removeItem(LS_DRIVE_DIRTY);
     } catch (e) {
       console.error('Werkbank: Drive-Sicherung fehlgeschlagen:', e);
+      showToast('Drive-Sicherung fehlgeschlagen — lokal ist alles gespeichert.');
     } finally {
       driveSyncing = false; updateDriveButton();
+      if (driveSaveQueued) { driveSaveQueued = false; scheduleDriveSave(); }
     }
   }
 
+  // Lädt einen vorhandenen Drive-Stand. Gibt true zurück, wenn eine Datei gefunden wurde
+  // — sonst false, damit der Aufrufer weiß, dass stattdessen ein initialer Upload nötig ist.
   async function driveLoadNow() {
     try {
       await driveEnsureFreshToken();
@@ -1622,15 +1609,26 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       const res = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
         headers: { Authorization: `Bearer ${driveAccessToken}` },
       });
-      if (res.status === 401) { notifyHubTokenInvalid(); throw new Error('Google-Sitzung abgelaufen'); }
-      if (!res.ok) throw new Error('Google Drive HTTP ' + res.status);
+      if (!res.ok) throw new Error('HTTP ' + res.status);
       const data = await res.json();
       if (!data || !Array.isArray(data.projects)) return false;
+      // Abgleich statt "Drive gewinnt immer": Liegen hier ungesicherte lokale Änderungen,
+      // die NEUER sind als der Drive-Stand, werden sie hochgeladen statt überschrieben.
+      const localDirty = localStorage.getItem(LS_DRIVE_DIRTY) === '1';
+      if (localDirty && (state.updatedAt || 0) > (data.updatedAt || 0)) {
+        driveSaveNow();
+        driveSyncImages();
+        return true;
+      }
       state = data;
       localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+      localStorage.removeItem(LS_DRIVE_DIRTY);
       renderAll();
       applyChipDefaults();
+      // Offenes Projekt-Modal mit dem neuen Stand aktualisieren
+      if (!document.getElementById('modal-project-detail').classList.contains('hidden')) refreshProjectDetail();
       localStorage.setItem(LS_DRIVE_LASTSYNC, String(Date.now()));
+      driveSyncImages();
       return true;
     } catch (e) {
       console.error('Werkbank: Laden aus Drive fehlgeschlagen:', e);
@@ -1638,21 +1636,25 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
     }
   }
 
-  async function acceptSharedDriveToken(token, expiresAt, hydrate) {
-    if (!token || Date.now() >= (Number(expiresAt) || 0)) {
-      driveAccessToken = null; driveTokenExpiresAt = 0; driveConnected = false;
-      updateDriveButton(); resolveDriveWaiters(null); return false;
-    }
-    driveAccessToken = token;
-    driveTokenExpiresAt = Number(expiresAt) || 0;
+  async function onDriveTokenResponse(resp) {
+    if (!resp || resp.error) { driveConnected = false; updateDriveButton(); return; }
+    driveAccessToken = resp.access_token;
+    driveTokenExpiresAt = Date.now() + (parseInt(resp.expires_in, 10) || 3500) * 1000 - 60000;
     driveConnected = true;
-    updateDriveButton(); resolveDriveWaiters(token);
-    if (hydrate && !driveHydratedFromCloud) {
-      driveHydratedFromCloud = true;
-      const found = await driveLoadNow();
-      if (!found) driveSaveNow();
-    }
-    return true;
+    localStorage.setItem(LS_DRIVE_CONNECTED, '1');
+    // Token + Ablaufzeit zwischenspeichern, damit ein Neuladen der Seite innerhalb
+    // der Gültigkeit KEINE neue Google-Anfrage mehr braucht.
+    localStorage.setItem(LS_DRIVE_TOKEN, driveAccessToken);
+    localStorage.setItem(LS_DRIVE_TOKEN_EXPIRY, String(driveTokenExpiresAt));
+    updateDriveButton();
+    setTimeout(() => {
+      if (driveConnected && driveTokenClient) driveTokenClient.requestAccessToken({ prompt: '' });
+    }, Math.max(driveTokenExpiresAt - Date.now() - 300000, 60000));
+    // Ein vorhandenes Drive-Backup gewinnt immer gegen den lokalen Stand (der ohne
+    // Backup nur die Beispieldaten wäre) — nur wenn wirklich noch nichts in Drive
+    // liegt, wird der aktuelle lokale Stand als allererstes Backup hochgeladen.
+    const found = await driveLoadNow();
+    if (!found) driveSaveNow();
   }
 
   function scheduleDriveSave() {
@@ -1662,34 +1664,46 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
   }
 
   function initDriveSync() {
-    const cached = readSharedDriveToken();
-    if (cached) acceptSharedDriveToken(cached.token, cached.expiresAt, true);
-    else {
-      updateDriveButton();
-      if (window.parent !== window) { try { window.parent.postMessage({type:'jmb-google-token-request',app:'projects'}, '*'); } catch (e) {} }
-    }
-    const btn = document.getElementById('btn-drive-sync');
-    if (btn) btn.addEventListener('click', () => {
-      if (driveConnected) driveSaveNow();
-      else {
-        try { if(window.parent!==window) window.parent.postMessage({type:'jmb-google-connect-request',app:'projects'}, '*'); } catch(e) {}
-        showToast('Google bitte einmal oben im JMB Headquarter verbinden.');
+    let tries = 0;
+    (function waitForGis() {
+      if (window.google && window.google.accounts && window.google.accounts.oauth2) {
+        driveTokenClient = window.google.accounts.oauth2.initTokenClient({
+          client_id: DRIVE_CLIENT_ID,
+          scope: DRIVE_SCOPE,
+          callback: onDriveTokenResponse,
+        });
+        if (driveConnected && driveAccessToken) {
+          // Zwischengespeichertes, noch gültiges Token wiederhergestellt (siehe oben)
+          // -> direkt laden, ganz ohne Google-Anfrage.
+          updateDriveButton();
+          driveLoadNow();
+        } else if (localStorage.getItem(LS_DRIVE_CONNECTED) === '1') {
+          // Kein gültiges Token mehr im Cache, aber schonmal verbunden gewesen ->
+          // stillen Anmeldeversuch starten (kann je nach Browser trotzdem ein
+          // sichtbares Google-Fenster zeigen, siehe Erklärung oben).
+          driveTokenClient.requestAccessToken({ prompt: '' });
+        }
+        return;
       }
-    });
-  }
+      if (tries < 50) { tries += 1; setTimeout(waitForGis, 200); }
+    })();
 
-  window.addEventListener('message', e => {
-    const d = e.data || {};
-    if (d.type === 'jmb-google-auth') acceptSharedDriveToken(d.token, d.expiresAt, !!d.token);
-    if (d.type === 'jmb-google-sync-now' && driveConnected) driveSaveNow();
-  });
-  window.addEventListener('storage', e => {
-    if (e.key === JMB_TOKEN_KEY || e.key === JMB_TOKEN_EXP_KEY || e.key === JMB_CONNECTED_KEY) {
-      const cached = readSharedDriveToken();
-      if (cached) acceptSharedDriveToken(cached.token, cached.expiresAt, false);
-      else acceptSharedDriveToken(null, 0, false);
+    const btn = document.getElementById('btn-drive-sync');
+    if (btn) {
+      btn.addEventListener('click', () => {
+        if (driveConnected) {
+          driveConnected = false;
+          localStorage.removeItem(LS_DRIVE_CONNECTED);
+          localStorage.removeItem(LS_DRIVE_TOKEN);
+          localStorage.removeItem(LS_DRIVE_TOKEN_EXPIRY);
+          driveAccessToken = null;
+          updateDriveButton();
+        } else if (driveTokenClient) {
+          driveTokenClient.requestAccessToken({});
+        }
+      });
     }
-  });
+  }
 
   /* ------------------------------------------------------------------ *
    * 2. UTILITIES
@@ -1782,7 +1796,7 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
     return Math.round((done / project.tasks.length) * 100);
   }
 
-  // Deterministische Verlaufs-Farbpalette für Projekt-Thumbnails (kein Bild-Upload nötig)
+  // Deterministische Verlaufs-Farbpalette für Projekt-Thumbnails (Platzhalter, solange kein Titelbild gesetzt ist)
   // Apple-Design: Paletten im Stil der Apple-Systemfarben (gleiche Anzahl, Zuordnung bleibt deterministisch)
   const THUMB_PALETTES = [
     ['#0A84FF', '#5E5CE6'],
@@ -2071,9 +2085,12 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
         const progress = projectProgress(p);
         const meta = statusMeta(p.status);
         const openTasks = p.tasks.filter(t => !t.done).length;
+        const cover = projectCover(p);          // Titelbild (falls Bilder vorhanden)
+        const imageCount = projectImages(p).length;
         return `
           <div class="card hoverable flex flex-col cursor-pointer overflow-hidden" data-open-project="${p.id}">
-            <div class="thumb" style="background-image:${thumbGradient(p.id)}">
+            <div class="thumb${cover ? ' has-image' : ''}" data-img-holder style="background-image:${thumbGradient(p.id)}">
+              ${cover ? imgTag(cover.id, 'thumb-img', 'thumb') : ''}
               <div class="thumb-badge" style="color:${meta.bar}"><i class="${meta.icon}"></i></div>
             </div>
             <div class="p-5 flex flex-col flex-1">
@@ -2090,11 +2107,15 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
               </div>
               <div class="flex items-center justify-between text-xs text-inksoft mt-auto pt-2 border-t border-line">
                 <span><i class="fa-regular fa-clock mr-1"></i>${relativeSince(p.createdAt)}</span>
-                <span><i class="fa-solid fa-list-check mr-1"></i>${openTasks} offen</span>
+                <span class="flex items-center gap-3">
+                  ${imageCount ? `<span title="Bilder"><i class="fa-regular fa-image mr-1"></i>${imageCount}</span>` : ''}
+                  <span><i class="fa-solid fa-list-check mr-1"></i>${openTasks} offen</span>
+                </span>
               </div>
             </div>
           </div>`;
       }).join('');
+      hydrateImages(grid);   // Titelbilder aus IndexedDB/Drive nachladen
     }
   }
 
@@ -2261,7 +2282,10 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
   }
 
   function deleteProject(id) {
-    if (!confirm('Dieses Projekt inklusive aller Aufgaben wirklich löschen?')) return;
+    const doomed = state.projects.find(p => p.id === id);
+    const imageCount = projectImages(doomed).length;
+    if (!confirm(`Dieses Projekt inklusive aller Aufgaben${imageCount ? ` und ${imageCount} Bild${imageCount === 1 ? '' : 'er'}` : ''} wirklich löschen?`)) return;
+    projectImages(doomed).forEach(img => forgetImage(img.id, img.driveId));
     state.projects = state.projects.filter(p => p.id !== id);
     // Notizen, die auf dieses Projekt verweisen, entkoppeln statt löschen
     state.notes.forEach(n => { if (n.projectId === id) n.projectId = ''; });
@@ -2294,6 +2318,8 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
     document.getElementById('pd-progress-fill').style.width = progress + '%';
     document.getElementById('pd-progress-fill').style.background = meta.bar;
     document.getElementById('pd-progress-label').textContent = progress + '%';
+
+    renderProjectGallery(project);   // Projektbilder
 
     const taskList = document.getElementById('pd-task-list');
     if (project.tasks.length === 0) {
@@ -2479,6 +2505,522 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
   }
 
   /* ------------------------------------------------------------------ *
+   * 5b. PROJEKTBILDER
+   * Speicherung:
+   *  - Im Projekt stehen nur Metadaten: project.images = [{ id, name, w, h,
+   *    size, type, addedAt, driveId? }] und optional project.coverImageId
+   *    (fehlt = erstes Bild ist Titelbild, 'none' = kein Titelbild).
+   *  - Die Bilddateien selbst liegen in IndexedDB (Datenbank "werkbank_images_v1"),
+   *    NICHT in localStorage — dort wären nach ~20 Fotos die 5 MB voll.
+   *  - Ist Google Drive verbunden, wird jedes Bild einzeln in den Drive-Ordner
+   *    "Werkbank-Bilder" hochgeladen (driveId im Projekt). Andere Geräte laden
+   *    fehlende Bilder bei Bedarf von dort nach.
+   *  - Große Fotos werden vor dem Speichern verkleinert (max. 2048 px, WebP/JPEG),
+   *    kleine Dateien bis 1,5 MB bleiben unverändert (z. B. Screenshots, GIFs).
+   * ------------------------------------------------------------------ */
+  const IMG_MAX_EDGE = 2048;
+  const IMG_THUMB_EDGE = 480;
+  const IMG_KEEP_MAX_BYTES = 1.5 * 1024 * 1024;
+  const IMG_INPUT_MAX_BYTES = 50 * 1024 * 1024;
+
+  // --- IndexedDB (Bilddateien) ---
+  const imgDB = (() => {
+    let dbPromise = null;
+    function open() {
+      if (!dbPromise) {
+        dbPromise = new Promise((resolve, reject) => {
+          if (!window.indexedDB) { reject(new Error('IndexedDB nicht verfügbar')); return; }
+          const req = indexedDB.open('werkbank_images_v1', 1);
+          req.onupgradeneeded = () => req.result.createObjectStore('images');
+          req.onsuccess = () => resolve(req.result);
+          req.onerror = () => reject(req.error);
+        });
+        dbPromise.catch(() => { dbPromise = null; });
+      }
+      return dbPromise;
+    }
+    async function run(mode, fn) {
+      const db = await open();
+      return new Promise((resolve, reject) => {
+        const tx = db.transaction('images', mode);
+        const req = fn(tx.objectStore('images'));
+        tx.oncomplete = () => resolve(req ? req.result : undefined);
+        tx.onerror = () => reject(tx.error);
+        tx.onabort = () => reject(tx.error);
+      });
+    }
+    return {
+      get: (id) => run('readonly', (s) => s.get(id)),
+      put: (id, rec) => run('readwrite', (s) => s.put(rec, id)),
+      del: (id) => run('readwrite', (s) => s.delete(id)),
+      clear: () => run('readwrite', (s) => s.clear()),
+    };
+  })();
+
+  // --- Hilfen ---
+  function projectImages(project) { return (project && Array.isArray(project.images)) ? project.images : []; }
+
+  function projectCover(project) {
+    const imgs = projectImages(project);
+    if (!imgs.length || project.coverImageId === 'none') return null;
+    return imgs.find(i => i.id === project.coverImageId) || imgs[0];
+  }
+
+  function findImage(imageId) {
+    for (const project of state.projects) {
+      const image = projectImages(project).find(i => i.id === imageId);
+      if (image) return { project, image };
+    }
+    return null;
+  }
+
+  function imageExt(type) {
+    return ({ 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp', 'image/gif': 'gif' })[type] || 'img';
+  }
+
+  function cleanImageName(fileName) {
+    const base = String(fileName || '').replace(/\.[a-z0-9]{2,5}$/i, '').trim();
+    if (!base || /^image$/i.test(base)) return 'Eingefügtes Bild';
+    return base.slice(0, 80);
+  }
+
+  function loadImageElement(blob) {
+    return new Promise((resolve, reject) => {
+      const url = URL.createObjectURL(blob);
+      const img = new Image();
+      img.onload = () => { URL.revokeObjectURL(url); resolve(img); };
+      img.onerror = () => { URL.revokeObjectURL(url); reject(new Error('Bildformat wird nicht unterstützt')); };
+      img.src = url;
+    });
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise((resolve) => canvas.toBlob(resolve, type, quality));
+  }
+
+  // Verkleinert auf maxEdge (lange Kante) und kodiert als WebP, sonst JPEG (Safari-Fallback)
+  async function encodeImage(img, maxEdge, quality) {
+    const w0 = img.naturalWidth, h0 = img.naturalHeight;
+    const scale = Math.min(1, maxEdge / Math.max(w0, h0));
+    const w = Math.max(1, Math.round(w0 * scale));
+    const h = Math.max(1, Math.round(h0 * scale));
+    const canvas = document.createElement('canvas');
+    canvas.width = w; canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.imageSmoothingEnabled = true;
+    ctx.imageSmoothingQuality = 'high';
+    ctx.drawImage(img, 0, 0, w, h);
+    let blob = await canvasToBlob(canvas, 'image/webp', quality);
+    if (!blob || blob.type !== 'image/webp') {
+      // JPEG kennt keine Transparenz -> weißer Hintergrund statt schwarzem
+      ctx.globalCompositeOperation = 'destination-over';
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, w, h);
+      blob = await canvasToBlob(canvas, 'image/jpeg', quality);
+    }
+    if (!blob) throw new Error('Bild konnte nicht umgewandelt werden');
+    return { blob, w, h };
+  }
+
+  async function prepareImage(file) {
+    if (file.size > IMG_INPUT_MAX_BYTES) throw new Error('Datei ist größer als 50 MB');
+    const img = await loadImageElement(file);
+    const w0 = img.naturalWidth, h0 = img.naturalHeight;
+    const keepOriginal = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'].includes(file.type)
+      && file.size <= IMG_KEEP_MAX_BYTES && Math.max(w0, h0) <= 2560;
+    let full, w = w0, h = h0;
+    if (keepOriginal) {
+      full = file.slice(0, file.size, file.type);
+    } else {
+      const enc = await encodeImage(img, IMG_MAX_EDGE, 0.86);
+      full = enc.blob; w = enc.w; h = enc.h;
+    }
+    const thumb = (await encodeImage(img, IMG_THUMB_EDGE, 0.8)).blob;
+    return { full, thumb, w, h, type: full.type };
+  }
+
+  // --- Anzeige: Object-URLs (Cache) + Nachladen aus IndexedDB bzw. Drive ---
+  const imgUrlCache = new Map();   // "id:thumb" / "id:full" -> blob:-URL
+  const imgInflight = new Map();   // id -> Promise<record|null>
+
+  function cachedImageUrl(id, variant) { return imgUrlCache.get(id + ':' + variant) || ''; }
+
+  async function loadImageRecord(id) {
+    let rec = null;
+    try { rec = await imgDB.get(id); } catch (e) { /* IndexedDB nicht verfügbar */ }
+    if (rec && rec.full) return rec;
+    // Lokal nicht vorhanden (z. B. anderes Gerät) -> aus Drive nachladen
+    const found = findImage(id);
+    if (!found || !found.image.driveId) return null;
+    const blob = await driveDownloadImage(found.image.driveId).catch(() => null);
+    if (!blob) return null;
+    let thumb = blob;
+    try { thumb = (await encodeImage(await loadImageElement(blob), IMG_THUMB_EDGE, 0.8)).blob; } catch (e) {}
+    rec = { full: blob, thumb, type: blob.type || found.image.type || 'image/jpeg' };
+    try { await imgDB.put(id, rec); } catch (e) {}
+    return rec;
+  }
+
+  function getImageUrl(id, variant) {
+    const key = id + ':' + variant;
+    if (imgUrlCache.has(key)) return Promise.resolve(imgUrlCache.get(key));
+    if (!imgInflight.has(id)) {
+      imgInflight.set(id, loadImageRecord(id).finally(() => imgInflight.delete(id)));
+    }
+    return imgInflight.get(id).then((rec) => {
+      if (!rec) return null;
+      if (!imgUrlCache.has(key)) {
+        const blob = variant === 'full' ? rec.full : (rec.thumb || rec.full);
+        imgUrlCache.set(key, URL.createObjectURL(blob));
+      }
+      return imgUrlCache.get(key);
+    });
+  }
+
+  // <img>-Tag für Render-Funktionen: bekannte URLs sofort, sonst füllt hydrateImages() nach
+  function imgTag(id, cls, variant) {
+    const url = cachedImageUrl(id, variant || 'thumb');
+    return `<img class="${cls}${url ? ' is-loaded' : ''}" data-img-id="${id}" data-img-variant="${variant || 'thumb'}"${url ? ` src="${url}"` : ''} alt="" decoding="async" draggable="false">`;
+  }
+
+  function hydrateImages(container) {
+    (container || document).querySelectorAll('img[data-img-id]:not([src])').forEach((img) => {
+      if (img._hydrating) return;
+      img._hydrating = true;
+      getImageUrl(img.dataset.imgId, img.dataset.imgVariant || 'thumb').then((url) => {
+        img._hydrating = false;
+        const holder = img.closest('[data-img-holder]');
+        if (!url) { if (holder) holder.classList.add('img-missing'); return; }
+        if (holder) holder.classList.remove('img-missing');
+        img.onload = () => img.classList.add('is-loaded');
+        img.src = url;
+      });
+    });
+  }
+
+  function forgetImage(id, driveId) {
+    ['thumb', 'full'].forEach((v) => {
+      const key = id + ':' + v;
+      if (imgUrlCache.has(key)) { URL.revokeObjectURL(imgUrlCache.get(key)); imgUrlCache.delete(key); }
+    });
+    imgDB.del(id).catch(() => {});
+    if (driveId) { queueDriveImageTrash(driveId); driveSyncImages(); }
+  }
+
+  // --- Galerie im Projekt-Modal ---
+  let imageBusy = { projectId: null, count: 0 };   // Platzhalter, während Bilder verarbeitet werden
+
+  function renderProjectGallery(project) {
+    const wrap = document.getElementById('pd-gallery');
+    const imgs = projectImages(project);
+    const cover = projectCover(project);
+    const busy = imageBusy.projectId === project.id ? imageBusy.count : 0;
+    document.getElementById('pd-image-count').textContent = imgs.length ? `· ${imgs.length}` : '';
+
+    if (!imgs.length && !busy) {
+      wrap.innerHTML = `
+        <button type="button" class="g-empty" data-add-images style="grid-column:1/-1">
+          <i class="fa-regular fa-images"></i>
+          <span><strong>Bilder auswählen</strong>, hierher ziehen oder mit Strg/⌘ + V einfügen</span>
+        </button>`;
+      return;
+    }
+    wrap.innerHTML = imgs.map((img, i) => `
+        <button type="button" class="g-tile" data-img-holder data-open-image="${img.id}" aria-label="Bild ${i + 1} von ${imgs.length} öffnen" title="${escapeHtml(img.name || '')}">
+          ${imgTag(img.id, 'g-img', 'thumb')}
+          <span class="g-missing"><i class="fa-solid fa-cloud"></i>${img.driveId ? 'in Drive' : 'fehlt hier'}</span>
+          ${cover && cover.id === img.id ? '<span class="g-flag cover" title="Titelbild"><i class="fa-solid fa-star"></i></span>' : ''}
+          ${driveConnected && !img.driveId ? '<span class="g-flag pending" title="Wird in Google Drive gesichert …"><i class="fa-solid fa-cloud-arrow-up"></i></span>' : ''}
+        </button>`).join('')
+      + Array.from({ length: busy }, () => '<div class="g-tile is-busy" aria-label="Bild wird verarbeitet"><i class="fa-solid fa-spinner fa-spin"></i></div>').join('')
+      + `<button type="button" class="g-add" data-add-images aria-label="Bilder hinzufügen"><i class="fa-solid fa-plus"></i>Hinzufügen</button>`;
+    hydrateImages(wrap);
+  }
+
+  async function addImagesToProject(projectId, fileList) {
+    const files = [...(fileList || [])].filter(f => f && /^image\//.test(f.type));
+    if (!files.length) { showToast('Keine Bilddatei gefunden.'); return; }
+    imageBusy = { projectId, count: (imageBusy.projectId === projectId ? imageBusy.count : 0) + files.length };
+    if (activeProjectId === projectId) refreshProjectDetail();
+
+    let added = 0, failed = 0, lastError = '';
+    for (const file of files) {
+      try {
+        const v = await prepareImage(file);
+        const id = uid();
+        await imgDB.put(id, { full: v.full, thumb: v.thumb, type: v.type });
+        const project = state.projects.find(p => p.id === projectId);
+        if (!project) { imgDB.del(id).catch(() => {}); continue; }
+        if (!Array.isArray(project.images)) project.images = [];
+        project.images.push({
+          id, name: cleanImageName(file.name), w: v.w, h: v.h, size: v.full.size, type: v.type,
+          addedAt: new Date().toISOString(),
+        });
+        saveState();
+        added += 1;
+      } catch (e) {
+        failed += 1;
+        lastError = (e && e.name === 'QuotaExceededError') ? 'Gerätespeicher voll' : ((e && e.message) || 'unbekannter Fehler');
+        console.error('Werkbank: Bild konnte nicht hinzugefügt werden:', e);
+      } finally {
+        imageBusy.count = Math.max(0, imageBusy.count - 1);
+        if (activeProjectId === projectId) refreshProjectDetail();
+      }
+    }
+    renderProjects();
+    if (added && !failed) showToast(added === 1 ? 'Bild hinzugefügt.' : `${added} Bilder hinzugefügt.`);
+    else if (added && failed) showToast(`${added} hinzugefügt, ${failed} fehlgeschlagen (${lastError}).`);
+    else showToast(`Bild konnte nicht hinzugefügt werden (${lastError}).`);
+    if (added) driveSyncImages();
+  }
+
+  function deleteProjectImage(projectId, imageId) {
+    const project = state.projects.find(p => p.id === projectId);
+    if (!project) return;
+    const image = projectImages(project).find(i => i.id === imageId);
+    if (!image) return;
+    project.images = projectImages(project).filter(i => i.id !== imageId);
+    if (project.coverImageId === imageId) delete project.coverImageId;
+    saveState();
+    forgetImage(imageId, image.driveId);
+    if (activeProjectId === projectId) refreshProjectDetail();
+    renderProjects();
+    showToast('Bild gelöscht.');
+  }
+
+  function toggleProjectCover(projectId, imageId) {
+    const project = state.projects.find(p => p.id === projectId);
+    if (!project) return;
+    const cover = projectCover(project);
+    project.coverImageId = (cover && cover.id === imageId) ? 'none' : imageId;
+    saveState();
+    if (activeProjectId === projectId) refreshProjectDetail();
+    renderProjects();
+    showToast(project.coverImageId === 'none' ? 'Kein Titelbild mehr.' : 'Als Titelbild gesetzt.');
+  }
+
+  // --- Bildansicht (Lightbox) ---
+  const lightbox = { projectId: null, index: 0, touchX: null };
+
+  function lightboxImages() {
+    const project = state.projects.find(p => p.id === lightbox.projectId);
+    return { project, imgs: projectImages(project) };
+  }
+
+  function openLightbox(projectId, imageId) {
+    lightbox.projectId = projectId;
+    const { imgs } = lightboxImages();
+    lightbox.index = Math.max(0, imgs.findIndex(i => i.id === imageId));
+    document.getElementById('lightbox').classList.remove('hidden');
+    renderLightbox(false);
+    document.querySelector('#lightbox [data-lb="close"]').focus({ preventScroll: true });
+  }
+
+  function closeLightbox() {
+    const lb = document.getElementById('lightbox');
+    if (lb.classList.contains('hidden')) return;
+    const current = lightboxImages().imgs[lightbox.index];
+    lb.classList.add('hidden');
+    document.getElementById('lb-img').removeAttribute('src');
+    lightbox.projectId = null;
+    // Fokus zurück auf die Kachel des zuletzt gezeigten Bildes
+    const tile = current && document.querySelector(`#pd-gallery [data-open-image="${current.id}"]`);
+    if (tile) tile.focus({ preventScroll: true });
+  }
+
+  function renderLightbox(swap) {
+    const { project, imgs } = lightboxImages();
+    if (!project || !imgs.length) { closeLightbox(); return; }
+    lightbox.index = Math.min(Math.max(lightbox.index, 0), imgs.length - 1);
+    const meta = imgs[lightbox.index];
+    const lb = document.getElementById('lightbox');
+    const el = document.getElementById('lb-img');
+    document.getElementById('lb-title').textContent = meta.name || '';
+    document.getElementById('lb-counter').textContent = `${lightbox.index + 1} / ${imgs.length}`;
+    lb.querySelector('[data-lb="prev"]').disabled = imgs.length < 2;
+    lb.querySelector('[data-lb="next"]').disabled = imgs.length < 2;
+    const cover = projectCover(project);
+    const isCover = !!cover && cover.id === meta.id;
+    const coverBtn = document.getElementById('lb-cover');
+    coverBtn.classList.toggle('is-on', isCover);
+    coverBtn.querySelector('i').className = isCover ? 'fa-solid fa-star' : 'fa-regular fa-star';
+    coverBtn.title = isCover ? 'Ist das Titelbild — erneut tippen, um es zu entfernen' : 'Als Titelbild der Projektkarte verwenden';
+    el.alt = meta.name || 'Projektbild';
+
+    // Erst das (schnelle) Vorschaubild, dann die volle Auflösung
+    const quick = cachedImageUrl(meta.id, 'full') || cachedImageUrl(meta.id, 'thumb');
+    if (quick) el.src = quick; else el.removeAttribute('src');
+    lb.classList.toggle('is-loading', !quick);
+    if (swap) { el.classList.remove('is-swapping'); void el.offsetWidth; el.classList.add('is-swapping'); }
+    const wantedId = meta.id;
+    getImageUrl(meta.id, 'full').then((url) => {
+      if (lightbox.projectId !== project.id) return;
+      const current = lightboxImages().imgs[lightbox.index];
+      if (!current || current.id !== wantedId) return;
+      lb.classList.remove('is-loading');
+      if (url) el.src = url;
+      else showToast(meta.driveId ? 'Bild liegt in Drive — bitte Google Drive verbinden.' : 'Bilddatei ist auf diesem Gerät nicht vorhanden.');
+    });
+  }
+
+  function stepLightbox(dir) {
+    const { imgs } = lightboxImages();
+    if (imgs.length < 2) return;
+    lightbox.index = (lightbox.index + dir + imgs.length) % imgs.length;
+    renderLightbox(true);
+  }
+
+  function lightboxAction(action) {
+    const { project, imgs } = lightboxImages();
+    const meta = imgs[lightbox.index];
+    if (action === 'close') return closeLightbox();
+    if (action === 'prev') return stepLightbox(-1);
+    if (action === 'next') return stepLightbox(1);
+    if (!project || !meta) return;
+    if (action === 'cover') { toggleProjectCover(project.id, meta.id); renderLightbox(false); return; }
+    if (action === 'download') {
+      getImageUrl(meta.id, 'full').then((url) => {
+        if (!url) { showToast('Bilddatei ist auf diesem Gerät nicht vorhanden.'); return; }
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${(meta.name || 'bild').replace(/[\\/:*?"<>|]+/g, '-')}.${imageExt(meta.type)}`;
+        document.body.appendChild(a); a.click(); a.remove();
+      });
+      return;
+    }
+    if (action === 'delete') {
+      if (!confirm('Dieses Bild wirklich löschen?')) return;
+      deleteProjectImage(project.id, meta.id);
+      if (projectImages(project).length) renderLightbox(true); else closeLightbox();
+    }
+  }
+
+  // --- Google Drive: Bilder einzeln sichern / nachladen / löschen ---
+  let driveImgFolderChecked = null;
+  let imgSyncing = false;
+  let imgSyncQueued = false;
+
+  function driveAuth() { return { Authorization: `Bearer ${driveAccessToken}` }; }
+
+  function readDriveImageTrash() {
+    try { const t = JSON.parse(localStorage.getItem(LS_DRIVE_IMGTRASH) || '[]'); return Array.isArray(t) ? t : []; }
+    catch (e) { return []; }
+  }
+  function writeDriveImageTrash(list) {
+    if (list.length) localStorage.setItem(LS_DRIVE_IMGTRASH, JSON.stringify(list));
+    else localStorage.removeItem(LS_DRIVE_IMGTRASH);
+  }
+  function queueDriveImageTrash(driveId) {
+    const list = readDriveImageTrash();
+    if (!list.includes(driveId)) { list.push(driveId); writeDriveImageTrash(list); }
+  }
+
+  async function driveEnsureImageFolder() {
+    if (driveImgFolderChecked) return driveImgFolderChecked;
+    const cached = localStorage.getItem(LS_DRIVE_IMGFOLDER);
+    if (cached) {
+      const r = await fetch(`https://www.googleapis.com/drive/v3/files/${cached}?fields=id,trashed`, { headers: driveAuth() });
+      if (r.ok) { const d = await r.json(); if (!d.trashed) return (driveImgFolderChecked = cached); }
+      localStorage.removeItem(LS_DRIVE_IMGFOLDER);
+    }
+    const q = encodeURIComponent(`name='${DRIVE_IMG_FOLDER}' and mimeType='application/vnd.google-apps.folder' and trashed=false`);
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id)`, { headers: driveAuth() });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    let id = data.files && data.files[0] && data.files[0].id;
+    if (!id) {
+      const cr = await fetch('https://www.googleapis.com/drive/v3/files?fields=id', {
+        method: 'POST',
+        headers: { ...driveAuth(), 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: DRIVE_IMG_FOLDER, mimeType: 'application/vnd.google-apps.folder' }),
+      });
+      if (!cr.ok) throw new Error('HTTP ' + cr.status);
+      id = (await cr.json()).id;
+    }
+    localStorage.setItem(LS_DRIVE_IMGFOLDER, id);
+    return (driveImgFolderChecked = id);
+  }
+
+  async function driveUploadImage(meta, rec) {
+    // Schon einmal hochgeladen (z. B. Stand von einem anderen Gerät)? Dann wiederverwenden.
+    const q = encodeURIComponent(`appProperties has { key='werkbankImageId' and value='${meta.id}' } and trashed=false`);
+    const found = await fetch(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id)`, { headers: driveAuth() });
+    if (found.ok) {
+      const d = await found.json();
+      if (d.files && d.files[0]) return d.files[0].id;
+    }
+    const folderId = await driveEnsureImageFolder();
+    const type = rec.type || rec.full.type || 'image/jpeg';
+    const metadata = {
+      name: `${(meta.name || 'bild').replace(/[\\/]+/g, '-')}-${meta.id}.${imageExt(type)}`,
+      mimeType: type,
+      parents: [folderId],
+      appProperties: { werkbankImageId: meta.id },
+    };
+    const boundary = 'wb_img_boundary_' + Date.now();
+    const body = new Blob([
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n${JSON.stringify(metadata)}\r\n`,
+      `--${boundary}\r\nContent-Type: ${type}\r\n\r\n`,
+      rec.full,
+      `\r\n--${boundary}--`,
+    ]);
+    const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id', {
+      method: 'POST',
+      headers: { ...driveAuth(), 'Content-Type': `multipart/related; boundary=${boundary}` },
+      body,
+    });
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    return (await res.json()).id;
+  }
+
+  // Nur mit gültigem Token — zum Anzeigen wird nie ein Google-Fenster geöffnet
+  async function driveDownloadImage(driveId) {
+    if (!driveConnected || !driveAccessToken || Date.now() >= driveTokenExpiresAt) return null;
+    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${driveId}?alt=media`, { headers: driveAuth() });
+    if (!res.ok) return null;
+    return await res.blob();
+  }
+
+  async function driveSyncImages() {
+    if (!driveConnected || !driveAccessToken) return;
+    if (imgSyncing) { imgSyncQueued = true; return; }
+    imgSyncing = true;
+    try {
+      await driveEnsureFreshToken();
+      // 1) In der App gelöschte Bilder auch in Drive entfernen
+      const trash = readDriveImageTrash();
+      for (const driveId of trash) {
+        const r = await fetch(`https://www.googleapis.com/drive/v3/files/${driveId}`, { method: 'DELETE', headers: driveAuth() });
+        if (r.ok || r.status === 404) writeDriveImageTrash(readDriveImageTrash().filter(x => x !== driveId));
+      }
+      // 2) Neue Bilder hochladen
+      const pending = [];
+      state.projects.forEach(p => projectImages(p).forEach(i => { if (!i.driveId) pending.push(i.id); }));
+      for (const id of pending) {
+        let rec = null;
+        try { rec = await imgDB.get(id); } catch (e) {}
+        if (!rec || !rec.full) continue;   // Datei liegt nicht auf diesem Gerät
+        const meta = findImage(id);
+        if (!meta) continue;
+        const driveId = await driveUploadImage(meta.image, rec);
+        const now = findImage(id);          // Stand kann sich während des Uploads geändert haben
+        if (now) {
+          now.image.driveId = driveId;
+          saveState();
+          if (activeProjectId === now.project.id) refreshProjectDetail();
+        } else {
+          queueDriveImageTrash(driveId);    // inzwischen gelöscht -> in Drive aufräumen
+        }
+      }
+    } catch (e) {
+      console.error('Werkbank: Bilder-Sync mit Drive fehlgeschlagen:', e);
+    } finally {
+      imgSyncing = false;
+      if (imgSyncQueued) { imgSyncQueued = false; driveSyncImages(); }
+    }
+  }
+
+  /* ------------------------------------------------------------------ *
    * 6. NAVIGATION, MODALS & EVENT-BINDINGS
    * ------------------------------------------------------------------ */
   function switchView(viewName) {
@@ -2580,6 +3122,80 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       if (del) deleteTask(del.dataset.deleteTask);
     });
 
+    // --- Projektbilder ---
+    const imageInput = document.getElementById('pd-image-input');
+    const pickImages = () => { imageInput.value = ''; imageInput.click(); };
+    document.getElementById('btn-add-images').addEventListener('click', pickImages);
+    imageInput.addEventListener('change', () => {
+      if (activeProjectId && imageInput.files.length) addImagesToProject(activeProjectId, imageInput.files);
+    });
+    document.getElementById('pd-gallery').addEventListener('click', (e) => {
+      if (e.target.closest('[data-add-images]')) { pickImages(); return; }
+      const tile = e.target.closest('[data-open-image]');
+      if (tile) openLightbox(activeProjectId, tile.dataset.openImage);
+    });
+
+    // Drag & Drop aufs offene Projekt-Modal
+    const detailModal = document.getElementById('modal-project-detail');
+    const hasFiles = (e) => e.dataTransfer && [...(e.dataTransfer.types || [])].includes('Files');
+    let dragDepth = 0;
+    detailModal.addEventListener('dragenter', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault(); dragDepth += 1; detailModal.classList.add('is-dragover');
+    });
+    detailModal.addEventListener('dragover', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault(); e.dataTransfer.dropEffect = 'copy';
+    });
+    detailModal.addEventListener('dragleave', (e) => {
+      if (!hasFiles(e)) return;
+      dragDepth = Math.max(0, dragDepth - 1);
+      if (!dragDepth) detailModal.classList.remove('is-dragover');
+    });
+    detailModal.addEventListener('drop', (e) => {
+      if (!hasFiles(e)) return;
+      e.preventDefault(); dragDepth = 0; detailModal.classList.remove('is-dragover');
+      if (activeProjectId) addImagesToProject(activeProjectId, e.dataTransfer.files);
+    });
+    // Versehentlich daneben fallen gelassene Dateien öffnen nicht die Bilddatei statt der App
+    window.addEventListener('dragover', (e) => { if (hasFiles(e)) e.preventDefault(); });
+    window.addEventListener('drop', (e) => { if (hasFiles(e)) e.preventDefault(); });
+
+    // Einfügen aus der Zwischenablage (Strg/⌘ + V), solange ein Projekt offen ist
+    document.addEventListener('paste', (e) => {
+      if (!activeProjectId || detailModal.classList.contains('hidden') || !e.clipboardData) return;
+      // Text in ein Eingabefeld einfügen hat Vorrang (Word & Co. legen oft zusätzlich ein Bild ab)
+      const t = e.target;
+      const inField = t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      if (inField && [...(e.clipboardData.types || [])].includes('text/plain')) return;
+      const files = [...(e.clipboardData.files || [])].filter(f => /^image\//.test(f.type));
+      if (!files.length) return;   // normaler Text-Einfügevorgang bleibt unberührt
+      e.preventDefault();
+      addImagesToProject(activeProjectId, files);
+    });
+
+    // Bildansicht: Buttons, Klick auf den Hintergrund, Wischen, Tastatur
+    const lb = document.getElementById('lightbox');
+    lb.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-lb]');
+      if (btn) { lightboxAction(btn.dataset.lb); return; }
+      if (e.target === lb || e.target.classList.contains('lb-stage')) closeLightbox();
+    });
+    lb.addEventListener('touchstart', (e) => { lightbox.touchX = e.touches[0].clientX; }, { passive: true });
+    lb.addEventListener('touchend', (e) => {
+      if (lightbox.touchX === null) return;
+      const dx = e.changedTouches[0].clientX - lightbox.touchX;
+      lightbox.touchX = null;
+      if (Math.abs(dx) > 50) stepLightbox(dx < 0 ? 1 : -1);
+    }, { passive: true });
+    // Capture-Phase: Escape schließt NUR die Bildansicht, nicht zusätzlich das Projekt-Modal
+    window.addEventListener('keydown', (e) => {
+      if (lb.classList.contains('hidden')) return;
+      if (e.key === 'Escape') { e.preventDefault(); e.stopPropagation(); closeLightbox(); }
+      else if (e.key === 'ArrowLeft') { e.preventDefault(); stepLightbox(-1); }
+      else if (e.key === 'ArrowRight') { e.preventDefault(); stepLightbox(1); }
+    }, true);
+
     // --- Notizen ---
     document.getElementById('btn-new-note').addEventListener('click', () => openNoteForm(null));
     document.getElementById('form-note').addEventListener('submit', saveNoteForm);
@@ -2643,6 +3259,10 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
     // --- Daten zurücksetzen ---
     document.getElementById('btn-reset-data').addEventListener('click', () => {
       if (!confirm('Alle Daten löschen und Beispieldaten neu laden?')) return;
+      // Projektbilder auf diesem Gerät mit entfernen (Kopien in Drive bleiben unangetastet)
+      imgDB.clear().catch(() => {});
+      imgUrlCache.forEach(url => URL.revokeObjectURL(url));
+      imgUrlCache.clear();
       localStorage.removeItem(STORAGE_KEY);
       loadState();
       renderAll();
@@ -3073,45 +3693,6 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
-})();
-</script>
-<script id="jmb-global-theme-runtime">
-(function(){
-  'use strict';
-  var hub=window.JMBGlobalTheme;if(!hub)return;
-  function syncToggle(){
-    var t=hub.current();
-    var buttons=[document.getElementById('themeToggle'),document.getElementById('btnThemeToggle'),document.getElementById('btn-theme')].filter(Boolean);
-    buttons.forEach(function(btn){
-      var apple=(t==='apple'||t==='apple-dark');
-      btn.style.display=apple?'':'none';
-      if(apple){
-        var dark=t==='apple-dark';
-        btn.setAttribute('aria-label',dark?'Apple Hell aktivieren':'Apple Dunkel aktivieren');
-        btn.setAttribute('title',dark?'Apple Hell':'Apple Dunkel');
-        btn.setAttribute('aria-pressed',dark?'true':'false');
-      }
-    });
-  }
-  function installToggle(btn){
-    if(!btn)return;
-    btn.addEventListener('click',function(e){
-      var t=hub.current();
-      if(t!=='apple'&&t!=='apple-dark')return;
-      e.preventDefault();e.stopImmediatePropagation();
-      hub.set(t==='apple-dark'?'apple':'apple-dark');
-      syncToggle();
-    },true);
-  }
-  installToggle(document.getElementById('themeToggle'));
-  installToggle(document.getElementById('btnThemeToggle'));
-  installToggle(document.getElementById('btn-theme'));
-  window.addEventListener('jmb-global-theme-change',syncToggle);
-  syncToggle();
-  var frame=document.getElementById('appFrame');
-  if(frame){
-    frame.addEventListener('load',function(){try{frame.contentWindow.postMessage({type:'jmb-global-theme',theme:hub.current()},'*');}catch(e){}});
-  }
 })();
 </script>
 </body>
