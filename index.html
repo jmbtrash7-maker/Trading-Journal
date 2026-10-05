@@ -28,8 +28,6 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Inter nur als Fallback für Windows/Android – auf Apple-Geräten greift die Systemschrift (SF Pro) -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!-- Google Identity Services: offizieller OAuth-Client für die Kontoverbindung -->
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   /* ==================================================================
      APPLE-EDITION — helles Basis-Design im Stil von macOS/iOS,
@@ -356,46 +354,6 @@
   .hero__time{color:#fff;font-variant-numeric:tabular-nums;}
   .live-dot{width:8px;height:8px;border-radius:50%;background:#30d158;flex:0 0 auto;animation:startPulse 2s infinite;}
 
-  /* ---------- Google-Account-Verbindung ---------- */
-  .account-card{
-    margin-top:24px;padding:18px 20px;border-radius:var(--radius);
-    background:var(--bg-panel);
-    box-shadow:var(--shadow-sm), inset 0 0 0 .5px var(--card-line);
-    display:flex;align-items:center;justify-content:space-between;gap:18px;
-  }
-  .account-card__main{display:flex;align-items:center;gap:14px;min-width:0;}
-  .account-card__avatar{
-    width:46px;height:46px;flex:0 0 auto;border-radius:50%;overflow:hidden;
-    display:grid;place-items:center;background:var(--fill);color:var(--text);
-    font-family:var(--font-display);font-size:20px;font-weight:700;
-    box-shadow:inset 0 0 0 .5px var(--separator);
-  }
-  .account-card__avatar img{width:100%;height:100%;object-fit:cover;display:block;}
-  .account-card__copy{min-width:0;}
-  .account-card__title{
-    margin:0;font-family:var(--font-display);font-size:16px;font-weight:600;
-    letter-spacing:-.018em;line-height:1.25;
-  }
-  .account-card__status{margin:3px 0 0;color:var(--text-dim);font-size:13px;line-height:1.4;}
-  .account-card__status.is-success{color:var(--green);}
-  .account-card__status.is-error{color:var(--red);}
-  .account-card__email{margin:2px 0 0;color:var(--text-dim);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .account-card__actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto;}
-  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
-  .google-config-copy{margin:8px 0 0;color:var(--text-dim);font-size:13px;line-height:1.45;}
-  .field{display:grid;gap:7px;margin-top:18px;}
-  .field__label{font-size:13px;font-weight:600;color:var(--text);}
-  .field__input{
-    width:100%;min-height:44px;padding:10px 12px;border-radius:12px;
-    border:.5px solid var(--separator);background:var(--fill);color:var(--text);
-    font:inherit;font-size:14px;outline:none;
-    transition:border-color .2s var(--ease), background-color .2s var(--ease);
-  }
-  .field__input:focus{border-color:var(--focus);background:var(--bg-panel);}
-  .google-config-origin{margin:10px 0 0;color:var(--text-dim);font-size:12px;overflow-wrap:anywhere;}
-  .google-config-error{margin:10px 0 0;color:var(--red);font-size:12px;line-height:1.4;}
-  [hidden]{display:none !important;}
-
   /* ---------- App-Karten (ersetzen die Rechteck-Kacheln) ----------
      Klassenname .hex bleibt, weil das JS darüber die Klicks bindet. */
   .apps{margin-top:40px;}
@@ -573,9 +531,6 @@
     /* Status-Pille am Handy volle Breite, Uhrzeit rechtsbündig */
     .hero__status{display:flex;width:100%;border-radius:14px;padding:9px 14px 9px 12px;}
     .hero__time{margin-left:auto;}
-    .account-card{margin-top:16px;padding:16px;align-items:flex-start;flex-direction:column;}
-    .account-card__actions{width:100%;justify-content:stretch;}
-    .account-card__actions .btn{flex:1;min-height:44px;}
     .apps{margin-top:28px;}
     .hex-row{gap:12px;}
     .hex{min-height:168px;padding:16px;}
@@ -611,7 +566,35 @@
     .reveal{opacity:1 !important;transform:none !important;}
     .ambient{display:none;}
   }
+
+
+  /* ---------- Zentrale Google-Drive-Sicherung (nur Headquarter) ---------- */
+  .cloud-panel{
+    margin-top:18px;padding:18px 20px;border-radius:22px;background:var(--bg-panel);
+    border:1px solid var(--card-line);box-shadow:var(--shadow-sm);display:grid;
+    grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;
+  }
+  .cloud-panel__main{display:flex;align-items:center;gap:14px;min-width:0;}
+  .cloud-panel__icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;
+    background:var(--accent-dim);color:var(--accent);}
+  .cloud-panel__icon svg{width:25px;height:25px;}
+  .cloud-panel__title{font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:-.02em;}
+  .cloud-panel__status{margin-top:3px;color:var(--text-dim);font-size:13px;line-height:1.35;}
+  .cloud-panel__status strong{color:var(--text);font-weight:600;}
+  .cloud-panel__actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
+  .cloud-btn{appearance:none;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;
+    background:var(--fill);color:var(--text);cursor:pointer;transition:transform .18s var(--ease),background .18s var(--ease);}
+  .cloud-btn:hover{background:var(--fill-strong);}.cloud-btn:active{transform:scale(.97);}
+  .cloud-btn--primary{background:var(--accent-fill);color:#fff;}.cloud-btn--primary:hover{background:var(--accent-fill-hover);}
+  .cloud-btn[hidden]{display:none!important}.cloud-btn:disabled{opacity:.55;cursor:default;transform:none;}
+  .cloud-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--text-dim);vertical-align:1px;}
+  .cloud-dot.is-on{background:var(--green);box-shadow:0 0 0 4px var(--green-dim);}
+  .cloud-dot.is-busy{background:var(--amber-fill);box-shadow:0 0 0 4px rgba(255,159,10,.14);}
+  .cloud-dot.is-error{background:var(--red);box-shadow:0 0 0 4px var(--red-dim);}
+  @media (max-width:700px){.cloud-panel{grid-template-columns:1fr}.cloud-panel__actions{justify-content:flex-start}.cloud-btn{flex:1 1 auto;}}
+
 </style>
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -652,19 +635,26 @@
         </div>
       </section>
 
-      <section class="account-card" id="googleAccountCard" data-reveal aria-labelledby="googleAccountTitle">
-        <div class="account-card__main">
-          <div class="account-card__avatar" id="googleAccountAvatar" aria-hidden="true">G</div>
-          <div class="account-card__copy">
-            <h2 class="account-card__title" id="googleAccountTitle">Google Account</h2>
-            <p class="account-card__status" id="googleAccountStatus" role="status" aria-live="polite">Nicht verbunden</p>
-            <p class="account-card__email" id="googleAccountEmail" hidden></p>
+
+
+      <section class="cloud-panel" id="cloudPanel" data-reveal aria-labelledby="cloudTitle">
+        <div class="cloud-panel__main">
+          <span class="cloud-panel__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M7.5 18.5h9.2a4.3 4.3 0 0 0 .5-8.6A6.1 6.1 0 0 0 5.6 8.2 3.8 3.8 0 0 0 7.5 18.5z"/>
+              <path d="M12 10.5v5M9.9 12.6 12 10.5l2.1 2.1"/>
+            </svg>
+          </span>
+          <div>
+            <div class="cloud-panel__title" id="cloudTitle">Google Drive · Zentrales Backup</div>
+            <div class="cloud-panel__status" id="cloudStatus"><span class="cloud-dot" id="cloudDot"></span><strong>Nicht verbunden</strong> · lokale Daten bleiben erhalten</div>
           </div>
         </div>
-        <div class="account-card__actions">
-          <button class="btn" id="googleSetupBtn" type="button">Einrichten</button>
-          <button class="btn btn--primary" id="googleConnectBtn" type="button">Verbinden</button>
-          <button class="btn" id="googleDisconnectBtn" type="button" hidden>Trennen</button>
+        <div class="cloud-panel__actions">
+          <button class="cloud-btn cloud-btn--primary" id="cloudConnectBtn" type="button">Google verbinden</button>
+          <button class="cloud-btn" id="cloudSaveBtn" type="button" hidden>Jetzt sichern</button>
+          <button class="cloud-btn" id="cloudLoadBtn" type="button" hidden>Cloud laden</button>
+          <button class="cloud-btn" id="cloudDisconnectBtn" type="button" hidden>Trennen</button>
         </div>
       </section>
 
@@ -787,23 +777,6 @@
       <p class="confirm-title" id="confirmTitle">Änderungen speichern?</p>
       <div class="confirm-actions">
         <button class="btn btn--primary" id="btnConfirmSave" type="button">Ja</button>
-      </div>
-    </div>
-  </div>
-
-  <div class="confirm-overlay" id="googleConfigOverlay" aria-hidden="true">
-    <div class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="googleConfigTitle">
-      <p class="confirm-title" id="googleConfigTitle">Google Account einrichten</p>
-      <p class="google-config-copy">Trage die OAuth-Web-Client-ID deines Google-Cloud-Projekts ein. Die Client-ID ist kein Passwort und wird nur in diesem Browser gespeichert.</p>
-      <label class="field" for="googleClientIdInput">
-        <span class="field__label">OAuth Web Client-ID</span>
-        <input class="field__input" id="googleClientIdInput" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false">
-      </label>
-      <p class="google-config-origin" id="googleConfigOrigin"></p>
-      <p class="google-config-error" id="googleConfigError" role="alert" hidden></p>
-      <div class="confirm-actions">
-        <button class="btn" id="googleConfigCancel" type="button">Abbrechen</button>
-        <button class="btn btn--primary" id="googleConfigSave" type="button">Speichern &amp; verbinden</button>
       </div>
     </div>
   </div>
@@ -961,268 +934,6 @@
   } else {
     homeView.classList.add('is-active');
   }
-</script>
-
-<script>
-  /* ================================================================
-     GOOGLE-ACCOUNT-SCHICHT — Google Identity Services (OAuth Token)
-     Die OAuth-Client-ID wird lokal gespeichert; Zugriffstoken bleiben
-     ausschließlich im Arbeitsspeicher und werden nicht persistiert.
-     ================================================================ */
-  (function GoogleAccountLayer(){
-    const CLIENT_ID_KEY = 'jmb-google-oauth-client-id';
-    const SCOPES = 'openid profile email';
-    const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
-
-    const statusEl = document.getElementById('googleAccountStatus');
-    const emailEl = document.getElementById('googleAccountEmail');
-    const avatarEl = document.getElementById('googleAccountAvatar');
-    const connectBtn = document.getElementById('googleConnectBtn');
-    const disconnectBtn = document.getElementById('googleDisconnectBtn');
-    const setupBtn = document.getElementById('googleSetupBtn');
-    const overlay = document.getElementById('googleConfigOverlay');
-    const input = document.getElementById('googleClientIdInput');
-    const originEl = document.getElementById('googleConfigOrigin');
-    const errorEl = document.getElementById('googleConfigError');
-    const cancelBtn = document.getElementById('googleConfigCancel');
-    const saveBtn = document.getElementById('googleConfigSave');
-
-    let tokenClient = null;
-    let tokenClientId = '';
-    let accessToken = '';
-    let expiryTimer = null;
-    let busy = false;
-
-    function readClientId(){
-      try{ return localStorage.getItem(CLIENT_ID_KEY) || ''; }
-      catch(e){ console.error('Google Client-ID konnte nicht gelesen werden.', e); return ''; }
-    }
-
-    function saveClientId(value){
-      try{ localStorage.setItem(CLIENT_ID_KEY, value); return true; }
-      catch(e){ console.error('Google Client-ID konnte nicht gespeichert werden.', e); return false; }
-    }
-
-    function isValidClientId(value){
-      return typeof value === 'string' && value.trim().endsWith('.apps.googleusercontent.com');
-    }
-
-    function setStatus(text, type){
-      statusEl.textContent = text;
-      statusEl.classList.toggle('is-success', type === 'success');
-      statusEl.classList.toggle('is-error', type === 'error');
-    }
-
-    function setBusy(next){
-      busy = next;
-      connectBtn.disabled = next;
-      setupBtn.disabled = next;
-      connectBtn.textContent = next ? 'Verbindung …' : 'Verbinden';
-    }
-
-    function resetProfile(message){
-      accessToken = '';
-      if(expiryTimer){ clearTimeout(expiryTimer); expiryTimer = null; }
-      emailEl.textContent = '';
-      emailEl.hidden = true;
-      avatarEl.textContent = 'G';
-      disconnectBtn.hidden = true;
-      connectBtn.hidden = false;
-      setupBtn.hidden = false;
-      setStatus(message || 'Nicht verbunden');
-    }
-
-    function renderProfile(profile){
-      const name = profile && typeof profile.name === 'string' ? profile.name.trim() : '';
-      const email = profile && typeof profile.email === 'string' ? profile.email.trim() : '';
-      setStatus(name ? 'Verbunden mit ' + name : 'Google Account verbunden', 'success');
-      if(email){ emailEl.textContent = email; emailEl.hidden = false; }
-      else { emailEl.textContent = ''; emailEl.hidden = true; }
-
-      avatarEl.textContent = '';
-      if(profile && typeof profile.picture === 'string' && /^https:\/\//i.test(profile.picture)){
-        const img = document.createElement('img');
-        img.src = profile.picture;
-        img.alt = '';
-        img.referrerPolicy = 'no-referrer';
-        avatarEl.appendChild(img);
-      } else {
-        avatarEl.textContent = name ? name.charAt(0).toUpperCase() : 'G';
-      }
-      connectBtn.hidden = true;
-      setupBtn.hidden = true;
-      disconnectBtn.hidden = false;
-    }
-
-    function showConfigError(message){
-      errorEl.textContent = message;
-      errorEl.hidden = !message;
-    }
-
-    function currentOriginText(){
-      if(location.protocol === 'file:') return 'Aktuell geöffnet über file:// — Google OAuth benötigt localhost oder HTTPS.';
-      return 'Diese Web-Origin muss in Google Cloud freigegeben sein: ' + location.origin;
-    }
-
-    function openConfig(){
-      input.value = readClientId();
-      originEl.textContent = currentOriginText();
-      showConfigError('');
-      overlay.classList.add('is-active');
-      overlay.setAttribute('aria-hidden', 'false');
-      setTimeout(() => { try{ input.focus({preventScroll:true}); }catch(e){} }, 30);
-    }
-
-    function closeConfig(){
-      overlay.classList.remove('is-active');
-      overlay.setAttribute('aria-hidden', 'true');
-      showConfigError('');
-    }
-
-    function googleLibraryReady(){
-      return !!(window.google && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function');
-    }
-
-    function waitForGoogleIdentity(){
-      if(googleLibraryReady()) return Promise.resolve();
-      return new Promise((resolve, reject) => {
-        const started = Date.now();
-        const timer = setInterval(() => {
-          if(googleLibraryReady()){ clearInterval(timer); resolve(); return; }
-          if(Date.now() - started > 8000){
-            clearInterval(timer);
-            reject(new Error('Google Identity Services konnte nicht geladen werden.'));
-          }
-        }, 80);
-      });
-    }
-
-    function assertUsableOrigin(){
-      if(location.protocol !== 'http:' && location.protocol !== 'https:'){
-        throw new Error('Google Login funktioniert nicht über file://. Öffne JMB Headquarter über localhost oder HTTPS.');
-      }
-    }
-
-    async function loadProfile(token){
-      const response = await fetch(USERINFO_URL, {
-        method:'GET',
-        headers:{ Authorization:'Bearer ' + token },
-        cache:'no-store'
-      });
-      if(!response.ok) throw new Error('Google-Profil konnte nicht geladen werden (HTTP ' + response.status + ').');
-      return response.json();
-    }
-
-    function buildTokenClient(clientId){
-      if(tokenClient && tokenClientId === clientId) return tokenClient;
-      tokenClientId = clientId;
-      tokenClient = google.accounts.oauth2.initTokenClient({
-        client_id:clientId,
-        scope:SCOPES,
-        callback:async (response) => {
-          if(response && response.error){
-            console.error('Google OAuth Fehler:', response);
-            setBusy(false);
-            setStatus('Google-Verbindung abgebrochen oder fehlgeschlagen.', 'error');
-            return;
-          }
-          if(!response || !response.access_token){
-            setBusy(false);
-            setStatus('Google hat kein Zugriffstoken geliefert.', 'error');
-            return;
-          }
-          try{
-            accessToken = response.access_token;
-            const profile = await loadProfile(accessToken);
-            renderProfile(profile);
-            const seconds = Number(response.expires_in);
-            if(Number.isFinite(seconds) && seconds > 30){
-              if(expiryTimer) clearTimeout(expiryTimer);
-              expiryTimer = setTimeout(() => resetProfile('Google-Sitzung abgelaufen – erneut verbinden.'), (seconds - 15) * 1000);
-            }
-          }catch(err){
-            console.error(err);
-            resetProfile('Google-Profil konnte nicht geladen werden.');
-            statusEl.classList.add('is-error');
-          }finally{
-            setBusy(false);
-          }
-        },
-        error_callback:(error) => {
-          console.error('Google OAuth Popup-Fehler:', error);
-          setBusy(false);
-          setStatus('Google-Anmeldung konnte nicht geöffnet werden.', 'error');
-        }
-      });
-      return tokenClient;
-    }
-
-    async function connect(){
-      if(busy) return;
-      const clientId = readClientId().trim();
-      if(!isValidClientId(clientId)){ openConfig(); return; }
-      try{
-        assertUsableOrigin();
-        setBusy(true);
-        setStatus('Google-Verbindung wird vorbereitet …');
-        await waitForGoogleIdentity();
-        buildTokenClient(clientId).requestAccessToken({prompt:'select_account'});
-      }catch(err){
-        console.error(err);
-        setBusy(false);
-        setStatus(err && err.message ? err.message : 'Google-Verbindung fehlgeschlagen.', 'error');
-      }
-    }
-
-    function disconnect(){
-      if(!accessToken){ resetProfile(); return; }
-      const token = accessToken;
-      resetProfile('Google-Verbindung wird getrennt …');
-      if(googleLibraryReady() && typeof google.accounts.oauth2.revoke === 'function'){
-        google.accounts.oauth2.revoke(token, (response) => {
-          if(response && response.successful === false){
-            console.error('Google-Berechtigung konnte nicht vollständig widerrufen werden:', response);
-            setStatus('Lokal getrennt; Google-Berechtigung konnte nicht vollständig widerrufen werden.', 'error');
-            return;
-          }
-          setStatus('Nicht verbunden');
-        });
-      } else {
-        setStatus('Nicht verbunden');
-      }
-    }
-
-    connectBtn.addEventListener('click', connect);
-    setupBtn.addEventListener('click', openConfig);
-    disconnectBtn.addEventListener('click', disconnect);
-    cancelBtn.addEventListener('click', closeConfig);
-    saveBtn.addEventListener('click', () => {
-      const clientId = input.value.trim();
-      if(!isValidClientId(clientId)){
-        showConfigError('Bitte eine gültige Google OAuth Web Client-ID eintragen, die auf .apps.googleusercontent.com endet.');
-        return;
-      }
-      if(!saveClientId(clientId)){
-        showConfigError('Die Client-ID konnte im Browser nicht gespeichert werden.');
-        return;
-      }
-      tokenClient = null;
-      tokenClientId = '';
-      closeConfig();
-      connect();
-    });
-    input.addEventListener('keydown', (e) => {
-      if(e.key === 'Enter'){ e.preventDefault(); saveBtn.click(); }
-    });
-    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeConfig(); });
-    document.addEventListener('keydown', (e) => {
-      if(e.key === 'Escape' && overlay.classList.contains('is-active')) closeConfig();
-    });
-
-    resetProfile();
-    if(location.protocol === 'file:') setStatus('Für Google Login über localhost oder HTTPS öffnen.', 'error');
-    else if(readClientId()) setStatus('Bereit zum Verbinden');
-  })();
 </script>
 
 <script>
@@ -1386,5 +1097,484 @@
     mo.observe(app,  { attributes: true, attributeFilter: ['class'] });
   })();
 </script>
+
+<script>
+/* ========================================================================
+   JMB HEADQUARTER · ZENTRALE GOOGLE-DRIVE-SICHERUNG
+   - Google-Anmeldung ausschließlich hier im Headquarter.
+   - Sichert den gemeinsamen localStorage aller Unterseiten.
+   - Sichert zusätzlich die bekannten IndexedDB-Medien aus Projekte + Journal.
+   - Access-Token bleibt nur im Arbeitsspeicher und wird NICHT ins Backup geschrieben.
+   ======================================================================== */
+(function(){
+  'use strict';
+
+  const CLIENT_ID = '273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com';
+  const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
+  const BACKUP_NAME = 'JMB-Headquarter-Backup.json';
+  const CONFLICT_PREFIX = 'JMB-Headquarter-Konflikt-';
+  const LS_PREFIX = 'jmb_hq_cloud_';
+  const LS_CONNECTED = LS_PREFIX + 'connected_v1';
+  const LS_FILE_ID = LS_PREFIX + 'fileid_v1';
+  const LS_LAST_SYNC = LS_PREFIX + 'lastsync_v1';
+  const LS_LAST_LOCAL_CHANGE = LS_PREFIX + 'lastlocalchange_v1';
+  const LS_DEVICE = LS_PREFIX + 'device_v1';
+
+  const statusEl = document.getElementById('cloudStatus');
+  const dotEl = document.getElementById('cloudDot');
+  const connectBtn = document.getElementById('cloudConnectBtn');
+  const saveBtn = document.getElementById('cloudSaveBtn');
+  const loadBtn = document.getElementById('cloudLoadBtn');
+  const disconnectBtn = document.getElementById('cloudDisconnectBtn');
+
+  let tokenClient = null;
+  let accessToken = null;
+  let tokenExpiresAt = 0;
+  let connected = false;
+  let busy = false;
+  let saveTimer = null;
+  let saveQueued = false;
+
+  const DB_SCHEMAS = [
+    {name:'werkbank_images_v1', stores:[{name:'images', keyPath:null, autoIncrement:false, indexes:[]}]},
+    {name:'jmb_journal_media_v1', stores:[{name:'media', keyPath:'id', autoIncrement:false, indexes:[
+      {name:'hash',keyPath:'hash',unique:false},{name:'kind',keyPath:'kind',unique:false},{name:'createdAt',keyPath:'createdAt',unique:false}
+    ]}]}
+  ];
+
+  function nowLabel(ts){
+    if(!ts) return '';
+    try{return new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(_){return '';}
+  }
+  function setStatus(kind, html){
+    dotEl.className = 'cloud-dot' + (kind ? ' is-' + kind : '');
+    statusEl.innerHTML = '<span class="cloud-dot' + (kind ? ' is-' + kind : '') + '"></span>' + html;
+  }
+  function renderStatus(message, kind){
+    connectBtn.hidden = connected;
+    saveBtn.hidden = !connected;
+    loadBtn.hidden = !connected;
+    disconnectBtn.hidden = !connected;
+    [connectBtn,saveBtn,loadBtn,disconnectBtn].forEach(b=>{ if(b) b.disabled=busy; });
+    if(message){ setStatus(kind||'', message); return; }
+    if(busy){ setStatus('busy','<strong>Synchronisiere …</strong> · Daten werden verschlüsselt per HTTPS an Google Drive übertragen'); return; }
+    if(connected){
+      const last = parseInt(localStorage.getItem(LS_LAST_SYNC)||'0',10)||0;
+      setStatus('on','<strong>Verbunden</strong>' + (last ? ' · zuletzt gesichert ' + nowLabel(last) : ' · bereit für automatische Sicherung'));
+    }else{
+      setStatus('','<strong>Nicht verbunden</strong> · lokale Daten bleiben erhalten');
+    }
+  }
+
+  function isExcludedStorageKey(key){
+    if(!key) return true;
+    if(key.startsWith(LS_PREFIX)) return true;
+    if(key === 'jmb_google_token_v1' || key === 'jmb_google_token_exp_v1' || key === 'jmb_google_connected_v1') return true;
+    if(key.startsWith('wb_drive') || key.startsWith('tj_drive')) return true;
+    if(key === 'kalenderJulian_calconnected_v1' || key === 'kalenderJulian_callastsync_v1') return true;
+    if(/(google|drive|oauth|calendar).*(token|expiry|expires|fileid|connected|lastsync)/i.test(key)) return true;
+    return false;
+  }
+
+  function collectLocalStorage(){
+    const data = {};
+    for(let i=0;i<localStorage.length;i++){
+      const key = localStorage.key(i);
+      if(!key || isExcludedStorageKey(key)) continue;
+      try{ data[key] = localStorage.getItem(key); }catch(_){ }
+    }
+    return data;
+  }
+
+  function bytesToBase64(bytes){
+    const chunk = 0x8000;
+    let binary = '';
+    for(let i=0;i<bytes.length;i+=chunk){
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+chunk,bytes.length)));
+    }
+    return btoa(binary);
+  }
+  function base64ToBytes(base64){
+    const binary = atob(base64||'');
+    const bytes = new Uint8Array(binary.length);
+    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
+    return bytes;
+  }
+  function blobToBase64(blob){
+    return new Promise((resolve,reject)=>{
+      const r = new FileReader();
+      r.onload = ()=>{
+        const value = String(r.result||'');
+        resolve(value.slice(value.indexOf(',')+1));
+      };
+      r.onerror = ()=>reject(r.error||new Error('Datei konnte nicht gelesen werden.'));
+      r.readAsDataURL(blob);
+    });
+  }
+  async function encodeValue(value){
+    if(value instanceof File){
+      return {__jmbType:'File',name:value.name,type:value.type,lastModified:value.lastModified,data:await blobToBase64(value)};
+    }
+    if(value instanceof Blob){
+      return {__jmbType:'Blob',type:value.type,data:await blobToBase64(value)};
+    }
+    if(value instanceof Date) return {__jmbType:'Date',value:value.toISOString()};
+    if(value instanceof ArrayBuffer) return {__jmbType:'ArrayBuffer',data:bytesToBase64(new Uint8Array(value))};
+    if(ArrayBuffer.isView(value)) return {__jmbType:'TypedArray',ctor:value.constructor.name,data:bytesToBase64(new Uint8Array(value.buffer,value.byteOffset,value.byteLength))};
+    if(Array.isArray(value)) return Promise.all(value.map(encodeValue));
+    if(value && typeof value === 'object'){
+      const out = {};
+      for(const [k,v] of Object.entries(value)) out[k] = await encodeValue(v);
+      return out;
+    }
+    return value;
+  }
+  function decodeValue(value){
+    if(Array.isArray(value)) return value.map(decodeValue);
+    if(!value || typeof value !== 'object') return value;
+    if(value.__jmbType === 'Date') return new Date(value.value);
+    if(value.__jmbType === 'Blob') return new Blob([base64ToBytes(value.data)],{type:value.type||''});
+    if(value.__jmbType === 'File'){
+      const bytes=base64ToBytes(value.data);
+      try{return new File([bytes],value.name||'datei',{type:value.type||'',lastModified:value.lastModified||Date.now()});}
+      catch(_){return new Blob([bytes],{type:value.type||''});}
+    }
+    if(value.__jmbType === 'ArrayBuffer') return base64ToBytes(value.data).buffer;
+    if(value.__jmbType === 'TypedArray'){
+      const bytes=base64ToBytes(value.data);
+      const ctor=window[value.ctor];
+      try{return typeof ctor==='function'?new ctor(bytes.buffer):bytes;}catch(_){return bytes;}
+    }
+    const out={};
+    for(const [k,v] of Object.entries(value)) out[k]=decodeValue(v);
+    return out;
+  }
+
+  function openKnownDb(schema){
+    return new Promise((resolve,reject)=>{
+      if(!window.indexedDB){ resolve(null); return; }
+      const req=indexedDB.open(schema.name);
+      req.onupgradeneeded=()=>{
+        const db=req.result;
+        for(const st of schema.stores){
+          if(db.objectStoreNames.contains(st.name)) continue;
+          const options={autoIncrement:!!st.autoIncrement};
+          if(st.keyPath!==null) options.keyPath=st.keyPath;
+          const store=db.createObjectStore(st.name,options);
+          for(const ix of st.indexes||[]) store.createIndex(ix.name,ix.keyPath,{unique:!!ix.unique});
+        }
+      };
+      req.onsuccess=()=>resolve(req.result);
+      req.onerror=()=>reject(req.error||new Error('IndexedDB konnte nicht geöffnet werden.'));
+      req.onblocked=()=>reject(new Error('IndexedDB ist durch eine andere Seite blockiert.'));
+    });
+  }
+  function reqPromise(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
+  function txPromise(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
+
+  async function collectIndexedDB(){
+    const result={};
+    for(const schema of DB_SCHEMAS){
+      let db=null;
+      try{
+        db=await openKnownDb(schema);
+        if(!db) continue;
+        const dbOut={version:db.version,stores:{}};
+        for(const st of schema.stores){
+          if(!db.objectStoreNames.contains(st.name)) continue;
+          const tx=db.transaction(st.name,'readonly');
+          const store=tx.objectStore(st.name);
+          const valuesReq=store.getAll();
+          const keysReq=store.getAllKeys();
+          const [values,keys]=await Promise.all([reqPromise(valuesReq),reqPromise(keysReq)]);
+          await txPromise(tx);
+          const records=[];
+          for(let i=0;i<values.length;i++) records.push({key:await encodeValue(keys[i]),value:await encodeValue(values[i])});
+          dbOut.stores[st.name]={keyPath:st.keyPath,records};
+        }
+        result[schema.name]=dbOut;
+      }catch(err){
+        console.warn('HQ Backup: IndexedDB konnte nicht gelesen werden:',schema.name,err);
+      }finally{try{db&&db.close();}catch(_){}}
+    }
+    return result;
+  }
+
+  async function buildSnapshot(){
+    return {
+      format:'JMB_HEADQUARTER_BACKUP',
+      version:2,
+      savedAt:Date.now(),
+      savedAtIso:new Date().toISOString(),
+      source:location.origin + location.pathname,
+      localStorage:collectLocalStorage(),
+      indexedDB:await collectIndexedDB()
+    };
+  }
+
+  async function restoreIndexedDB(bundle){
+    if(!bundle || typeof bundle!=='object') return;
+    for(const schema of DB_SCHEMAS){
+      const backupDb=bundle[schema.name];
+      if(!backupDb || !backupDb.stores) continue;
+      let db=null;
+      try{
+        db=await openKnownDb(schema);
+        if(!db) continue;
+        for(const st of schema.stores){
+          const backed=backupDb.stores[st.name];
+          if(!backed || !db.objectStoreNames.contains(st.name)) continue;
+          const tx=db.transaction(st.name,'readwrite');
+          const store=tx.objectStore(st.name);
+          store.clear();
+          for(const rec of backed.records||[]){
+            const value=decodeValue(rec.value), key=decodeValue(rec.key);
+            if(st.keyPath===null) store.put(value,key); else store.put(value);
+          }
+          await txPromise(tx);
+        }
+      }finally{try{db&&db.close();}catch(_){}}
+    }
+  }
+
+  async function applySnapshot(snapshot){
+    if(!snapshot || snapshot.format!=='JMB_HEADQUARTER_BACKUP' || !snapshot.localStorage) throw new Error('Ungültiges Headquarter-Backup.');
+    for(const [key,value] of Object.entries(snapshot.localStorage)){
+      if(isExcludedStorageKey(key)) continue;
+      localStorage.setItem(key,value);
+    }
+    await restoreIndexedDB(snapshot.indexedDB||{});
+    localStorage.setItem(LS_LAST_SYNC,String(Number(snapshot.savedAt)||Date.now()));
+    localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(Number(snapshot.savedAt)||Date.now()));
+    try{frame.src='about:blank'; currentTarget=null;}catch(_){ }
+  }
+
+  function multipart(metadata,json){
+    const boundary='jmb_hq_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+    const body=new Blob([
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,JSON.stringify(metadata),'\r\n',
+      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,json,'\r\n',
+      `--${boundary}--`
+    ],{type:`multipart/related; boundary=${boundary}`});
+    return {body,contentType:`multipart/related; boundary=${boundary}`};
+  }
+
+  async function api(url,options){
+    const token=await ensureToken();
+    const opts=Object.assign({},options||{});
+    opts.headers=Object.assign({},opts.headers||{},{Authorization:'Bearer '+token});
+    const res=await fetch(url,opts);
+    if(!res.ok){
+      let detail=''; try{detail=await res.text();}catch(_){ }
+      throw new Error('Google Drive HTTP '+res.status+(detail?' · '+detail.slice(0,160):''));
+    }
+    return res;
+  }
+  async function findBackupFile(){
+    const cached=localStorage.getItem(LS_FILE_ID);
+    if(cached){
+      try{const r=await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(cached)}?fields=id,name,modifiedTime`);return await r.json();}
+      catch(_){localStorage.removeItem(LS_FILE_ID);}
+    }
+    const q=encodeURIComponent(`name='${BACKUP_NAME}' and trashed=false`);
+    const r=await api(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc&pageSize=10`);
+    const data=await r.json();
+    const found=data.files&&data.files[0];
+    if(found&&found.id) localStorage.setItem(LS_FILE_ID,found.id);
+    return found||null;
+  }
+  async function downloadSnapshot(file){
+    if(!file||!file.id) return null;
+    const r=await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?alt=media`);
+    return await r.json();
+  }
+  async function uploadSnapshot(snapshot,name,fileId){
+    const content=JSON.stringify(snapshot);
+    const mp=multipart({name:name||BACKUP_NAME,mimeType:'application/json'},content);
+    const url=fileId
+      ? `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=multipart`
+      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
+    const r=await api(url,{method:fileId?'PATCH':'POST',headers:{'Content-Type':mp.contentType},body:mp.body});
+    return await r.json();
+  }
+
+  async function saveNow(reason){
+    if(!connected) return false;
+    if(busy){saveQueued=true;return false;}
+    busy=true; renderStatus();
+    try{
+      const snapshot=await buildSnapshot();
+      const file=await findBackupFile();
+      const result=await uploadSnapshot(snapshot,BACKUP_NAME,file&&file.id);
+      if(result&&result.id) localStorage.setItem(LS_FILE_ID,result.id);
+      localStorage.setItem(LS_LAST_SYNC,String(snapshot.savedAt));
+      localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(snapshot.savedAt));
+      renderStatus('<strong>Gesichert</strong> · '+nowLabel(snapshot.savedAt)+' · automatische Sicherung aktiv','on');
+      return true;
+    }catch(err){
+      console.error('HQ Backup fehlgeschlagen:',err);
+      renderStatus('<strong>Sicherung fehlgeschlagen</strong> · lokal bleibt alles erhalten','error');
+      return false;
+    }finally{
+      busy=false;
+      setTimeout(()=>renderStatus(),1800);
+      if(saveQueued){saveQueued=false;scheduleSave('queued');}
+    }
+  }
+
+  async function saveConflictSnapshot(){
+    const snapshot=await buildSnapshot();
+    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
+    await uploadSnapshot(snapshot,CONFLICT_PREFIX+stamp+'.json',null);
+  }
+
+  async function loadFromCloud(manual){
+    if(!connected) return false;
+    if(busy) return false;
+    busy=true; renderStatus();
+    try{
+      const file=await findBackupFile();
+      if(!file){renderStatus('<strong>Noch kein Cloud-Backup</strong> · zuerst „Jetzt sichern“ verwenden','');return false;}
+      const remote=await downloadSnapshot(file);
+      if(manual && !confirm('Cloud-Backup laden? Der gespeicherte Cloud-Stand wird auf dieses Gerät übernommen.')) return false;
+      if(manual){
+        const localChanged=+localStorage.getItem(LS_LAST_LOCAL_CHANGE)||0;
+        const lastSync=+localStorage.getItem(LS_LAST_SYNC)||0;
+        if(localChanged>lastSync) await saveConflictSnapshot();
+      }
+      await applySnapshot(remote);
+      renderStatus('<strong>Cloud-Stand geladen</strong> · Apps beim nächsten Öffnen mit diesen Daten','on');
+      return true;
+    }catch(err){
+      console.error('HQ Restore fehlgeschlagen:',err);
+      renderStatus('<strong>Cloud konnte nicht geladen werden</strong> · lokale Daten wurden nicht gelöscht','error');
+      return false;
+    }finally{busy=false;setTimeout(()=>renderStatus(),2200);}
+  }
+
+  async function reconcileAfterConnect(){
+    busy=true; renderStatus();
+    try{
+      const file=await findBackupFile();
+      const lastSync=parseInt(localStorage.getItem(LS_LAST_SYNC)||'0',10)||0;
+      const localChanged=parseInt(localStorage.getItem(LS_LAST_LOCAL_CHANGE)||'0',10)||0;
+      if(!file){
+        busy=false;
+        await saveNow('first-connect');
+        return;
+      }
+      const remote=await downloadSnapshot(file);
+      const remoteAt=Number(remote&&remote.savedAt)||0;
+      if(!lastSync){
+        await applySnapshot(remote);
+        renderStatus('<strong>Cloud-Stand übernommen</strong> · zentrales Backup ist aktiv','on');
+        return;
+      }
+      const localDirty=localChanged>lastSync;
+      const remoteDirty=remoteAt>lastSync;
+      if(localDirty && remoteDirty){
+        if(localChanged>remoteAt){
+          busy=false; await saveNow('local-newer'); return;
+        }
+        await saveConflictSnapshot();
+        await applySnapshot(remote);
+        renderStatus('<strong>Neueren Cloud-Stand geladen</strong> · lokaler Konflikt wurde separat in Drive gesichert','on');
+        return;
+      }
+      if(remoteDirty){await applySnapshot(remote);renderStatus('<strong>Neueren Cloud-Stand geladen</strong> · alles aktuell','on');return;}
+      if(localDirty){busy=false;await saveNow('local-dirty');return;}
+      renderStatus('<strong>Alles aktuell</strong> · automatische Sicherung aktiv','on');
+    }catch(err){
+      console.error('HQ Abgleich fehlgeschlagen:',err);
+      renderStatus('<strong>Abgleich fehlgeschlagen</strong> · lokale Daten bleiben erhalten','error');
+    }finally{busy=false;setTimeout(()=>renderStatus(),2200);}
+  }
+
+  function scheduleSave(reason){
+    localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(Date.now()));
+    if(!connected) return;
+    clearTimeout(saveTimer);
+    saveTimer=setTimeout(()=>saveNow(reason||'change'),1800);
+  }
+
+  function acceptToken(resp){
+    if(!resp || resp.error || !resp.access_token) throw new Error(resp&&resp.error?resp.error:'Google-Anmeldung fehlgeschlagen.');
+    accessToken=resp.access_token;
+    tokenExpiresAt=Date.now()+(parseInt(resp.expires_in,10)||3500)*1000-60000;
+    connected=true;
+    localStorage.setItem(LS_CONNECTED,'1');
+    renderStatus();
+    return accessToken;
+  }
+  function requestToken(prompt){
+    return new Promise((resolve,reject)=>{
+      if(!tokenClient){reject(new Error('Google-Anmeldung ist noch nicht bereit.'));return;}
+      const old=tokenClient.callback;
+      tokenClient.callback=(resp)=>{
+        tokenClient.callback=old;
+        try{resolve(acceptToken(resp));}catch(err){reject(err);}
+      };
+      try{tokenClient.requestAccessToken({prompt:prompt||''});}catch(err){tokenClient.callback=old;reject(err);}
+    });
+  }
+  async function ensureToken(){
+    if(accessToken && Date.now()<tokenExpiresAt) return accessToken;
+    return requestToken('');
+  }
+  async function connect(){
+    if(location.protocol==='file:'){
+      alert('Google-Anmeldung funktioniert nicht zuverlässig über file://. Bitte den Ordner über einen lokalen Webserver oder dein normales Hosting öffnen und diese Adresse in Google Cloud als Authorized JavaScript Origin hinterlegen.');
+      return;
+    }
+    try{await requestToken('consent');await reconcileAfterConnect();}
+    catch(err){console.error(err);connected=false;renderStatus('<strong>Google-Verbindung fehlgeschlagen</strong> · bitte erneut versuchen','error');}
+  }
+  function disconnect(){
+    if(accessToken && window.google&&google.accounts&&google.accounts.oauth2){try{google.accounts.oauth2.revoke(accessToken,()=>{});}catch(_){}}
+    accessToken=null;tokenExpiresAt=0;connected=false;
+    localStorage.removeItem(LS_CONNECTED);
+    renderStatus();
+  }
+  function initGoogle(tries){
+    tries=tries||0;
+    if(window.google&&google.accounts&&google.accounts.oauth2){
+      tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:DRIVE_SCOPE,callback:()=>{}});
+      if(localStorage.getItem(LS_CONNECTED)==='1' && location.protocol!=='file:'){
+        requestToken('').then(()=>reconcileAfterConnect()).catch(()=>{connected=false;renderStatus('<strong>Neu verbinden erforderlich</strong> · Google-Sitzung ist abgelaufen','');});
+      }else renderStatus();
+      return;
+    }
+    if(tries<60) setTimeout(()=>initGoogle(tries+1),200);
+    else renderStatus('<strong>Google-Anmeldung konnte nicht geladen werden</strong> · Internetverbindung prüfen','error');
+  }
+
+  if(!localStorage.getItem(LS_DEVICE)){
+    try{localStorage.setItem(LS_DEVICE,(crypto.randomUUID?crypto.randomUUID():'dev_'+Date.now()+'_'+Math.random().toString(36).slice(2)));}catch(_){ }
+  }
+  if(!localStorage.getItem(LS_LAST_LOCAL_CHANGE)) localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(Date.now()));
+
+  connectBtn.addEventListener('click',connect);
+  saveBtn.addEventListener('click',()=>saveNow('manual'));
+  loadBtn.addEventListener('click',()=>loadFromCloud(true));
+  disconnectBtn.addEventListener('click',disconnect);
+
+  // localStorage-Änderungen aus einem eingebetteten same-origin iframe landen hier.
+  window.addEventListener('storage',(event)=>{
+    if(!event.key || isExcludedStorageKey(event.key)) return;
+    scheduleSave('storage');
+  });
+  // Zusätzlicher Bridge-Hook der fünf Unterseiten (auch für IndexedDB/Dateien).
+  window.addEventListener('message',(event)=>{
+    if(event.source!==frame.contentWindow) return;
+    if(event.data&&event.data.type==='jmb-hq-data-changed') scheduleSave(event.data.reason||'child');
+  });
+  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&connected){const l=+localStorage.getItem(LS_LAST_LOCAL_CHANGE)||0,s=+localStorage.getItem(LS_LAST_SYNC)||0;if(l>s) saveNow('visibility');}});
+  setInterval(()=>{if(connected&&!busy){const l=+localStorage.getItem(LS_LAST_LOCAL_CHANGE)||0,s=+localStorage.getItem(LS_LAST_SYNC)||0;if(l>s) saveNow('interval');}},30000);
+
+  renderStatus();
+  initGoogle(0);
+})();
+</script>
+
 </body>
 </html>

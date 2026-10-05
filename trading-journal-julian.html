@@ -31,26 +31,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Outfit:wght@400;500;600;700&family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=VT323&family=Shippori+Mincho:wght@600;700&family=Manrope:wght@500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
 <script>try{var t=localStorage.getItem("tj_theme_v1");if(["cream","sakura","neon","cosmic","glass","aurora","terminal","ocean","zen","alchemy","synthwave","topo","blueprint","matrix","biolum","rte","apple","apple-dark"].indexOf(t)>-1)document.documentElement.setAttribute("data-theme",t);/* Soft-Struktur für Primär-Designs (Gruppe 1 in THEMES, bei Änderung dort mitziehen) */var d=document.documentElement.getAttribute("data-theme")||"dark";if(["dark","neon","rte","sakura","cosmic","glass","apple","apple-dark"].indexOf(d)>-1)document.documentElement.setAttribute("data-feel","soft");}catch(e){}</script>
-<script id="jmb-global-theme-master">
-/* Trading Journal publishes its primary design to the whole JMB suite. */
-(function(){
-  'use strict';
-  var KEY='jmb_global_theme_v1',CHANNEL='jmb-global-theme-v1';
-  var PRIMARY=['dark','neon','rte','sakura','cosmic','glass','apple','apple-dark'];
-  var bc=null;
-  function valid(t){return PRIMARY.indexOf(t)>-1?t:null;}
-  function persist(t){try{localStorage.setItem(KEY,t);}catch(e){}}
-  function post(t){
-    try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'jmb-global-theme',theme:t},'*');}catch(e){}
-    try{if(bc)bc.postMessage({type:'jmb-global-theme',theme:t});}catch(e){}
-  }
-  function publish(t){t=valid(t);if(!t)return false;persist(t);post(t);return true;}
-  try{if('BroadcastChannel'in window)bc=new BroadcastChannel(CHANNEL);}catch(e){}
-  var initial=valid(document.documentElement.getAttribute('data-theme')||'dark');
-  if(initial)persist(initial);
-  window.JMBGlobalThemeMaster=Object.freeze({key:KEY,primary:PRIMARY.slice(),publish:publish});
-})();
-</script>
 <script>/* Layout-Stil (Form/Dichte/Schrift) – unabhängig vom Farb-Design, siehe LAYOUTS */try{var l=localStorage.getItem("tj_layout_v1");if(["bento","swiss","sharp","dense","floating"].indexOf(l)>-1)document.documentElement.setAttribute("data-layout",l);}catch(e){}</script>
 <script>/* Bewegung & Übergänge (Einstellungen → Darstellung) – Standard an, siehe JournalMotion */try{var m=localStorage.getItem("tj_motion_v1");document.documentElement.setAttribute("data-motion",m==="off"?"off":"on");}catch(e){document.documentElement.setAttribute("data-motion","on");}</script>
 <style>
@@ -16707,6 +16687,7 @@ html[data-motion="on"] :is(.mjmp-nav-btn,.mjmp-nav-add):active{transform:scale(.
 }
 </style>
 
+<style id="jmb-hq-central-cloud-ui">/* JMB HQ CENTRAL CLOUD UI */ #backupBoardDriveConnectBtn,#settingsDriveActionBtn,#driveSyncPanel{display:none!important}</style>
 </head>
 <body>
 
@@ -22747,8 +22728,6 @@ function applyTheme(theme){
   const themeEntry=THEMES.find(x=>x.key===(theme||"dark"));
   if(themeEntry&&themeEntry.group===1) document.documentElement.setAttribute("data-feel","soft");
   else document.documentElement.removeAttribute("data-feel");
-  // Primär-Design hubweit publizieren (Index/Kalender/Projekte/Budgetplaner).
-  try{ window.JMBGlobalThemeMaster && window.JMBGlobalThemeMaster.publish(theme||"dark"); }catch(e){}
   // Statusleisten-Farbe (iPhone/PWA): Apple Hell/Dunkel passend, alle anderen wie bisher
   const themeColorMeta=document.querySelector('meta[name="theme-color"]');
   if(themeColorMeta) themeColorMeta.setAttribute("content", theme==="apple"?"#f5f5f7":theme==="apple-dark"?"#000000":"#0a0a0d");
@@ -34014,13 +33993,12 @@ const GoogleDriveBackupAdapter = (() => {
 })();
 
 const DriveBackupController = (() => {
+  let tokenClient=null;
   let accessToken=null;
   let tokenExpiresAt=0;
   let connected=false;
   let syncing=false;
   let initialized=false;
-  let hubWaiters=[];
-  let hubListenersInstalled=false;
 
   function status(){
     return Object.freeze({
@@ -34031,8 +34009,7 @@ const DriveBackupController = (() => {
       lastSync:parseInt(JournalStorage.get(LS_DRIVE_LASTSYNC),10)||null,
       adapter:GoogleDriveBackupAdapter.status(),
       auth:GoogleHubAuthCache.status(),
-      role:"BACKUP_ONLY",
-      authOwner:"JMB_HEADQUARTER"
+      role:"BACKUP_ONLY"
     });
   }
 
@@ -34040,72 +34017,15 @@ const DriveBackupController = (() => {
     if(typeof DriveBackupUI!=="undefined") DriveBackupUI.refresh();
   }
 
-  function resolveHubWaiters(token){
-    const list=hubWaiters.splice(0);
-    list.forEach(w=>token?w.resolve(token):w.reject(new Error("Google ist im Headquarter nicht verbunden.")));
-  }
-
-  function applyHubToken(token,expiresAt,postConnect){
-    expiresAt=Number(expiresAt)||0;
-    if(!token||Date.now()>=expiresAt){
-      accessToken=null; tokenExpiresAt=0; connected=false;
-      refreshUI(); resolveHubWaiters(null); return false;
-    }
-    accessToken=token;
-    tokenExpiresAt=expiresAt;
-    connected=true;
-    GoogleHubAuthCache.save(accessToken,tokenExpiresAt);
-    scheduleTokenRefresh();
-    refreshUI();
-    resolveHubWaiters(accessToken);
-    if(postConnect){
-      Promise.resolve().then(afterConnectAction).catch(err=>console.error("Drive-Post-Connect fehlgeschlagen:",err));
-    }
-    return true;
-  }
-
-  function requestHubToken(){
-    const shared=GoogleHubAuthCache.loadValid();
-    if(shared){ applyHubToken(shared.token,shared.expiresAt,false); return Promise.resolve(shared.token); }
-    if(window.parent===window) return Promise.reject(new Error("Google bitte über den JMB-Index verbinden."));
-    return new Promise((resolve,reject)=>{
-      const waiter={resolve,reject}; hubWaiters.push(waiter);
-      try{window.parent.postMessage({type:"jmb-google-token-request",app:"journal"},"*");}catch(e){}
-      JournalTaskScheduler.timeout("drive:hub-token-timeout",()=>{
-        const i=hubWaiters.indexOf(waiter);
-        if(i>=0){hubWaiters.splice(i,1);reject(new Error("Keine Google-Sitzung vom Headquarter erhalten."));}
-      },8000);
-    });
-  }
-
-  function notifyHubTokenInvalid(){
-    accessToken=null; tokenExpiresAt=0; connected=false; refreshUI();
-    try{if(window.parent!==window)window.parent.postMessage({type:"jmb-google-token-invalid",app:"journal"},"*");}catch(e){}
-  }
-
-  function installHubListeners(){
-    if(hubListenersInstalled) return;
-    hubListenersInstalled=true;
-    window.addEventListener("message",e=>{
-      const d=e.data||{};
-      if(d.type==="jmb-google-auth") applyHubToken(d.token,d.expiresAt,!!d.token);
-      if(d.type==="jmb-google-sync-now"&&connected) saveNow();
-    });
-    window.addEventListener("storage",e=>{
-      if(e.key===JMB_TOKEN_KEY||e.key===JMB_TOKEN_EXP_KEY||e.key===JMB_CONNECTED_KEY){
-        const shared=GoogleHubAuthCache.loadValid();
-        if(shared) applyHubToken(shared.token,shared.expiresAt,false);
-        else applyHubToken(null,0,false);
-      }
-    });
-  }
-
   function scheduleTokenRefresh(){
     JournalTaskScheduler.timeout("drive:token-refresh",()=>{
       if(!connected) return;
-      requestHubToken().catch(err=>{
-        console.warn("Google-Token konnte nicht vom Headquarter erneuert werden:",err);
-        connected=false; accessToken=null; tokenExpiresAt=0; refreshUI();
+      requestToken("",false).catch(err=>{
+        console.warn("Stiller Google-Token-Refresh fehlgeschlagen:",err);
+        connected=false;
+        accessToken=null;
+        tokenExpiresAt=0;
+        refreshUI();
       });
     },Math.max(tokenExpiresAt-Date.now()-300000,60000));
   }
@@ -34115,36 +34035,111 @@ const DriveBackupController = (() => {
     else await saveNow();
   }
 
-  async function ensureFreshToken(){
-    if(accessToken&&Date.now()<tokenExpiresAt) return accessToken;
-    return requestHubToken();
+  function acceptToken(resp,postConnect){
+    if(!resp || resp.error || !resp.access_token){
+      connected=false;
+      refreshUI();
+      throw new Error(resp&&resp.error?String(resp.error):"Google-Anmeldung fehlgeschlagen.");
+    }
+
+    accessToken=resp.access_token;
+    tokenExpiresAt=Date.now()+(parseInt(resp.expires_in,10)||3500)*1000-60000;
+    connected=true;
+    GoogleHubAuthCache.save(accessToken,tokenExpiresAt);
+    scheduleTokenRefresh();
+    refreshUI();
+
+    if(postConnect){
+      Promise.resolve().then(afterConnectAction).catch(err=>console.error("Drive-Post-Connect fehlgeschlagen:",err));
+    }
+    return accessToken;
   }
 
-  function init(){
+  function requestToken(prompt,postConnect){
+    return new Promise((resolve,reject)=>{
+      if(!tokenClient){ reject(new Error("Google-Anmeldung noch nicht bereit.")); return; }
+      const defaultCallback=tokenClient.callback;
+      tokenClient.callback=(resp)=>{
+        tokenClient.callback=defaultCallback;
+        try{ resolve(acceptToken(resp,!!postConnect)); }
+        catch(err){ reject(err); }
+      };
+      try{ tokenClient.requestAccessToken({prompt:prompt||""}); }
+      catch(err){ tokenClient.callback=defaultCallback; reject(err); }
+    });
+  }
+
+  async function ensureFreshToken(){
+    if(accessToken&&Date.now()<tokenExpiresAt) return accessToken;
+    return requestToken("",false);
+  }
+
+  function init(tries){
+    tries=Number(tries)||0;
     JOURNAL_BACKUP_AUTOSAVE_HOOK=scheduleAutoSave;
-    installHubListeners();
-    initialized=true;
-    const shared=GoogleHubAuthCache.loadValid();
-    if(shared){
-      applyHubToken(shared.token,shared.expiresAt,false);
-      if(STATE.trades.length===0){
-        Promise.resolve().then(()=>loadNow(false)).catch(err=>console.error("Drive Autoload fehlgeschlagen:",err));
+
+    if(window.google&&google.accounts&&google.accounts.oauth2){
+      if(!tokenClient){
+        tokenClient=google.accounts.oauth2.initTokenClient({
+          client_id:GOOGLE_CLIENT_ID,
+          scope:JMB_SCOPE,
+          callback:(resp)=>{
+            try{ acceptToken(resp,true); }
+            catch(err){
+              console.warn("Google Drive Anmeldung fehlgeschlagen:",err);
+              connected=false;
+              refreshUI();
+            }
+          }
+        });
       }
+
+      initialized=true;
+      const shared=GoogleHubAuthCache.loadValid();
+      if(shared){
+        accessToken=shared.token;
+        tokenExpiresAt=shared.expiresAt;
+        connected=true;
+        scheduleTokenRefresh();
+        refreshUI();
+        // Historisches Verhalten: auf leerem lokalen Journal automatisch aus Drive laden.
+        if(STATE.trades.length===0){
+          Promise.resolve().then(()=>loadNow(false)).catch(err=>console.error("Drive Autoload fehlgeschlagen:",err));
+        }
+        return status();
+      }
+
+      if(GoogleHubAuthCache.wasConnected()){
+        requestToken("",true).catch(()=>{ connected=false; refreshUI(); });
+      }
+      refreshUI();
+      return status();
+    }
+
+    if(tries<50){
+      JournalTaskScheduler.timeout("drive:init-poll",()=>init(tries+1),200);
     }else{
-      connected=false; refreshUI();
-      if(window.parent!==window){try{window.parent.postMessage({type:"jmb-google-token-request",app:"journal"},"*");}catch(e){}}
+      initialized=true;
+      refreshUI();
     }
     return status();
   }
 
   function connect(){
-    try{if(window.parent!==window)window.parent.postMessage({type:"jmb-google-connect-request",app:"journal"},"*");}catch(e){}
-    toast("Google bitte einmal oben im JMB Headquarter verbinden.");
+    if(!tokenClient){
+      alert("Google-Anmeldung lädt noch, bitte kurz warten und nochmal klicken.");
+      return;
+    }
+    requestToken("consent",true).catch(err=>{
+      console.error("Google Drive verbinden fehlgeschlagen:",err);
+      toast("Google Drive konnte nicht verbunden werden.");
+    });
   }
 
   async function saveNow(){
     if(syncing||!connected) return {ok:false,reason:"not-ready"};
-    syncing=true; refreshUI();
+    syncing=true;
+    refreshUI();
     try{
       const token=await ensureFreshToken();
       const {payload}=await JournalBackupService.createValidatedPayload("google-drive-save");
@@ -34153,11 +34148,11 @@ const DriveBackupController = (() => {
       markBackedUp();
       return result;
     }catch(err){
-      if(String(err&&err.message||err).includes("HTTP 401")) notifyHubTokenInvalid();
       console.error("Drive-Sicherung fehlgeschlagen:",err);
       return {ok:false,error:String(err&&err.message?err.message:err)};
     }finally{
-      syncing=false; refreshUI();
+      syncing=false;
+      refreshUI();
     }
   }
 
@@ -34175,15 +34170,18 @@ const DriveBackupController = (() => {
         toast("In Google Drive wurde noch kein Backup gefunden.");
         return {ok:false,reason:"not-found"};
       }
+
       const validation=JournalBackupService.validateIncoming(loaded.data,"google-drive");
       if(askConfirm&&!confirm(`${validation.counts.trades} Trades aus Google Drive laden? Das ersetzt deine aktuellen lokalen Daten.${validation.legacy?"\n\nÄlteres Backup ohne Manifest erkannt – kompatibler Restore.":""}`)){
         return {ok:false,reason:"cancelled"};
       }
+
       await JournalBackupService.restoreValidated(loaded.data,"google-drive",validation);
-      markBackedUp(); render(); toast("Daten aus Google Drive geladen.");
+      markBackedUp();
+      render();
+      toast("Daten aus Google Drive geladen.");
       return {ok:true,validation};
     }catch(err){
-      if(String(err&&err.message||err).includes("HTTP 401")) notifyHubTokenInvalid();
       console.error("Laden aus Drive fehlgeschlagen:",err);
       toast("Laden aus Google Drive fehlgeschlagen.");
       return {ok:false,error:String(err&&err.message?err.message:err)};
@@ -34191,7 +34189,17 @@ const DriveBackupController = (() => {
   }
 
   function disconnect(){
-    toast("Die Google-Verbindung wird zentral im JMB Headquarter getrennt.");
+    if(accessToken&&window.google&&google.accounts&&google.accounts.oauth2){
+      try{ google.accounts.oauth2.revoke(accessToken,()=>{}); }catch(e){}
+    }
+    accessToken=null;
+    tokenExpiresAt=0;
+    connected=false;
+    JournalTaskScheduler.cancelPrefix("drive:");
+    JournalTaskScheduler.cancel("debounce:drive-autosave");
+    GoogleHubAuthCache.clear(); // bewusst hub-weit wie bisher
+    refreshUI();
+    toast("Google Drive getrennt.");
   }
 
   return Object.freeze({init,connect,disconnect,saveNow,loadNow,scheduleAutoSave,status});
@@ -34203,10 +34211,11 @@ const DriveBackupUI = Object.freeze({
     if(!drive.connected){
       return `
         <p style="margin:0 0 12px; color:var(--ui-text-muted); font-size:13px;">
-          Google wird zentral im JMB Headquarter verbunden. Danach sichert das Journal jede Änderung
-          automatisch als eigene JSON-Datei in deinem Google Drive.
+          Verbindet die App mit deinem eigenen Google Drive: jede Änderung wird automatisch
+          als JSON-Datei dort gesichert, zusätzlich zum manuellen Backup oben. Die App sieht
+          dabei ausschließlich ihre eigene Backup-Datei, keine anderen Dateien in deinem Drive.
         </p>
-        <button class="btn" id="driveConnectBtn">Im Headquarter mit Google verbinden</button>
+        <button class="btn" id="driveConnectBtn">Mit Google Drive verbinden</button>
       `;
     }
 
@@ -34218,7 +34227,7 @@ const DriveBackupUI = Object.freeze({
       <div style="display:flex; gap:10px; flex-wrap:wrap;">
         <button class="btn" id="driveSyncNowBtn">Jetzt synchronisieren</button>
         <button class="btn" id="driveLoadBtn">Von Drive laden</button>
-        <button class="btn btn-ghost" id="driveDisconnectBtn">Im Headquarter trennen</button>
+        <button class="btn btn-ghost" id="driveDisconnectBtn">Trennen</button>
       </div>
     `;
   },
@@ -35047,7 +35056,43 @@ html[data-layout] .tabs{border-radius:var(--ui-radius-panel)!important;}
 <!-- =====================================================================
      MOMO-PAKET · Stand 2026.10.01 (aus trading-journal-julian.html,
      APP_VERSION 2026.10.01-tradelist-scrollbar-fix)
-     EINBAU: Diesen kompletten Inhalt unverändert direkt VOR </body> der
+     EINBAU: Diesen kompletten Inhalt unverändert direkt VOR 
+<script>
+/* JMB HQ DATA BRIDGE · keine Cloud-Anmeldung in der Unterseite */
+(function(){
+  if(window.self===window.top) return;
+  let timer=null;
+  function ping(reason){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{try{window.parent.postMessage({type:'jmb-hq-data-changed',reason:reason||'change'},'*');}catch(_){ }},180);
+  }
+  try{
+    const p=Storage.prototype;
+    for(const name of ['setItem','removeItem','clear']){
+      const original=p[name];
+      if(typeof original!=='function'||original.__jmbWrapped) continue;
+      const wrapped=function(){const r=original.apply(this,arguments);ping('storage:'+name);return r;};
+      wrapped.__jmbWrapped=true;p[name]=wrapped;
+    }
+  }catch(_){ }
+  try{
+    if(window.IDBObjectStore){
+      const p=IDBObjectStore.prototype;
+      for(const name of ['put','add','delete','clear']){
+        const original=p[name];
+        if(typeof original!=='function'||original.__jmbWrapped) continue;
+        const wrapped=function(){const r=original.apply(this,arguments);ping('indexeddb:'+name);return r;};
+        wrapped.__jmbWrapped=true;p[name]=wrapped;
+      }
+    }
+  }catch(_){ }
+  document.addEventListener('change',()=>ping('input-change'),true);
+  document.addEventListener('submit',()=>ping('submit'),true);
+  window.addEventListener('pagehide',()=>{try{window.parent.postMessage({type:'jmb-hq-data-changed',reason:'pagehide'},'*');}catch(_){ }});
+})();
+</script>
+
+</body> der
      Ziel-Datei einfügen (nach allen App-Scripts). Nichts davon in den Chat
      kopieren – die Datei als Anhang geben. Host-Anforderungen: siehe
      MASTERPROMPT-Momo-Einbau.md

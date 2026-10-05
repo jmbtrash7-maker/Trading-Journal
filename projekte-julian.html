@@ -922,6 +922,7 @@
     .hero { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
   }
 </style>
+<style id="jmb-hq-central-cloud-ui">/* JMB HQ CENTRAL CLOUD UI */ #btn-drive-sync{display:none!important}</style>
 </head>
 <body class="min-h-screen text-ink antialiased">
 
@@ -3695,5 +3696,41 @@
   else init();
 })();
 </script>
+
+<script>
+/* JMB HQ DATA BRIDGE · keine Cloud-Anmeldung in der Unterseite */
+(function(){
+  if(window.self===window.top) return;
+  let timer=null;
+  function ping(reason){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{try{window.parent.postMessage({type:'jmb-hq-data-changed',reason:reason||'change'},'*');}catch(_){ }},180);
+  }
+  try{
+    const p=Storage.prototype;
+    for(const name of ['setItem','removeItem','clear']){
+      const original=p[name];
+      if(typeof original!=='function'||original.__jmbWrapped) continue;
+      const wrapped=function(){const r=original.apply(this,arguments);ping('storage:'+name);return r;};
+      wrapped.__jmbWrapped=true;p[name]=wrapped;
+    }
+  }catch(_){ }
+  try{
+    if(window.IDBObjectStore){
+      const p=IDBObjectStore.prototype;
+      for(const name of ['put','add','delete','clear']){
+        const original=p[name];
+        if(typeof original!=='function'||original.__jmbWrapped) continue;
+        const wrapped=function(){const r=original.apply(this,arguments);ping('indexeddb:'+name);return r;};
+        wrapped.__jmbWrapped=true;p[name]=wrapped;
+      }
+    }
+  }catch(_){ }
+  document.addEventListener('change',()=>ping('input-change'),true);
+  document.addEventListener('submit',()=>ping('submit'),true);
+  window.addEventListener('pagehide',()=>{try{window.parent.postMessage({type:'jmb-hq-data-changed',reason:'pagehide'},'*');}catch(_){ }});
+})();
+</script>
+
 </body>
 </html>

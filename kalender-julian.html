@@ -15,78 +15,10 @@
     }catch(e){}
   })();
 </script>
-<script id="jmb-global-theme-bridge">
-/* JMB GLOBAL THEME BRIDGE · Trading Journal = Design-Master */
-(function(){
-  'use strict';
-  var KEY='jmb_global_theme_v1';
-  var CHANNEL='jmb-global-theme-v1';
-  var PRIMARY=['dark','neon','rte','sakura','cosmic','glass','apple','apple-dark'];
-  var DARK={dark:1,neon:1,rte:1,cosmic:1,glass:1,'apple-dark':1};
-  var root=document.documentElement;
-  var bc=null;
-  function valid(t){return PRIMARY.indexOf(t)>-1?t:null;}
-  function read(){
-    try{
-      var g=valid(localStorage.getItem(KEY));
-      if(g)return g;
-      var j=valid(localStorage.getItem('tj_theme_v1'));
-      if(j)return j;
-    }catch(e){}
-    return 'dark';
-  }
-  function metaColor(t){
-    if(t==='apple')return '#f5f5f7';
-    if(t==='sakura')return '#fdf8f9';
-    if(t==='apple-dark')return '#000000';
-    if(t==='neon')return '#090a12';
-    if(t==='rte')return '#050505';
-    if(t==='cosmic')return '#04030d';
-    if(t==='glass')return '#090b11';
-    return '#070605';
-  }
-  function apply(t){
-    t=valid(t)||'dark';
-    root.setAttribute('data-theme',t);
-    root.setAttribute('data-jmb-theme',t);
-    root.setAttribute('data-jmb-dark',DARK[t]?'true':'false');
-    var meta=document.querySelector('meta[name="theme-color"]');
-    if(meta)meta.setAttribute('content',metaColor(t));
-    try{window.dispatchEvent(new CustomEvent('jmb-global-theme-change',{detail:{theme:t}}));}catch(e){}
-    return t;
-  }
-  function persist(t){try{localStorage.setItem(KEY,t);}catch(e){}}
-  function postParent(t){
-    try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'jmb-global-theme',theme:t},'*');}catch(e){}
-  }
-  function postFrame(t,except){
-    try{
-      var f=document.getElementById('appFrame');
-      if(f&&f.contentWindow&&f.contentWindow!==except)f.contentWindow.postMessage({type:'jmb-global-theme',theme:t},'*');
-    }catch(e){}
-  }
-  function broadcast(t){try{if(bc)bc.postMessage({type:'jmb-global-theme',theme:t});}catch(e){}}
-  function set(t,opt){
-    opt=opt||{}; t=valid(t); if(!t)return current();
-    apply(t);
-    if(opt.persist!==false)persist(t);
-    if(opt.broadcast!==false)broadcast(t);
-    if(opt.post!==false){postParent(t);postFrame(t,null);}
-    return t;
-  }
-  function current(){return valid(root.getAttribute('data-jmb-theme')||root.getAttribute('data-theme'))||'dark';}
-  try{if('BroadcastChannel'in window){bc=new BroadcastChannel(CHANNEL);bc.onmessage=function(e){var d=e.data||{};if(d.type==='jmb-global-theme'&&valid(d.theme))set(d.theme,{persist:true,broadcast:false,post:false});};}}catch(e){}
-  window.addEventListener('storage',function(e){if(e.key===KEY&&valid(e.newValue))set(e.newValue,{persist:false,broadcast:false,post:false});});
-  window.addEventListener('message',function(e){var d=e.data||{};if(d.type!=='jmb-global-theme'||!valid(d.theme))return;set(d.theme,{persist:true,broadcast:true,post:false});postFrame(d.theme,e.source);});
-  window.JMBGlobalTheme=Object.freeze({key:KEY,primary:PRIMARY.slice(),current:current,set:set,apply:apply});
-  apply(read());
-})();
-</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <script src="https://accounts.google.com/gsi/client" async defer></script>
-<link id="jmb-global-theme-fonts" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Outfit:wght@400;500;600;700&family=Manrope:wght@500;600;700;800&display=swap" rel="stylesheet">
 <style>
   /* ============================================================
      DESIGN-TOKENS – Apple-Stil (macOS/iOS: Apple.com, iOS-Einstellungen,
@@ -638,141 +570,6 @@
     .sidebar.collapsed{ margin-left:-100vw; }
     .modal{ border-radius:22px; }
   }
-</style>
-<style id="jmb-global-primary-themes">
-/* =====================================================================
-   JMB GLOBAL PRIMARY THEMES · Quelle/Identität: Trading Journal
-   Master-Auswahl: Trading Journal · Primärgruppe 1
-   dark / neon / rte / sakura / cosmic / glass / apple / apple-dark
-   ===================================================================== */
-:root[data-theme="dark"]{
-  color-scheme:dark;
-  --bg:#070605;--bg-panel:#12100c;--bg-card:#1a1711;--bg-card-hover:#231e15;
-  --panel-border:rgba(217,171,69,.16);--card-line:rgba(217,171,69,.14);--hero-line:rgba(232,190,95,.26);
-  --fill:rgba(217,171,69,.10);--fill-strong:rgba(217,171,69,.18);--glass:rgba(18,16,12,.76);--glass-strong:rgba(24,21,15,.92);--glass-border:rgba(217,171,69,.18);--separator:rgba(217,171,69,.20);
-  --text:#f6efdf;--text-dim:#b4a88e;--text-faint:#7c7059;
-  --accent:#d9ab45;--accent-fill:#c8942e;--accent-fill-hover:#e1b448;--accent-dim:rgba(217,171,69,.18);--focus:#e8be5f;
-  --green:#5fd09c;--green-dim:#13302a;--red:#ef6f5e;--red-dim:#3a1914;--amber:#f0c060;--amber-fill:#f0c060;--amber-dim:#3a2c10;
-  --inverse-bg:#e6c15f;--inverse-text:#1c1405;--thumb:#2c2517;--thumb-shadow:0 3px 12px rgba(0,0,0,.45),inset 0 0 0 1px rgba(232,190,95,.22);--backdrop:rgba(0,0,0,.62);--toast-link:#f3dc9a;
-  --ambient-a:rgba(217,171,69,.13);--ambient-b:rgba(201,128,60,.09);
-  --radius-lg:24px;--radius:20px;--radius-sm:14px;--radius-xs:9px;
-  --shadow-sm:0 2px 8px rgba(0,0,0,.32),inset 0 1px 0 rgba(255,228,160,.05);--shadow-md:0 16px 36px -22px rgba(0,0,0,.92);--shadow-lg:0 28px 70px -30px rgba(0,0,0,.95);
-  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Cinzel",Georgia,serif;
-  --jmb-on-accent:#1c1405;--jmb-brand-gradient:linear-gradient(135deg,#fff1bd 0%,#f1ca60 22%,#c8942e 52%,#f7d981 76%,#a5752a 100%);
-  --jmb-hero-base:#0c0a08;--jmb-hero-art:radial-gradient(55% 75% at 82% 10%,rgba(217,171,69,.36),transparent 63%),radial-gradient(45% 60% at 12% 90%,rgba(201,128,60,.24),transparent 66%),linear-gradient(160deg,#18150f,#070605 72%);
-}
-:root[data-theme="neon"]{
-  color-scheme:dark;
-  --bg:#090a12;--bg-panel:#10121d;--bg-card:#131725;--bg-card-hover:#181e30;--panel-border:#22283c;--card-line:#22283c;--hero-line:rgba(139,123,255,.22);
-  --fill:rgba(139,123,255,.11);--fill-strong:rgba(139,123,255,.20);--glass:rgba(12,15,26,.76);--glass-strong:rgba(16,18,29,.92);--glass-border:rgba(139,123,255,.20);--separator:rgba(111,127,180,.22);
-  --text:#edf2ff;--text-dim:#97a1bb;--text-faint:#68738e;
-  --accent:#8b7bff;--accent-fill:#6a58f5;--accent-fill-hover:#7968ff;--accent-dim:rgba(139,123,255,.20);--focus:#8b7bff;
-  --green:#31d0a8;--green-dim:#173a34;--red:#f87171;--red-dim:#3a2230;--amber:#f5b544;--amber-fill:#f5b544;--amber-dim:#3a2c10;
-  --inverse-bg:#8b7bff;--inverse-text:#fff;--thumb:#171b2c;--thumb-shadow:0 0 0 1px rgba(139,123,255,.22),0 8px 22px rgba(0,0,0,.32);--backdrop:rgba(3,5,12,.66);--toast-link:#31d5ee;
-  --ambient-a:rgba(139,123,255,.18);--ambient-b:rgba(49,213,238,.12);
-  --radius-lg:20px;--radius:13px;--radius-sm:8px;--radius-xs:7px;--shadow-sm:inset 0 1px 0 rgba(108,130,255,.055),0 8px 24px -18px rgba(0,0,0,.9);--shadow-md:0 18px 42px -28px rgba(49,213,238,.18);--shadow-lg:0 30px 80px -36px rgba(0,0,0,.95);
-  --font-text:Inter,Arial,sans-serif;--font-display:Inter,Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(135deg,#7768ff,#6a58f5 48%,#31d5ee 118%);
-  --jmb-hero-base:#090a12;--jmb-hero-art:linear-gradient(rgba(139,123,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(49,213,238,.05) 1px,transparent 1px),radial-gradient(60% 70% at 82% 15%,rgba(139,123,255,.42),transparent 64%),linear-gradient(145deg,#131725,#090a12 72%);--jmb-hero-size:22px 22px,22px 22px,auto,auto;
-}
-:root[data-theme="rte"]{
-  color-scheme:dark;
-  --bg:#050505;--bg-panel:#0c0c0d;--bg-card:#121213;--bg-card-hover:#19191b;--panel-border:#232325;--card-line:#232325;--hero-line:rgba(220,220,226,.18);
-  --fill:rgba(220,220,226,.08);--fill-strong:rgba(220,220,226,.15);--glass:rgba(8,8,9,.78);--glass-strong:rgba(14,14,15,.94);--glass-border:rgba(220,220,226,.14);--separator:rgba(220,220,226,.15);
-  --text:#ededef;--text-dim:#a7a7ac;--text-faint:#6e6e74;
-  --accent:#dcdce0;--accent-fill:#cfcfd3;--accent-fill-hover:#ededf0;--accent-dim:rgba(220,220,226,.16);--focus:#f2f2f4;
-  --green:#5fd4a0;--green-dim:#10302a;--red:#ff6b6b;--red-dim:#3a1616;--amber:#e6c877;--amber-fill:#e6c877;--amber-dim:#352c14;
-  --inverse-bg:#f2f2f4;--inverse-text:#0a0a0b;--thumb:#262628;--thumb-shadow:inset 0 1px 0 rgba(255,255,255,.08),0 8px 24px rgba(0,0,0,.42);--backdrop:rgba(0,0,0,.72);--toast-link:#dcdce0;
-  --ambient-a:rgba(220,220,226,.10);--ambient-b:rgba(135,140,150,.07);
-  --radius-lg:18px;--radius:10px;--radius-sm:8px;--radius-xs:6px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.055),0 10px 28px -20px rgba(0,0,0,.95);--shadow-md:0 18px 40px -26px rgba(0,0,0,.95);--shadow-lg:0 32px 80px -32px rgba(0,0,0,.98);
-  --font-text:"Outfit",Inter,Arial,sans-serif;--font-display:"Outfit",Inter,Arial,sans-serif;
-  --jmb-on-accent:#0a0a0b;--jmb-brand-gradient:linear-gradient(135deg,#fbfbfb 0%,#cfcfd3 34%,#8c8c92 56%,#e8e8eb 100%);
-  --jmb-hero-base:#050505;--jmb-hero-art:radial-gradient(58% 78% at 82% 12%,rgba(240,240,244,.18),transparent 62%),linear-gradient(160deg,#171719,#050505 76%);
-}
-:root[data-theme="sakura"]{
-  color-scheme:light;
-  --bg:#fdf8f9;--bg-panel:#ffffff;--bg-card:#fff6f8;--bg-card-hover:#fdeaf0;--panel-border:#f5dfe6;--card-line:#f5dfe6;--hero-line:rgba(229,115,154,.18);
-  --fill:rgba(229,115,154,.09);--fill-strong:rgba(229,115,154,.16);--glass:rgba(255,252,253,.76);--glass-strong:rgba(255,255,255,.92);--glass-border:rgba(229,115,154,.14);--separator:rgba(201,96,138,.18);
-  --text:#3b2a31;--text-dim:#7d6770;--text-faint:#b097a1;
-  --accent:#e5739a;--accent-fill:#e2678f;--accent-fill-hover:#ec7aa1;--accent-dim:rgba(229,115,154,.16);--focus:#e5739a;
-  --green:#2f9e7a;--green-dim:#def3ea;--red:#d9485f;--red-dim:#fbe1e6;--amber:#c98a1b;--amber-fill:#d89a28;--amber-dim:#f8ecd2;
-  --inverse-bg:#3b2a31;--inverse-text:#fff8fa;--thumb:#ffffff;--thumb-shadow:0 4px 14px rgba(203,91,133,.13);--backdrop:rgba(75,42,56,.25);--toast-link:#c9608a;
-  --ambient-a:rgba(244,143,181,.18);--ambient-b:rgba(255,194,214,.20);
-  --radius-lg:28px;--radius:20px;--radius-sm:14px;--radius-xs:9px;--shadow-sm:0 6px 18px -14px rgba(203,91,133,.28);--shadow-md:0 16px 36px -25px rgba(203,91,133,.36);--shadow-lg:0 30px 70px -34px rgba(203,91,133,.40);
-  --font-text:Inter,Arial,sans-serif;--font-display:Inter,Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(135deg,#ffc2d6 0%,#f48fb5 45%,#e2678f 100%);
-  --jmb-hero-base:#7f3554;--jmb-hero-art:radial-gradient(circle at 84% 18%,rgba(255,230,239,.92),transparent 24%),radial-gradient(circle at 70% 35%,rgba(255,194,214,.55),transparent 28%),linear-gradient(145deg,#dc6f96,#7f3554 78%);
-}
-:root[data-theme="cosmic"]{
-  color-scheme:dark;
-  --bg:#04030d;--bg-panel:#0b0920;--bg-card:#110e2b;--bg-card-hover:#181438;--panel-border:#1d1940;--card-line:#1d1940;--hero-line:rgba(168,152,255,.20);
-  --fill:rgba(168,152,255,.10);--fill-strong:rgba(168,152,255,.18);--glass:rgba(9,7,28,.72);--glass-strong:rgba(13,10,34,.92);--glass-border:rgba(168,152,255,.16);--separator:rgba(163,159,201,.18);
-  --text:#ece9ff;--text-dim:#a39fc9;--text-faint:#6b6795;
-  --accent:#a898ff;--accent-fill:#8d7af0;--accent-fill-hover:#aa98ff;--accent-dim:rgba(168,152,255,.20);--focus:#b8aaff;
-  --green:#6ef2c0;--green-dim:#10302f;--red:#ff7390;--red-dim:#35142a;--amber:#ffd38a;--amber-fill:#ffd38a;--amber-dim:#352a18;
-  --inverse-bg:#d9d2ff;--inverse-text:#0c0822;--thumb:#211b4d;--thumb-shadow:0 0 0 1px rgba(168,152,255,.18),0 10px 26px rgba(0,0,0,.42);--backdrop:rgba(3,2,12,.7);--toast-link:#c9c0ff;
-  --ambient-a:rgba(168,152,255,.19);--ambient-b:rgba(240,140,255,.12);
-  --radius-lg:28px;--radius:20px;--radius-sm:14px;--radius-xs:9px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.05),0 12px 30px -24px rgba(0,0,0,.9);--shadow-md:0 20px 44px -26px rgba(0,0,0,.9);--shadow-lg:0 34px 86px -34px rgba(0,0,0,.96);
-  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Cinzel",Georgia,serif;
-  --jmb-on-accent:#0c0822;--jmb-brand-gradient:linear-gradient(135deg,#d9d2ff 0%,#a898ff 46%,#6a55e0 100%);
-  --jmb-hero-base:#09051d;--jmb-hero-art:radial-gradient(circle at 20% 18%,rgba(143,200,255,.40),transparent 16%),radial-gradient(circle at 76% 22%,rgba(240,140,255,.34),transparent 24%),radial-gradient(circle at 52% 75%,rgba(168,152,255,.30),transparent 30%),linear-gradient(150deg,#130c38,#04030d 78%);
-}
-:root[data-theme="glass"]{
-  color-scheme:dark;
-  --bg:#090b11;--bg-panel:#12151d;--bg-card:#171b25;--bg-card-hover:#1e2330;--panel-border:rgba(255,255,255,.08);--card-line:rgba(255,255,255,.07);--hero-line:rgba(212,222,245,.16);
-  --fill:rgba(212,222,245,.09);--fill-strong:rgba(212,222,245,.16);--glass:rgba(18,21,29,.58);--glass-strong:rgba(23,27,37,.76);--glass-border:rgba(255,255,255,.12);--separator:rgba(212,222,245,.14);
-  --text:#eef1f7;--text-dim:#a2a9ba;--text-faint:#6b7285;
-  --accent:#d4def5;--accent-fill:#aebdde;--accent-fill-hover:#cad5ed;--accent-dim:rgba(212,222,245,.16);--focus:#d4def5;
-  --green:#74e0b3;--green-dim:#15302a;--red:#ff8a8a;--red-dim:#3a1c20;--amber:#f2cf8a;--amber-fill:#f2cf8a;--amber-dim:#3a3020;
-  --inverse-bg:#eaf0ff;--inverse-text:#0b1020;--thumb:rgba(255,255,255,.14);--thumb-shadow:inset 0 1px 0 rgba(255,255,255,.14),0 10px 28px rgba(0,0,0,.35);--backdrop:rgba(0,0,0,.58);--toast-link:#d4def5;
-  --ambient-a:rgba(184,200,234,.13);--ambient-b:rgba(196,181,232,.11);
-  --radius-lg:30px;--radius:22px;--radius-sm:16px;--radius-xs:10px;--shadow-sm:inset 0 1px 0 rgba(255,255,255,.10),0 12px 30px -24px rgba(0,0,0,.88);--shadow-md:inset 0 1px 0 rgba(255,255,255,.12),0 24px 50px -28px rgba(0,0,0,.9);--shadow-lg:0 36px 90px -34px rgba(0,0,0,.94);
-  --font-text:"Manrope",Inter,Arial,sans-serif;--font-display:"Manrope",Inter,Arial,sans-serif;
-  --jmb-on-accent:#0b1020;--jmb-brand-gradient:linear-gradient(135deg,rgba(255,255,255,.95),#d4def5 45%,#9aabd6 100%);
-  --jmb-hero-base:#0b0f18;--jmb-hero-art:radial-gradient(55% 70% at 82% 12%,rgba(212,222,245,.28),transparent 64%),radial-gradient(42% 58% at 18% 82%,rgba(196,181,232,.18),transparent 66%),linear-gradient(145deg,#202735,#090b11 78%);
-}
-:root[data-theme="apple"]{
-  color-scheme:light;
-  --bg:#f5f5f7;--bg-panel:#ffffff;--bg-card:#f5f5f7;--bg-card-hover:#e8e8ed;--panel-border:transparent;--card-line:transparent;--hero-line:transparent;
-  --fill:rgba(118,118,128,.12);--fill-strong:rgba(118,118,128,.2);--glass:rgba(255,255,255,.72);--glass-strong:rgba(255,255,255,.86);--glass-border:rgba(0,0,0,.08);--separator:rgba(60,60,67,.14);
-  --text:#1d1d1f;--text-dim:#6e6e73;--text-faint:#86868b;--accent:#0066cc;--accent-fill:#0071e3;--accent-fill-hover:#0077ed;--accent-dim:rgba(0,113,227,.18);--focus:#0071e3;
-  --green:#1a7f37;--green-dim:rgba(52,199,89,.14);--red:#d70015;--red-dim:rgba(255,59,48,.1);--amber:#b25000;--amber-fill:#ff9f0a;--amber-dim:rgba(255,159,10,.14);
-  --inverse-bg:#1d1d1f;--inverse-text:#fff;--thumb:#fff;--thumb-shadow:0 3px 8px rgba(0,0,0,.12),0 3px 1px rgba(0,0,0,.04);--backdrop:rgba(0,0,0,.28);--toast-link:#2997ff;
-  --ambient-a:rgba(0,113,227,.10);--ambient-b:rgba(175,82,222,.08);--radius-lg:28px;--radius:18px;--radius-sm:12px;--radius-xs:8px;--shadow-sm:0 1px 2px rgba(0,0,0,.04),0 1px 1px rgba(0,0,0,.02);--shadow-md:0 4px 14px rgba(0,0,0,.06),0 1px 3px rgba(0,0,0,.04);--shadow-lg:0 24px 60px rgba(0,0,0,.14),0 6px 18px rgba(0,0,0,.06);
-  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Helvetica Neue",Arial,sans-serif;--font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,"Helvetica Neue",Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(145deg,#0a84ff,#5e5ce6);--jmb-hero-base:#0b0b12;--jmb-hero-art:radial-gradient(55% 75% at 14% 12%,#3d5afe 0%,rgba(61,90,254,0) 70%),radial-gradient(50% 70% at 86% 18%,#a24bff 0%,rgba(162,75,255,0) 70%),radial-gradient(45% 65% at 66% 95%,#00a8ff 0%,rgba(0,168,255,0) 70%),linear-gradient(160deg,#161a33,#07070c);
-}
-:root[data-theme="apple-dark"]{
-  color-scheme:dark;
-  --bg:#000;--bg-panel:#1c1c1e;--bg-card:#2c2c2e;--bg-card-hover:#3a3a3c;--panel-border:rgba(255,255,255,.06);--card-line:rgba(255,255,255,.06);--hero-line:rgba(255,255,255,.09);
-  --fill:rgba(118,118,128,.24);--fill-strong:rgba(118,118,128,.36);--glass:rgba(22,22,23,.72);--glass-strong:rgba(28,28,30,.88);--glass-border:rgba(255,255,255,.08);--separator:rgba(84,84,88,.6);
-  --text:#f5f5f7;--text-dim:#a1a1a6;--text-faint:#8e8e93;--accent:#2997ff;--accent-fill:#0071e3;--accent-fill-hover:#0077ed;--accent-dim:rgba(41,151,255,.26);--focus:#2997ff;
-  --green:#30d158;--green-dim:rgba(48,209,88,.16);--red:#ff6961;--red-dim:rgba(255,69,58,.16);--amber:#ffb340;--amber-fill:#ffb340;--amber-dim:rgba(255,159,10,.18);
-  --inverse-bg:#f5f5f7;--inverse-text:#1d1d1f;--thumb:#636366;--thumb-shadow:0 3px 8px rgba(0,0,0,.3),0 3px 1px rgba(0,0,0,.12);--backdrop:rgba(0,0,0,.5);--toast-link:#0066cc;
-  --ambient-a:rgba(41,151,255,.14);--ambient-b:rgba(191,90,242,.11);--radius-lg:28px;--radius:18px;--radius-sm:12px;--radius-xs:8px;--shadow-sm:0 1px 2px rgba(0,0,0,.5),0 1px 1px rgba(0,0,0,.3);--shadow-md:0 8px 24px rgba(0,0,0,.55),0 2px 6px rgba(0,0,0,.4);--shadow-lg:0 30px 80px rgba(0,0,0,.7),0 10px 26px rgba(0,0,0,.5);
-  --font-text:-apple-system,BlinkMacSystemFont,"SF Pro Text",Inter,"Helvetica Neue",Arial,sans-serif;--font-display:-apple-system,BlinkMacSystemFont,"SF Pro Display",Inter,"Helvetica Neue",Arial,sans-serif;
-  --jmb-on-accent:#fff;--jmb-brand-gradient:linear-gradient(145deg,#0a84ff,#5e5ce6);--jmb-hero-base:#08090f;--jmb-hero-art:radial-gradient(55% 75% at 14% 12%,rgba(61,90,254,.82),transparent 70%),radial-gradient(50% 70% at 86% 18%,rgba(162,75,255,.72),transparent 70%),linear-gradient(160deg,#101326,#050507);
-}
-
-/* Komponenten-Brücke: vorhandene Apps behalten ihre Struktur, nutzen aber dieselbe Identität. */
-html[data-jmb-theme] body{background:radial-gradient(1000px 700px at 8% -8%,var(--ambient-a),transparent 62%),radial-gradient(900px 650px at 94% 10%,var(--ambient-b),transparent 58%),var(--bg)!important;color:var(--text);font-family:var(--font-text);}
-html[data-jmb-theme] :is(.page-title,.section-title,.modal-title,.brand-title,.brand-name,.hero-title,.hero__title,.kpi-value,.kpi .val){font-family:var(--font-display)!important;}
-html[data-jmb-theme] :is(.brand-mark,.logo,.logo-badge){background:var(--jmb-brand-gradient)!important;color:var(--jmb-on-accent)!important;}
-html[data-jmb-theme] :is(.btn-primary,.btn.primary){background:var(--accent-fill)!important;color:var(--jmb-on-accent)!important;}
-html[data-jmb-theme] :is(.btn-primary,.btn.primary):hover{background:var(--accent-fill)!important;filter:brightness(1.08);}
-html[data-jmb-theme] :is(.tabs-indicator){background:var(--thumb)!important;box-shadow:var(--thumb-shadow)!important;}
-html[data-jmb-theme] :is(.hero){background:var(--jmb-hero-base)!important;outline-color:var(--hero-line)!important;}
-html[data-jmb-theme] :is(.hero)::before{background-image:var(--jmb-hero-art)!important;background-size:var(--jmb-hero-size,cover)!important;background-position:center!important;}
-html[data-jmb-theme] :is(.hero-title,.hero__title,.grad-text){color:#fff!important;-webkit-text-fill-color:#fff!important;background:none!important;text-shadow:0 2px 18px rgba(0,0,0,.32);}
-html[data-theme="sakura"] :is(.hero-title,.hero__title,.grad-text){color:#fff!important;-webkit-text-fill-color:#fff!important;}
-html[data-jmb-theme] :is(.ambient){background:radial-gradient(38% 34% at 84% 8%,var(--ambient-a),transparent 70%),radial-gradient(42% 40% at 8% 42%,var(--ambient-b),transparent 70%)!important;}
-html[data-jmb-theme] .ambient::before{background:radial-gradient(circle,var(--ambient-a),transparent 65%)!important;}
-html[data-jmb-theme] .ambient::after{background:radial-gradient(circle,var(--ambient-b),transparent 65%)!important;}
-html[data-jmb-theme] :is(.card,.kpi,.task-card,.sidebar,.topbar,.modal-box,.dlg,.popover,.menu,.more-sheet){border-color:var(--panel-border,var(--glass-border))!important;}
-html[data-jmb-theme] :is(input,textarea,select){caret-color:var(--accent);}
-html[data-jmb-theme] :is(.pbar-fill,.bar i:not(.alt)){background:var(--accent-fill)!important;}
-html[data-jmb-theme] :is(.checkbox-custom.checked){background:var(--accent-fill)!important;border-color:var(--accent-fill)!important;}
-html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s ease;}
 </style>
 </head>
 <body>
@@ -2117,100 +1914,77 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
      ============================================================ */
   const GOOGLE_CLIENT_ID = "273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com";
   const CAL_SCOPE = "https://www.googleapis.com/auth/calendar.events";
-  const LS_CAL_CONNECTED = 'kalenderJulian_calconnected_v1'; // nur noch Legacy-/UI-Kompatibilität
+  const LS_CAL_CONNECTED = 'kalenderJulian_calconnected_v1';
   const LS_CAL_LASTSYNC = 'kalenderJulian_callastsync_v1';
-  const JMB_TOKEN_KEY = 'jmb_google_token_v1';
-  const JMB_TOKEN_EXP_KEY = 'jmb_google_token_exp_v1';
-  const JMB_CONNECTED_KEY = 'jmb_google_connected_v1';
-  const CAL_SYNC_PAST_DAYS = 30;
-  const CAL_SYNC_FUTURE_DAYS = 180;
+  const CAL_SYNC_PAST_DAYS = 30;    // wie weit rückwirkend mit Google abgeglichen wird
+  const CAL_SYNC_FUTURE_DAYS = 180; // wie weit im Voraus mit Google abgeglichen wird
+  // Grobe Zuordnung Google-Kalender-Vorschaufarben <-> eigene Kategoriefarben.
   const GOOGLE_CAL_COLORS = {
     '1':'#7986cb','2':'#33b679','3':'#8e24aa','4':'#e67c73','5':'#f6bf26',
     '6':'#f4511e','7':'#039be5','8':'#616161','9':'#3f51b5','10':'#0b8043','11':'#d50000'
   };
 
+  let calTokenClient = null;
   let calAccessToken = null;
   let calTokenExpiresAt = 0;
   let calConnected = false;
   let calSyncing = false;
   let calSyncTimer = null;
   let calPollTimer = null;
-  let calHubTokenWaiters = [];
-  const calDirtyIds = new Set();
+  const calDirtyIds = new Set(); // lokal geänderte Termine, die noch zu Google hochgeladen werden müssen
 
   function markCalDirty(id){ if(id) calDirtyIds.add(id); }
 
-  function readSharedGoogleToken(){
-    try{
-      const token=localStorage.getItem(JMB_TOKEN_KEY);
-      const expiresAt=parseInt(localStorage.getItem(JMB_TOKEN_EXP_KEY)||'0',10)||0;
-      if(token&&Date.now()<expiresAt) return {token,expiresAt};
-    }catch(e){}
-    return null;
-  }
-  function resolveCalHubWaiters(token){
-    const waiters=calHubTokenWaiters.splice(0);
-    waiters.forEach(w=>token?w.resolve(token):w.reject(new Error('Google ist im Headquarter nicht verbunden.')));
-  }
-  function acceptHubGoogleToken(token,expiresAt,runSync){
-    if(!token||Date.now()>=(Number(expiresAt)||0)){
-      calAccessToken=null;calTokenExpiresAt=0;calConnected=false;
-      updateCalSyncPanel();resolveCalHubWaiters(null);return false;
+  // Wartet, bis das nachgeladene Google-Skript bereit ist (async defer im <head>).
+  function initGoogleCalendar(tries){
+    tries = tries || 0;
+    if(window.google && google.accounts && google.accounts.oauth2){
+      calTokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: GOOGLE_CLIENT_ID, scope: CAL_SCOPE, callback: onCalTokenResponse
+      });
+      if(localStorage.getItem(LS_CAL_CONNECTED) === '1'){
+        calTokenClient.requestAccessToken({ prompt: '' }); // stiller Reconnect, falls Google-Session noch aktiv
+      }
+      return;
     }
-    calAccessToken=token;
-    calTokenExpiresAt=Number(expiresAt)||0;
-    calConnected=true;
-    try{localStorage.setItem(LS_CAL_CONNECTED,'1');}catch(e){}
-    updateCalSyncPanel();
-    resolveCalHubWaiters(token);
-    if(!calPollTimer) calPollTimer=setInterval(()=>{if(calConnected)calSyncNow();},120000);
-    if(runSync) setTimeout(()=>calSyncNow(),0);
-    return true;
+    if(tries < 50) setTimeout(() => initGoogleCalendar(tries+1), 200);
   }
-  function requestHubGoogleToken(){
-    return new Promise((resolve,reject)=>{
-      const cached=readSharedGoogleToken();
-      if(cached){acceptHubGoogleToken(cached.token,cached.expiresAt,false);resolve(cached.token);return;}
-      if(window.parent===window){reject(new Error('Google bitte über den JMB-Index verbinden.'));return;}
-      const waiter={resolve,reject};calHubTokenWaiters.push(waiter);
-      try{window.parent.postMessage({type:'jmb-google-token-request',app:'calendar'},'*');}catch(e){}
-      setTimeout(()=>{
-        const i=calHubTokenWaiters.indexOf(waiter);
-        if(i>=0){calHubTokenWaiters.splice(i,1);reject(new Error('Keine Google-Sitzung vom Headquarter erhalten.'));}
-      },8000);
+
+  function onCalTokenResponse(resp){
+    if(!resp || resp.error){ calConnected = false; updateCalSyncPanel(); return; }
+    calAccessToken = resp.access_token;
+    calTokenExpiresAt = Date.now() + (parseInt(resp.expires_in,10) || 3500) * 1000 - 60000;
+    calConnected = true;
+    localStorage.setItem(LS_CAL_CONNECTED, '1');
+    updateCalSyncPanel();
+    setTimeout(() => { if(calConnected) calTokenClient.requestAccessToken({ prompt: '' }); }, Math.max(calTokenExpiresAt - Date.now() - 300000, 60000));
+    if(!calPollTimer) calPollTimer = setInterval(() => { if(calConnected) calSyncNow(); }, 120000); // alle 2 Min. nach Änderungen am Handy schauen
+    calSyncNow();
+  }
+
+  function ensureFreshCalToken(){
+    return new Promise((resolve, reject) => {
+      if(calAccessToken && Date.now() < calTokenExpiresAt){ resolve(calAccessToken); return; }
+      if(!calTokenClient){ reject(new Error('Google-Anmeldung noch nicht bereit')); return; }
+      const prevCallback = calTokenClient.callback;
+      calTokenClient.callback = (resp) => {
+        calTokenClient.callback = prevCallback;
+        onCalTokenResponse(resp);
+        if(resp && !resp.error) resolve(resp.access_token); else reject(new Error('Google-Anmeldung abgelaufen'));
+      };
+      calTokenClient.requestAccessToken({ prompt: '' });
     });
   }
-  function initGoogleCalendar(){
-    const cached=readSharedGoogleToken();
-    if(cached) acceptHubGoogleToken(cached.token,cached.expiresAt,true);
-    else{
-      calConnected=false;updateCalSyncPanel();
-      if(window.parent!==window){try{window.parent.postMessage({type:'jmb-google-token-request',app:'calendar'},'*');}catch(e){}}
-    }
-  }
-  function ensureFreshCalToken(){
-    if(calAccessToken&&Date.now()<calTokenExpiresAt) return Promise.resolve(calAccessToken);
-    return requestHubGoogleToken();
-  }
-  function calConnect(){
-    try{if(window.parent!==window)window.parent.postMessage({type:'jmb-google-connect-request',app:'calendar'},'*');}catch(e){}
-    showToast('Google bitte einmal oben im JMB Headquarter verbinden.');
-  }
+
+  function calConnect(){ if(calTokenClient) calTokenClient.requestAccessToken({ prompt: 'consent' }); }
   function calDisconnect(){
-    showToast('Die Google-Verbindung wird zentral im JMB Headquarter getrennt.');
+    if(calAccessToken) google.accounts.oauth2.revoke(calAccessToken, () => {});
+    calAccessToken = null; calTokenExpiresAt = 0; calConnected = false;
+    clearInterval(calPollTimer); calPollTimer = null;
+    localStorage.removeItem(LS_CAL_CONNECTED);
+    updateCalSyncPanel();
+    showToast('Google-Kalender-Verbindung getrennt');
   }
-  window.addEventListener('message',(e)=>{
-    const d=e.data||{};
-    if(d.type==='jmb-google-auth') acceptHubGoogleToken(d.token,d.expiresAt,!!d.token);
-    if(d.type==='jmb-google-sync-now'&&calConnected) calSyncNow();
-  });
-  window.addEventListener('storage',(e)=>{
-    if(e.key===JMB_TOKEN_KEY||e.key===JMB_TOKEN_EXP_KEY||e.key===JMB_CONNECTED_KEY){
-      const cached=readSharedGoogleToken();
-      if(cached) acceptHubGoogleToken(cached.token,cached.expiresAt,false);
-      else acceptHubGoogleToken(null,0,false);
-    }
-  });
 
   // ---------- Farb-/Kategorie-Zuordnung (Google kennt keine eigenen Kategorien) ----------
   function hexToRgb(hex){ hex = (hex||'#808080').replace('#',''); return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)]; }
@@ -2386,10 +2160,10 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
       const last = parseInt(localStorage.getItem(LS_CAL_LASTSYNC), 10);
       const label = last ? new Date(last).toLocaleTimeString('de-DE', { hour:'2-digit', minute:'2-digit' }) : '';
       btn.textContent = '✓ Google Kalender' + (label ? ` · ${label}` : '');
-      btn.title = 'Verbunden über JMB Headquarter — Klick synchronisiert jetzt';
+      btn.title = 'Verbunden mit Google Kalender (beidseitig) — Klick zum Trennen';
     } else {
-      btn.textContent = '☁ Google im Headquarter';
-      btn.title = 'Google einmal zentral im JMB Headquarter verbinden';
+      btn.textContent = '🔗 Google Kalender verbinden';
+      btn.title = 'Termine beidseitig mit Google Kalender synchronisieren (auch am Handy sichtbar)';
     }
   }
 
@@ -2454,8 +2228,11 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
     }
   });
   document.getElementById('btnSync').addEventListener('click', () => {
-    if(calConnected) calSyncNow();
-    else calConnect();
+    if(calConnected){
+      if(confirm('Verbindung zu Google Kalender trennen? Bereits übertragene Termine bleiben in Google Kalender erhalten.')) calDisconnect();
+    } else {
+      calConnect();
+    }
   });
   document.getElementById('btnExport').addEventListener('click', exportData);
   document.getElementById('btnImportTrigger').addEventListener('click', () => document.getElementById('importFileInput').click());
@@ -2603,44 +2380,41 @@ html[data-jmb-theme] .theme-toggle{transition:opacity .2s ease,transform .2s eas
   if(prefersReducedMotion() && indicator){ indicator.style.transition = 'none'; }
 })();
 </script>
-<script id="jmb-global-theme-runtime">
+
+<script>
+/* JMB HQ DATA BRIDGE · keine Cloud-Anmeldung in der Unterseite */
 (function(){
-  'use strict';
-  var hub=window.JMBGlobalTheme;if(!hub)return;
-  function syncToggle(){
-    var t=hub.current();
-    var buttons=[document.getElementById('themeToggle'),document.getElementById('btnThemeToggle'),document.getElementById('btn-theme')].filter(Boolean);
-    buttons.forEach(function(btn){
-      var apple=(t==='apple'||t==='apple-dark');
-      btn.style.display=apple?'':'none';
-      if(apple){
-        var dark=t==='apple-dark';
-        btn.setAttribute('aria-label',dark?'Apple Hell aktivieren':'Apple Dunkel aktivieren');
-        btn.setAttribute('title',dark?'Apple Hell':'Apple Dunkel');
-        btn.setAttribute('aria-pressed',dark?'true':'false');
+  if(window.self===window.top) return;
+  let timer=null;
+  function ping(reason){
+    clearTimeout(timer);
+    timer=setTimeout(()=>{try{window.parent.postMessage({type:'jmb-hq-data-changed',reason:reason||'change'},'*');}catch(_){ }},180);
+  }
+  try{
+    const p=Storage.prototype;
+    for(const name of ['setItem','removeItem','clear']){
+      const original=p[name];
+      if(typeof original!=='function'||original.__jmbWrapped) continue;
+      const wrapped=function(){const r=original.apply(this,arguments);ping('storage:'+name);return r;};
+      wrapped.__jmbWrapped=true;p[name]=wrapped;
+    }
+  }catch(_){ }
+  try{
+    if(window.IDBObjectStore){
+      const p=IDBObjectStore.prototype;
+      for(const name of ['put','add','delete','clear']){
+        const original=p[name];
+        if(typeof original!=='function'||original.__jmbWrapped) continue;
+        const wrapped=function(){const r=original.apply(this,arguments);ping('indexeddb:'+name);return r;};
+        wrapped.__jmbWrapped=true;p[name]=wrapped;
       }
-    });
-  }
-  function installToggle(btn){
-    if(!btn)return;
-    btn.addEventListener('click',function(e){
-      var t=hub.current();
-      if(t!=='apple'&&t!=='apple-dark')return;
-      e.preventDefault();e.stopImmediatePropagation();
-      hub.set(t==='apple-dark'?'apple':'apple-dark');
-      syncToggle();
-    },true);
-  }
-  installToggle(document.getElementById('themeToggle'));
-  installToggle(document.getElementById('btnThemeToggle'));
-  installToggle(document.getElementById('btn-theme'));
-  window.addEventListener('jmb-global-theme-change',syncToggle);
-  syncToggle();
-  var frame=document.getElementById('appFrame');
-  if(frame){
-    frame.addEventListener('load',function(){try{frame.contentWindow.postMessage({type:'jmb-global-theme',theme:hub.current()},'*');}catch(e){}});
-  }
+    }
+  }catch(_){ }
+  document.addEventListener('change',()=>ping('input-change'),true);
+  document.addEventListener('submit',()=>ping('submit'),true);
+  window.addEventListener('pagehide',()=>{try{window.parent.postMessage({type:'jmb-hq-data-changed',reason:'pagehide'},'*');}catch(_){ }});
 })();
 </script>
+
 </body>
 </html>
