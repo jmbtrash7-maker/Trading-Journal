@@ -28,6 +28,8 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <!-- Inter nur als Fallback für Windows/Android – auf Apple-Geräten greift die Systemschrift (SF Pro) -->
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<!-- Google Identity Services: offizieller OAuth-Client für die Kontoverbindung -->
+<script src="https://accounts.google.com/gsi/client" async defer></script>
 <style>
   /* ==================================================================
      APPLE-EDITION — helles Basis-Design im Stil von macOS/iOS,
@@ -354,6 +356,46 @@
   .hero__time{color:#fff;font-variant-numeric:tabular-nums;}
   .live-dot{width:8px;height:8px;border-radius:50%;background:#30d158;flex:0 0 auto;animation:startPulse 2s infinite;}
 
+  /* ---------- Google-Account-Verbindung ---------- */
+  .account-card{
+    margin-top:24px;padding:18px 20px;border-radius:var(--radius);
+    background:var(--bg-panel);
+    box-shadow:var(--shadow-sm), inset 0 0 0 .5px var(--card-line);
+    display:flex;align-items:center;justify-content:space-between;gap:18px;
+  }
+  .account-card__main{display:flex;align-items:center;gap:14px;min-width:0;}
+  .account-card__avatar{
+    width:46px;height:46px;flex:0 0 auto;border-radius:50%;overflow:hidden;
+    display:grid;place-items:center;background:var(--fill);color:var(--text);
+    font-family:var(--font-display);font-size:20px;font-weight:700;
+    box-shadow:inset 0 0 0 .5px var(--separator);
+  }
+  .account-card__avatar img{width:100%;height:100%;object-fit:cover;display:block;}
+  .account-card__copy{min-width:0;}
+  .account-card__title{
+    margin:0;font-family:var(--font-display);font-size:16px;font-weight:600;
+    letter-spacing:-.018em;line-height:1.25;
+  }
+  .account-card__status{margin:3px 0 0;color:var(--text-dim);font-size:13px;line-height:1.4;}
+  .account-card__status.is-success{color:var(--green);}
+  .account-card__status.is-error{color:var(--red);}
+  .account-card__email{margin:2px 0 0;color:var(--text-dim);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .account-card__actions{display:flex;align-items:center;justify-content:flex-end;gap:8px;flex:0 0 auto;}
+  .btn:disabled{opacity:.5;cursor:not-allowed;transform:none;}
+  .google-config-copy{margin:8px 0 0;color:var(--text-dim);font-size:13px;line-height:1.45;}
+  .field{display:grid;gap:7px;margin-top:18px;}
+  .field__label{font-size:13px;font-weight:600;color:var(--text);}
+  .field__input{
+    width:100%;min-height:44px;padding:10px 12px;border-radius:12px;
+    border:.5px solid var(--separator);background:var(--fill);color:var(--text);
+    font:inherit;font-size:14px;outline:none;
+    transition:border-color .2s var(--ease), background-color .2s var(--ease);
+  }
+  .field__input:focus{border-color:var(--focus);background:var(--bg-panel);}
+  .google-config-origin{margin:10px 0 0;color:var(--text-dim);font-size:12px;overflow-wrap:anywhere;}
+  .google-config-error{margin:10px 0 0;color:var(--red);font-size:12px;line-height:1.4;}
+  [hidden]{display:none !important;}
+
   /* ---------- App-Karten (ersetzen die Rechteck-Kacheln) ----------
      Klassenname .hex bleibt, weil das JS darüber die Klicks bindet. */
   .apps{margin-top:40px;}
@@ -531,6 +573,9 @@
     /* Status-Pille am Handy volle Breite, Uhrzeit rechtsbündig */
     .hero__status{display:flex;width:100%;border-radius:14px;padding:9px 14px 9px 12px;}
     .hero__time{margin-left:auto;}
+    .account-card{margin-top:16px;padding:16px;align-items:flex-start;flex-direction:column;}
+    .account-card__actions{width:100%;justify-content:stretch;}
+    .account-card__actions .btn{flex:1;min-height:44px;}
     .apps{margin-top:28px;}
     .hex-row{gap:12px;}
     .hex{min-height:168px;padding:16px;}
@@ -604,6 +649,22 @@
             <span class="hero__status-label">Live</span>
             <span class="hero__time" id="hudTime">--:--:--</span>
           </div>
+        </div>
+      </section>
+
+      <section class="account-card" id="googleAccountCard" data-reveal aria-labelledby="googleAccountTitle">
+        <div class="account-card__main">
+          <div class="account-card__avatar" id="googleAccountAvatar" aria-hidden="true">G</div>
+          <div class="account-card__copy">
+            <h2 class="account-card__title" id="googleAccountTitle">Google Account</h2>
+            <p class="account-card__status" id="googleAccountStatus" role="status" aria-live="polite">Nicht verbunden</p>
+            <p class="account-card__email" id="googleAccountEmail" hidden></p>
+          </div>
+        </div>
+        <div class="account-card__actions">
+          <button class="btn" id="googleSetupBtn" type="button">Einrichten</button>
+          <button class="btn btn--primary" id="googleConnectBtn" type="button">Verbinden</button>
+          <button class="btn" id="googleDisconnectBtn" type="button" hidden>Trennen</button>
         </div>
       </section>
 
@@ -726,6 +787,23 @@
       <p class="confirm-title" id="confirmTitle">Änderungen speichern?</p>
       <div class="confirm-actions">
         <button class="btn btn--primary" id="btnConfirmSave" type="button">Ja</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="confirm-overlay" id="googleConfigOverlay" aria-hidden="true">
+    <div class="confirm-box" role="dialog" aria-modal="true" aria-labelledby="googleConfigTitle">
+      <p class="confirm-title" id="googleConfigTitle">Google Account einrichten</p>
+      <p class="google-config-copy">Trage die OAuth-Web-Client-ID deines Google-Cloud-Projekts ein. Die Client-ID ist kein Passwort und wird nur in diesem Browser gespeichert.</p>
+      <label class="field" for="googleClientIdInput">
+        <span class="field__label">OAuth Web Client-ID</span>
+        <input class="field__input" id="googleClientIdInput" type="text" inputmode="text" autocomplete="off" autocapitalize="none" spellcheck="false">
+      </label>
+      <p class="google-config-origin" id="googleConfigOrigin"></p>
+      <p class="google-config-error" id="googleConfigError" role="alert" hidden></p>
+      <div class="confirm-actions">
+        <button class="btn" id="googleConfigCancel" type="button">Abbrechen</button>
+        <button class="btn btn--primary" id="googleConfigSave" type="button">Speichern &amp; verbinden</button>
       </div>
     </div>
   </div>
@@ -883,6 +961,268 @@
   } else {
     homeView.classList.add('is-active');
   }
+</script>
+
+<script>
+  /* ================================================================
+     GOOGLE-ACCOUNT-SCHICHT — Google Identity Services (OAuth Token)
+     Die OAuth-Client-ID wird lokal gespeichert; Zugriffstoken bleiben
+     ausschließlich im Arbeitsspeicher und werden nicht persistiert.
+     ================================================================ */
+  (function GoogleAccountLayer(){
+    const CLIENT_ID_KEY = 'jmb-google-oauth-client-id';
+    const SCOPES = 'openid profile email';
+    const USERINFO_URL = 'https://openidconnect.googleapis.com/v1/userinfo';
+
+    const statusEl = document.getElementById('googleAccountStatus');
+    const emailEl = document.getElementById('googleAccountEmail');
+    const avatarEl = document.getElementById('googleAccountAvatar');
+    const connectBtn = document.getElementById('googleConnectBtn');
+    const disconnectBtn = document.getElementById('googleDisconnectBtn');
+    const setupBtn = document.getElementById('googleSetupBtn');
+    const overlay = document.getElementById('googleConfigOverlay');
+    const input = document.getElementById('googleClientIdInput');
+    const originEl = document.getElementById('googleConfigOrigin');
+    const errorEl = document.getElementById('googleConfigError');
+    const cancelBtn = document.getElementById('googleConfigCancel');
+    const saveBtn = document.getElementById('googleConfigSave');
+
+    let tokenClient = null;
+    let tokenClientId = '';
+    let accessToken = '';
+    let expiryTimer = null;
+    let busy = false;
+
+    function readClientId(){
+      try{ return localStorage.getItem(CLIENT_ID_KEY) || ''; }
+      catch(e){ console.error('Google Client-ID konnte nicht gelesen werden.', e); return ''; }
+    }
+
+    function saveClientId(value){
+      try{ localStorage.setItem(CLIENT_ID_KEY, value); return true; }
+      catch(e){ console.error('Google Client-ID konnte nicht gespeichert werden.', e); return false; }
+    }
+
+    function isValidClientId(value){
+      return typeof value === 'string' && value.trim().endsWith('.apps.googleusercontent.com');
+    }
+
+    function setStatus(text, type){
+      statusEl.textContent = text;
+      statusEl.classList.toggle('is-success', type === 'success');
+      statusEl.classList.toggle('is-error', type === 'error');
+    }
+
+    function setBusy(next){
+      busy = next;
+      connectBtn.disabled = next;
+      setupBtn.disabled = next;
+      connectBtn.textContent = next ? 'Verbindung …' : 'Verbinden';
+    }
+
+    function resetProfile(message){
+      accessToken = '';
+      if(expiryTimer){ clearTimeout(expiryTimer); expiryTimer = null; }
+      emailEl.textContent = '';
+      emailEl.hidden = true;
+      avatarEl.textContent = 'G';
+      disconnectBtn.hidden = true;
+      connectBtn.hidden = false;
+      setupBtn.hidden = false;
+      setStatus(message || 'Nicht verbunden');
+    }
+
+    function renderProfile(profile){
+      const name = profile && typeof profile.name === 'string' ? profile.name.trim() : '';
+      const email = profile && typeof profile.email === 'string' ? profile.email.trim() : '';
+      setStatus(name ? 'Verbunden mit ' + name : 'Google Account verbunden', 'success');
+      if(email){ emailEl.textContent = email; emailEl.hidden = false; }
+      else { emailEl.textContent = ''; emailEl.hidden = true; }
+
+      avatarEl.textContent = '';
+      if(profile && typeof profile.picture === 'string' && /^https:\/\//i.test(profile.picture)){
+        const img = document.createElement('img');
+        img.src = profile.picture;
+        img.alt = '';
+        img.referrerPolicy = 'no-referrer';
+        avatarEl.appendChild(img);
+      } else {
+        avatarEl.textContent = name ? name.charAt(0).toUpperCase() : 'G';
+      }
+      connectBtn.hidden = true;
+      setupBtn.hidden = true;
+      disconnectBtn.hidden = false;
+    }
+
+    function showConfigError(message){
+      errorEl.textContent = message;
+      errorEl.hidden = !message;
+    }
+
+    function currentOriginText(){
+      if(location.protocol === 'file:') return 'Aktuell geöffnet über file:// — Google OAuth benötigt localhost oder HTTPS.';
+      return 'Diese Web-Origin muss in Google Cloud freigegeben sein: ' + location.origin;
+    }
+
+    function openConfig(){
+      input.value = readClientId();
+      originEl.textContent = currentOriginText();
+      showConfigError('');
+      overlay.classList.add('is-active');
+      overlay.setAttribute('aria-hidden', 'false');
+      setTimeout(() => { try{ input.focus({preventScroll:true}); }catch(e){} }, 30);
+    }
+
+    function closeConfig(){
+      overlay.classList.remove('is-active');
+      overlay.setAttribute('aria-hidden', 'true');
+      showConfigError('');
+    }
+
+    function googleLibraryReady(){
+      return !!(window.google && google.accounts && google.accounts.oauth2 && typeof google.accounts.oauth2.initTokenClient === 'function');
+    }
+
+    function waitForGoogleIdentity(){
+      if(googleLibraryReady()) return Promise.resolve();
+      return new Promise((resolve, reject) => {
+        const started = Date.now();
+        const timer = setInterval(() => {
+          if(googleLibraryReady()){ clearInterval(timer); resolve(); return; }
+          if(Date.now() - started > 8000){
+            clearInterval(timer);
+            reject(new Error('Google Identity Services konnte nicht geladen werden.'));
+          }
+        }, 80);
+      });
+    }
+
+    function assertUsableOrigin(){
+      if(location.protocol !== 'http:' && location.protocol !== 'https:'){
+        throw new Error('Google Login funktioniert nicht über file://. Öffne JMB Headquarter über localhost oder HTTPS.');
+      }
+    }
+
+    async function loadProfile(token){
+      const response = await fetch(USERINFO_URL, {
+        method:'GET',
+        headers:{ Authorization:'Bearer ' + token },
+        cache:'no-store'
+      });
+      if(!response.ok) throw new Error('Google-Profil konnte nicht geladen werden (HTTP ' + response.status + ').');
+      return response.json();
+    }
+
+    function buildTokenClient(clientId){
+      if(tokenClient && tokenClientId === clientId) return tokenClient;
+      tokenClientId = clientId;
+      tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id:clientId,
+        scope:SCOPES,
+        callback:async (response) => {
+          if(response && response.error){
+            console.error('Google OAuth Fehler:', response);
+            setBusy(false);
+            setStatus('Google-Verbindung abgebrochen oder fehlgeschlagen.', 'error');
+            return;
+          }
+          if(!response || !response.access_token){
+            setBusy(false);
+            setStatus('Google hat kein Zugriffstoken geliefert.', 'error');
+            return;
+          }
+          try{
+            accessToken = response.access_token;
+            const profile = await loadProfile(accessToken);
+            renderProfile(profile);
+            const seconds = Number(response.expires_in);
+            if(Number.isFinite(seconds) && seconds > 30){
+              if(expiryTimer) clearTimeout(expiryTimer);
+              expiryTimer = setTimeout(() => resetProfile('Google-Sitzung abgelaufen – erneut verbinden.'), (seconds - 15) * 1000);
+            }
+          }catch(err){
+            console.error(err);
+            resetProfile('Google-Profil konnte nicht geladen werden.');
+            statusEl.classList.add('is-error');
+          }finally{
+            setBusy(false);
+          }
+        },
+        error_callback:(error) => {
+          console.error('Google OAuth Popup-Fehler:', error);
+          setBusy(false);
+          setStatus('Google-Anmeldung konnte nicht geöffnet werden.', 'error');
+        }
+      });
+      return tokenClient;
+    }
+
+    async function connect(){
+      if(busy) return;
+      const clientId = readClientId().trim();
+      if(!isValidClientId(clientId)){ openConfig(); return; }
+      try{
+        assertUsableOrigin();
+        setBusy(true);
+        setStatus('Google-Verbindung wird vorbereitet …');
+        await waitForGoogleIdentity();
+        buildTokenClient(clientId).requestAccessToken({prompt:'select_account'});
+      }catch(err){
+        console.error(err);
+        setBusy(false);
+        setStatus(err && err.message ? err.message : 'Google-Verbindung fehlgeschlagen.', 'error');
+      }
+    }
+
+    function disconnect(){
+      if(!accessToken){ resetProfile(); return; }
+      const token = accessToken;
+      resetProfile('Google-Verbindung wird getrennt …');
+      if(googleLibraryReady() && typeof google.accounts.oauth2.revoke === 'function'){
+        google.accounts.oauth2.revoke(token, (response) => {
+          if(response && response.successful === false){
+            console.error('Google-Berechtigung konnte nicht vollständig widerrufen werden:', response);
+            setStatus('Lokal getrennt; Google-Berechtigung konnte nicht vollständig widerrufen werden.', 'error');
+            return;
+          }
+          setStatus('Nicht verbunden');
+        });
+      } else {
+        setStatus('Nicht verbunden');
+      }
+    }
+
+    connectBtn.addEventListener('click', connect);
+    setupBtn.addEventListener('click', openConfig);
+    disconnectBtn.addEventListener('click', disconnect);
+    cancelBtn.addEventListener('click', closeConfig);
+    saveBtn.addEventListener('click', () => {
+      const clientId = input.value.trim();
+      if(!isValidClientId(clientId)){
+        showConfigError('Bitte eine gültige Google OAuth Web Client-ID eintragen, die auf .apps.googleusercontent.com endet.');
+        return;
+      }
+      if(!saveClientId(clientId)){
+        showConfigError('Die Client-ID konnte im Browser nicht gespeichert werden.');
+        return;
+      }
+      tokenClient = null;
+      tokenClientId = '';
+      closeConfig();
+      connect();
+    });
+    input.addEventListener('keydown', (e) => {
+      if(e.key === 'Enter'){ e.preventDefault(); saveBtn.click(); }
+    });
+    overlay.addEventListener('click', (e) => { if(e.target === overlay) closeConfig(); });
+    document.addEventListener('keydown', (e) => {
+      if(e.key === 'Escape' && overlay.classList.contains('is-active')) closeConfig();
+    });
+
+    resetProfile();
+    if(location.protocol === 'file:') setStatus('Für Google Login über localhost oder HTTPS öffnen.', 'error');
+    else if(readClientId()) setStatus('Bereit zum Verbinden');
+  })();
 </script>
 
 <script>
