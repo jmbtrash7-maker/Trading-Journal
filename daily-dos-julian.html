@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="theme-color" content="#f5f5f7" id="metaThemeColor">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<title>Daily Do’s</title>
+<script>
+  (function(){
+    var theme = null;
+    try{ theme = localStorage.getItem('jmb-theme'); }catch(e){}
+    if(theme !== 'light' && theme !== 'dark'){
+      theme = (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) ? 'dark' : 'light';
+    }
+    document.documentElement.setAttribute('data-theme', theme);
+  })();
+</script>
+<style>
+  :root{
+    color-scheme:light;
+    --bg:#f5f5f7;
+    --panel:#ffffff;
+    --panel-soft:#f5f5f7;
+    --panel-hover:#ececf0;
+    --text:#1d1d1f;
+    --muted:#6e6e73;
+    --muted-2:#8e8e93;
+    --separator:rgba(60,60,67,.14);
+    --separator-strong:rgba(60,60,67,.22);
+    --fill:rgba(118,118,128,.12);
+    --fill-strong:rgba(118,118,128,.20);
+    --glass:rgba(255,255,255,.82);
+    --glass-border:rgba(0,0,0,.08);
+    --backdrop:rgba(0,0,0,.26);
+    --accent:#0071e3;
+    --accent-hover:#0077ed;
+    --accent-soft:rgba(0,113,227,.12);
+    --accent-soft-strong:rgba(0,113,227,.20);
+    --green:#1a7f37;
+    --green-soft:rgba(52,199,89,.14);
+    --orange:#b25000;
+    --orange-fill:#ff9f0a;
+    --orange-soft:rgba(255,159,10,.16);
+    --red:#d70015;
+    --red-soft:rgba(255,59,48,.12);
+    --purple:#8944ab;
+    --purple-soft:rgba(175,82,222,.14);
+    --cyan:#007c91;
+    --cyan-soft:rgba(50,173,230,.14);
+    --indigo:#4b56a6;
+    --indigo-soft:rgba(88,86,214,.14);
+    --pink:#b42368;
+    --pink-soft:rgba(255,45,85,.13);
+    --focus:#0071e3;
+    --inverse:#1d1d1f;
+    --inverse-text:#ffffff;
+    --on-accent:#ffffff;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.04), 0 1px 1px rgba(0,0,0,.02);
+    --shadow-md:0 10px 30px rgba(0,0,0,.08), 0 2px 8px rgba(0,0,0,.04);
+    --shadow-lg:0 28px 70px rgba(0,0,0,.16), 0 8px 24px rgba(0,0,0,.08);
+    --radius-xl:28px;
+    --radius-lg:22px;
+    --radius:18px;
+    --radius-sm:12px;
+    --pill:999px;
+    --space-1:4px;
+    --space-2:8px;
+    --space-3:12px;
+    --space-4:16px;
+    --space-5:20px;
+    --space-6:24px;
+    --space-8:32px;
+    --space-10:40px;
+    --dur-fast:160ms;
+    --dur-base:260ms;
+    --dur-slow:420ms;
+    --ease:cubic-bezier(.28,.11,.32,1);
+    --spring:cubic-bezier(.34,1.56,.64,1);
+    --font:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",Arial,sans-serif;
+    --display:-apple-system,BlinkMacSystemFont,"SF Pro Display","Helvetica Neue",Arial,sans-serif;
+  }
+  :root[data-theme="dark"]{
+    color-scheme:dark;
+    --bg:#000000;
+    --panel:#1c1c1e;
+    --panel-soft:#2c2c2e;
+    --panel-hover:#3a3a3c;
+    --text:#f5f5f7;
+    --muted:#a1a1a6;
+    --muted-2:#8e8e93;
+    --separator:rgba(84,84,88,.60);
+    --separator-strong:rgba(142,142,147,.46);
+    --fill:rgba(118,118,128,.24);
+    --fill-strong:rgba(118,118,128,.36);
+    --glass:rgba(28,28,30,.88);
+    --glass-border:rgba(255,255,255,.08);
+    --backdrop:rgba(0,0,0,.56);
+    --accent:#2997ff;
+    --accent-hover:#409cff;
+    --accent-soft:rgba(41,151,255,.18);
+    --accent-soft-strong:rgba(41,151,255,.28);
+    --green:#30d158;
+    --green-soft:rgba(48,209,88,.16);
+    --orange:#ffb340;
+    --orange-fill:#ff9f0a;
+    --orange-soft:rgba(255,159,10,.18);
+    --red:#ff6961;
+    --red-soft:rgba(255,69,58,.16);
+    --purple:#bf5af2;
+    --purple-soft:rgba(191,90,242,.18);
+    --cyan:#64d2ff;
+    --cyan-soft:rgba(100,210,255,.16);
+    --indigo:#7d7aff;
+    --indigo-soft:rgba(94,92,230,.20);
+    --pink:#ff6482;
+    --pink-soft:rgba(255,55,95,.18);
+    --focus:#2997ff;
+    --inverse:#f5f5f7;
+    --inverse-text:#1d1d1f;
+    --on-accent:#ffffff;
+    --shadow-sm:0 1px 2px rgba(0,0,0,.50), 0 1px 1px rgba(0,0,0,.30);
+    --shadow-md:0 12px 34px rgba(0,0,0,.58), 0 2px 8px rgba(0,0,0,.40);
+    --shadow-lg:0 30px 80px rgba(0,0,0,.76), 0 8px 26px rgba(0,0,0,.54);
+  }
+
+  *,*::before,*::after{box-sizing:border-box;}
+  html{background:var(--bg);}
+  html,body{margin:0;min-height:100%;}
+  body{
+    background:var(--bg);color:var(--text);font-family:var(--font);font-size:15px;line-height:1.47;
+    letter-spacing:-.01em;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;
+  }
+  button,input,textarea,select{font:inherit;color:inherit;}
+  button{border:0;}
+  input,textarea,select{min-width:0;}
+  :focus-visible{outline:3px solid var(--focus);outline-offset:2px;}
+  .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0;}
+
+  .shell{min-height:100vh;}
+  .topbar{
+    position:sticky;top:0;z-index:20;
+    padding-top:env(safe-area-inset-top);
+    background:var(--glass);border-bottom:.5px solid var(--separator);
+    -webkit-backdrop-filter:blur(22px) saturate(180%);backdrop-filter:blur(22px) saturate(180%);
+  }
+  .topbar__inner{
+    max-width:1180px;margin:0 auto;min-height:64px;padding:10px max(28px,env(safe-area-inset-right)) 10px max(86px,env(safe-area-inset-left));
+    display:flex;align-items:center;justify-content:space-between;gap:16px;
+  }
+  .brand{min-width:0;}
+  .brand__title{margin:0;font-family:var(--display);font-size:20px;line-height:1.1;font-weight:700;letter-spacing:-.03em;}
+  .brand__sub{margin:3px 0 0;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .topbar__actions{display:flex;align-items:center;gap:8px;flex:0 0 auto;}
+  .icon-btn,.pill-btn,.text-btn{
+    -webkit-tap-highlight-color:transparent;cursor:pointer;
+    transition:transform var(--dur-base) var(--spring),background-color var(--dur-fast) var(--ease),opacity var(--dur-fast) var(--ease);
+  }
+  .icon-btn{width:38px;height:38px;border-radius:50%;display:grid;place-items:center;background:var(--fill);}
+  .icon-btn svg{width:18px;height:18px;}
+  .icon-btn:active,.pill-btn:active,.text-btn:active{transform:scale(.96);}
+  @media (hover:hover){.icon-btn:hover,.text-btn:hover{background:var(--fill-strong);}.pill-btn:hover{background:var(--accent-hover);}}
+
+  main{max-width:1180px;margin:0 auto;padding:28px max(28px,env(safe-area-inset-right)) calc(56px + env(safe-area-inset-bottom)) max(28px,env(safe-area-inset-left));}
+  .hero-grid{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(280px,.65fr);gap:18px;align-items:stretch;}
+  .hero-card,.summary-card,.panel{
+    background:var(--panel);border-radius:var(--radius-xl);box-shadow:var(--shadow-sm);border:.5px solid var(--separator);
+  }
+  .hero-card{
+    position:relative;overflow:hidden;min-height:250px;padding:32px;display:flex;flex-direction:column;justify-content:space-between;
+    background:
+      radial-gradient(circle at 92% 12%, var(--orange-soft), transparent 34%),
+      radial-gradient(circle at 5% 100%, var(--accent-soft), transparent 38%),
+      var(--panel);
+  }
+  .eyebrow{margin:0 0 8px;color:var(--orange);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;}
+  .hero-card h1{margin:0;max-width:720px;font-family:var(--display);font-size:clamp(32px,5vw,52px);line-height:1.02;letter-spacing:-.045em;}
+  .hero-card__sub{margin:12px 0 0;max-width:620px;color:var(--muted);font-size:16px;}
+  .hero-card__foot{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:18px;margin-top:34px;}
+  .week-label{font-family:var(--display);font-size:18px;font-weight:650;letter-spacing:-.025em;}
+  .week-nav{display:flex;align-items:center;gap:8px;}
+  .week-nav .icon-btn{background:var(--panel-soft);}
+  .today-btn{min-height:38px;padding:0 14px;border-radius:var(--pill);background:var(--panel-soft);font-weight:600;font-size:13px;}
+
+  .summary-card{padding:24px;display:flex;flex-direction:column;justify-content:space-between;gap:22px;}
+  .summary-title{margin:0;color:var(--muted);font-size:13px;font-weight:600;}
+  .summary-number{margin:6px 0 0;font-family:var(--display);font-size:42px;line-height:1;font-weight:700;letter-spacing:-.045em;}
+  .summary-number small{font-size:16px;color:var(--muted);font-weight:600;letter-spacing:-.01em;}
+  .summary-meta{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+  .mini-stat{padding:13px 14px;border-radius:var(--radius);background:var(--panel-soft);}
+  .mini-stat__label{font-size:11px;color:var(--muted);font-weight:600;}
+  .mini-stat__value{margin-top:2px;font-size:17px;font-weight:700;letter-spacing:-.02em;}
+  .progress{height:8px;border-radius:var(--pill);overflow:hidden;background:var(--fill);}
+  .progress__bar{height:100%;width:0;border-radius:inherit;background:var(--accent);transform-origin:left center;transition:transform var(--dur-slow) var(--ease),width var(--dur-slow) var(--ease);}
+  .summary-progress__head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin-bottom:8px;color:var(--muted);font-size:12px;}
+
+  .section{margin-top:32px;}
+  .section-head{display:flex;align-items:end;justify-content:space-between;gap:16px;margin:0 2px 13px;}
+  .section-title{margin:0;font-family:var(--display);font-size:22px;line-height:1.1;font-weight:700;letter-spacing:-.03em;}
+  .section-sub{margin:4px 0 0;color:var(--muted);font-size:13px;}
+  .pill-btn{min-height:40px;padding:0 18px;border-radius:var(--pill);background:var(--accent);color:var(--on-accent);font-weight:650;}
+  .pill-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .pill-btn--soft{background:var(--accent-soft);color:var(--accent);}
+  @media (hover:hover){.pill-btn--soft:hover{background:var(--accent-soft-strong);}}
+
+  .day-chart{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:10px;height:168px;align-items:end;padding:24px 22px 18px;}
+  .day-bar{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;gap:8px;min-width:0;}
+  .day-bar__track{width:min(30px,72%);height:112px;border-radius:var(--pill);background:var(--fill);display:flex;align-items:flex-end;overflow:hidden;}
+  .day-bar__fill{width:100%;height:0;border-radius:var(--pill);background:linear-gradient(180deg,var(--orange-fill),var(--accent));transition:height var(--dur-slow) var(--ease);}
+  .day-bar__label{font-size:11px;color:var(--muted);font-weight:650;}
+  .day-bar__value{font-size:10px;color:var(--muted-2);font-variant-numeric:tabular-nums;white-space:nowrap;}
+
+  .layout-grid{display:grid;grid-template-columns:minmax(0,1.12fr) minmax(310px,.88fr);gap:18px;align-items:start;}
+  .panel{overflow:hidden;}
+  .panel__head{padding:20px 22px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;}
+  .panel__title{margin:0;font-family:var(--display);font-size:18px;font-weight:700;letter-spacing:-.025em;}
+  .panel__body{padding:0 22px 22px;}
+
+  .category-list{display:grid;gap:10px;}
+  .category-card{padding:16px;border-radius:var(--radius);background:var(--panel-soft);border:.5px solid var(--separator);}
+  .category-card__top{display:flex;align-items:flex-start;justify-content:space-between;gap:14px;}
+  .category-card__name-wrap{display:flex;gap:11px;min-width:0;align-items:center;}
+  .category-dot{width:11px;height:11px;border-radius:50%;flex:0 0 auto;background:var(--accent);box-shadow:0 0 0 5px var(--accent-soft);}
+  .category-name{font-weight:700;letter-spacing:-.015em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .category-meta{margin-top:2px;color:var(--muted);font-size:12px;}
+  .text-btn{min-height:34px;padding:0 11px;border-radius:var(--pill);background:transparent;color:var(--accent);font-size:12px;font-weight:650;}
+  .category-progress{margin-top:14px;}
+  .category-progress__head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:7px;font-size:12px;color:var(--muted);}
+  .category-progress .progress__bar{background:var(--category-accent,var(--accent));}
+  .day-chips{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px;}
+  .day-chip{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:24px;padding:0 7px;border-radius:var(--pill);background:var(--fill);color:var(--muted);font-size:10px;font-weight:700;}
+  .day-chip.is-planned{background:var(--category-soft,var(--accent-soft));color:var(--category-accent,var(--accent));}
+
+  .log-form{display:grid;gap:14px;}
+  .field{display:grid;gap:6px;}
+  .field label,.field legend{font-size:12px;font-weight:650;color:var(--muted);}
+  .input,.select,.textarea{
+    width:100%;border:1px solid var(--separator);border-radius:var(--radius-sm);background:var(--panel-soft);color:var(--text);
+    padding:11px 12px;outline:none;transition:border-color var(--dur-fast) var(--ease),background-color var(--dur-fast) var(--ease);
+  }
+  .input,.select{min-height:44px;}
+  .textarea{min-height:78px;resize:vertical;}
+  .input:focus,.select:focus,.textarea:focus{border-color:var(--focus);background:var(--panel);}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
+  .duration-preview{padding:12px 13px;border-radius:var(--radius-sm);background:var(--orange-soft);color:var(--orange);font-weight:650;font-size:13px;}
+  .form-actions{display:flex;justify-content:flex-end;gap:8px;}
+
+  .balance-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;}
+  .balance-card{padding:18px;border-radius:var(--radius);background:var(--panel-soft);border:.5px solid var(--separator);}
+  .balance-card__head{display:flex;align-items:center;gap:10px;min-width:0;}
+  .balance-card__value{margin-top:16px;font-family:var(--display);font-size:29px;font-weight:750;letter-spacing:-.035em;}
+  .balance-card__goal{margin-top:2px;color:var(--muted);font-size:12px;}
+  .balance-card__status{display:inline-flex;margin-top:10px;padding:4px 8px;border-radius:var(--pill);font-size:11px;font-weight:700;background:var(--fill);color:var(--muted);}
+  .balance-card__status.is-good{background:var(--green-soft);color:var(--green);}
+
+  .entry-panel-body{padding-top:var(--space-6);}
+  .fieldset-reset{border:0;padding:0;margin:0;}
+  .entry-list{display:grid;gap:8px;}
+  .entry-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:12px;align-items:center;padding:13px 14px;border-radius:var(--radius);background:var(--panel-soft);border:.5px solid var(--separator);}
+  .entry-time{font-variant-numeric:tabular-nums;font-size:12px;font-weight:700;color:var(--muted);white-space:nowrap;}
+  .entry-main{min-width:0;}
+  .entry-title{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .entry-note{margin-top:2px;color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .entry-duration{font-size:13px;font-weight:750;white-space:nowrap;}
+  .entry-actions{display:flex;align-items:center;gap:4px;}
+  .entry-delete{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:transparent;color:var(--red);cursor:pointer;}
+  @media (hover:hover){.entry-delete:hover{background:var(--red-soft);}}
+  .entry-delete svg{width:15px;height:15px;}
+
+  .empty{padding:28px 18px;text-align:center;border:1px dashed var(--separator-strong);border-radius:var(--radius);color:var(--muted);}
+  .empty__icon{width:42px;height:42px;margin:0 auto 10px;border-radius:13px;display:grid;place-items:center;background:var(--fill);color:var(--text);}
+  .empty__icon svg{width:21px;height:21px;}
+  .empty strong{display:block;color:var(--text);font-size:14px;margin-bottom:4px;}
+  .empty p{margin:0;font-size:12px;}
+
+  .modal-backdrop{
+    position:fixed;inset:0;z-index:60;display:flex;align-items:center;justify-content:center;padding:20px;
+    background:var(--backdrop);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    opacity:0;visibility:hidden;pointer-events:none;transition:opacity var(--dur-base) var(--ease),visibility 0s linear var(--dur-base);
+  }
+  .modal-backdrop.is-open{opacity:1;visibility:visible;pointer-events:auto;transition:opacity var(--dur-base) var(--ease),visibility 0s;}
+  .modal{width:min(520px,100%);max-height:min(760px,calc(100vh - 40px));overflow:auto;border-radius:var(--radius-lg);background:var(--glass);border:.5px solid var(--glass-border);box-shadow:var(--shadow-lg);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);}
+  .modal-backdrop.is-open .modal{animation:modalIn var(--dur-slow) var(--spring) both;}
+  .modal__head{padding:20px 22px 14px;display:flex;align-items:center;justify-content:space-between;gap:12px;border-bottom:.5px solid var(--separator);}
+  .modal__title{margin:0;font-family:var(--display);font-size:18px;font-weight:750;letter-spacing:-.025em;}
+  .modal__body{padding:18px 22px 22px;display:grid;gap:16px;}
+  .day-picker{display:grid;grid-template-columns:repeat(7,1fr);gap:6px;}
+  .day-toggle{min-height:38px;border-radius:var(--radius-sm);background:var(--fill);color:var(--muted);font-weight:700;font-size:11px;cursor:pointer;transition:background-color var(--dur-fast) var(--ease),color var(--dur-fast) var(--ease),transform var(--dur-base) var(--spring);}
+  .day-toggle[aria-pressed="true"]{background:var(--accent-soft);color:var(--accent);}
+  .day-toggle:active{transform:scale(.95);}
+  .danger-row{padding-top:4px;border-top:.5px solid var(--separator);}
+  .danger-btn{min-height:40px;padding:0 14px;border-radius:var(--pill);background:var(--red-soft);color:var(--red);font-weight:700;cursor:pointer;}
+
+  .confirm-card{width:min(390px,100%);padding:22px;border-radius:var(--radius-lg);background:var(--glass);border:.5px solid var(--glass-border);box-shadow:var(--shadow-lg);-webkit-backdrop-filter:blur(30px) saturate(180%);backdrop-filter:blur(30px) saturate(180%);}
+  .confirm-title{margin:0;font-family:var(--display);font-size:18px;font-weight:750;letter-spacing:-.025em;}
+  .confirm-text{margin:8px 0 0;color:var(--muted);font-size:13px;}
+  .confirm-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:20px;}
+  .confirm-btn{min-height:40px;padding:0 15px;border-radius:var(--pill);background:var(--fill);font-weight:700;cursor:pointer;}
+  .confirm-btn--danger{background:var(--red);color:var(--on-accent);}
+
+  .toast{position:fixed;left:50%;bottom:calc(22px + env(safe-area-inset-bottom));z-index:90;max-width:min(520px,calc(100vw - 32px));padding:11px 16px;border-radius:var(--pill);background:var(--inverse);color:var(--inverse-text);box-shadow:var(--shadow-md);font-size:13px;font-weight:650;opacity:0;transform:translate3d(-50%,18px,0);pointer-events:none;transition:opacity var(--dur-base) var(--ease),transform var(--dur-base) var(--spring);}
+  .toast.is-visible{opacity:1;transform:translate3d(-50%,0,0);}
+  .toast.is-error{background:var(--red);}
+
+  @keyframes modalIn{from{opacity:0;transform:scale(1.04) translateY(8px);}to{opacity:1;transform:none;}}
+
+  @media (max-width:900px){
+    .hero-grid,.layout-grid{grid-template-columns:1fr;}
+    .summary-card{min-height:0;}
+  }
+  @media (max-width:640px){
+    .topbar__inner{min-height:58px;padding:8px max(14px,env(safe-area-inset-right)) 8px max(70px,env(safe-area-inset-left));}
+    .brand__title{font-size:17px;}.brand__sub{display:none;}
+    main{padding:18px max(14px,env(safe-area-inset-right)) calc(36px + env(safe-area-inset-bottom)) max(14px,env(safe-area-inset-left));}
+    .hero-card{min-height:230px;padding:22px;border-radius:24px;}
+    .hero-card h1{font-size:34px;}
+    .hero-card__sub{font-size:14px;}
+    .hero-card__foot{align-items:flex-start;flex-direction:column;margin-top:26px;}
+    .summary-card{padding:20px;border-radius:24px;}
+    .summary-number{font-size:36px;}
+    .section{margin-top:26px;}
+    .section-head{align-items:center;}
+    .section-title{font-size:20px;}
+    .section-sub{display:none;}
+    .pill-btn{min-height:38px;padding:0 14px;font-size:13px;}
+    .day-chart{gap:5px;padding:20px 10px 16px;}
+    .day-bar__track{width:min(26px,76%);}
+    .panel__head{padding:18px 16px 12px;}.panel__body{padding:0 16px 18px;}
+    .balance-grid{grid-template-columns:1fr;}
+    .form-row{grid-template-columns:1fr 1fr;}
+    .entry-row{grid-template-columns:minmax(0,1fr) auto;}
+    .entry-time{grid-column:1 / -1;}
+    .entry-actions{align-self:start;}
+    .modal-backdrop{align-items:flex-end;padding:10px;}
+    .modal{width:100%;max-height:88vh;border-radius:24px;}
+  }
+  @media (max-width:390px){
+    .summary-meta{grid-template-columns:1fr;}
+    .form-row{grid-template-columns:1fr;}
+    .day-picker{gap:4px;}.day-toggle{min-height:36px;font-size:10px;}
+  }
+  @media (prefers-reduced-motion:reduce){
+    *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important;transition-delay:0s !important;}
+  }
+</style>
+</head>
+<body>
+<div class="shell">
+  <header class="topbar">
+    <div class="topbar__inner">
+      <div class="brand">
+        <h1 class="brand__title">Daily Do’s</h1>
+        <p class="brand__sub" id="headerWeekLabel">Diese Woche</p>
+      </div>
+      <div class="topbar__actions">
+        <button class="icon-btn" id="themeToggle" type="button" aria-label="Dunkles Design aktivieren" aria-pressed="false">
+          <svg class="theme-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.2A8.5 8.5 0 1 1 10.8 3.5a6.6 6.6 0 0 0 9.7 9.7z"/></svg>
+        </button>
+        <button class="pill-btn" id="addCategoryBtn" type="button">+ Kategorie</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero-grid" aria-label="Wochenübersicht">
+      <div class="hero-card">
+        <div>
+          <p class="eyebrow">Zeit bewusst einsetzen</p>
+          <h1>Deine Woche.<br>In echten Stunden.</h1>
+          <p class="hero-card__sub">Lege eigene Bereiche fest, gib dein Wochenziel vor und logge danach nur noch, wann du wirklich Zeit investiert hast.</p>
+        </div>
+        <div class="hero-card__foot">
+          <div>
+            <div class="week-label" id="weekRangeLabel">–</div>
+            <div class="section-sub" id="weekHint">Montag bis Sonntag</div>
+          </div>
+          <nav class="week-nav" aria-label="Woche wechseln">
+            <button class="icon-btn" id="prevWeekBtn" type="button" aria-label="Vorherige Woche">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7"/></svg>
+            </button>
+            <button class="today-btn text-btn" id="currentWeekBtn" type="button">Diese Woche</button>
+            <button class="icon-btn" id="nextWeekBtn" type="button" aria-label="Nächste Woche">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7"/></svg>
+            </button>
+          </nav>
+        </div>
+      </div>
+
+      <aside class="summary-card" aria-label="Wochenfortschritt">
+        <div>
+          <p class="summary-title">Diese Woche erfasst</p>
+          <div class="summary-number"><span id="trackedHours">0</span> <small>Std.</small></div>
+        </div>
+        <div class="summary-meta">
+          <div class="mini-stat"><div class="mini-stat__label">Wochenziel</div><div class="mini-stat__value" id="goalHours">0 Std.</div></div>
+          <div class="mini-stat"><div class="mini-stat__label">Erfüllung</div><div class="mini-stat__value" id="goalPercent">0 %</div></div>
+        </div>
+        <div>
+          <div class="summary-progress__head"><span>Gesamtfortschritt</span><span id="progressCaption">0 / 0 Std.</span></div>
+          <div class="progress" aria-hidden="true"><div class="progress__bar" id="overallProgressBar"></div></div>
+        </div>
+      </aside>
+    </section>
+
+    <section class="section" aria-labelledby="rhythmTitle">
+      <div class="section-head">
+        <div><h2 class="section-title" id="rhythmTitle">Wochenrhythmus</h2><p class="section-sub">Gesamte erfasste Zeit pro Tag</p></div>
+      </div>
+      <div class="panel"><div class="day-chart" id="dayChart"></div></div>
+    </section>
+
+    <section class="section layout-grid">
+      <div class="panel" aria-labelledby="categoriesTitle">
+        <div class="panel__head">
+          <h2 class="panel__title" id="categoriesTitle">Ziele &amp; Kategorien</h2>
+          <button class="text-btn" id="addCategoryInlineBtn" type="button">Neu</button>
+        </div>
+        <div class="panel__body"><div class="category-list" id="categoryList"></div></div>
+      </div>
+
+      <div class="panel" aria-labelledby="logTitle">
+        <div class="panel__head"><h2 class="panel__title" id="logTitle">Zeit eintragen</h2></div>
+        <div class="panel__body">
+          <form class="log-form" id="logForm" novalidate>
+            <div class="field">
+              <label for="logCategory">Kategorie</label>
+              <select class="select" id="logCategory" required></select>
+            </div>
+            <div class="field">
+              <label for="logDate">Datum</label>
+              <input class="input" id="logDate" type="date" required>
+            </div>
+            <div class="form-row">
+              <div class="field"><label for="logStart">Von</label><input class="input" id="logStart" type="time" required></div>
+              <div class="field"><label for="logEnd">Bis</label><input class="input" id="logEnd" type="time" required></div>
+            </div>
+            <div class="duration-preview" id="durationPreview" aria-live="polite">Start- und Endzeit eintragen.</div>
+            <div class="field">
+              <label for="logNote">Notiz <span class="sr-only">optional</span></label>
+              <textarea class="textarea" id="logNote" maxlength="160" placeholder="z. B. Push-Training, Kapitel 4, Deep Work …"></textarea>
+            </div>
+            <div class="form-actions"><button class="pill-btn" id="saveLogBtn" type="submit">Zeit speichern</button></div>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <section class="section" aria-labelledby="balanceTitle">
+      <div class="section-head"><div><h2 class="section-title" id="balanceTitle">Wochenbilanz</h2><p class="section-sub">Ist-Zeit gegen dein selbst gesetztes Ziel</p></div></div>
+      <div class="balance-grid" id="balanceGrid"></div>
+    </section>
+
+    <section class="section" aria-labelledby="entriesTitle">
+      <div class="section-head"><div><h2 class="section-title" id="entriesTitle">Einträge dieser Woche</h2><p class="section-sub">Neueste zuerst</p></div></div>
+      <div class="panel"><div class="panel__body entry-panel-body"><div class="entry-list" id="entryList"></div></div></div>
+    </section>
+  </main>
+</div>
+
+<div class="modal-backdrop" id="categoryModalBackdrop" aria-hidden="true">
+  <section class="modal" role="dialog" aria-modal="true" aria-labelledby="categoryModalTitle">
+    <div class="modal__head">
+      <h2 class="modal__title" id="categoryModalTitle">Kategorie anlegen</h2>
+      <button class="icon-btn" id="closeCategoryModalBtn" type="button" aria-label="Dialog schließen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>
+      </button>
+    </div>
+    <form class="modal__body" id="categoryForm" novalidate>
+      <div class="field"><label for="categoryName">Name</label><input class="input" id="categoryName" maxlength="40" placeholder="z. B. Fitnessstudio" required></div>
+      <div class="form-row">
+        <div class="field"><label for="goalHoursInput">Zielstunden / Woche</label><input class="input" id="goalHoursInput" type="number" inputmode="numeric" min="0" max="168" step="1" value="0"></div>
+        <div class="field"><label for="goalMinutesInput">+ Minuten</label><input class="input" id="goalMinutesInput" type="number" inputmode="numeric" min="0" max="59" step="5" value="0"></div>
+      </div>
+      <fieldset class="field fieldset-reset">
+        <legend>Geplante Tage</legend>
+        <div class="day-picker" id="dayPicker"></div>
+      </fieldset>
+      <div class="duration-preview" id="goalPreview">Noch kein Wochenziel gesetzt.</div>
+      <div class="danger-row" id="categoryDangerRow" hidden><button class="danger-btn" id="deleteCategoryBtn" type="button">Kategorie löschen</button></div>
+      <div class="form-actions">
+        <button class="text-btn" id="cancelCategoryBtn" type="button">Abbrechen</button>
+        <button class="pill-btn" type="submit">Speichern</button>
+      </div>
+    </form>
+  </section>
+</div>
+
+<div class="modal-backdrop" id="confirmBackdrop" aria-hidden="true">
+  <div class="confirm-card" role="alertdialog" aria-modal="true" aria-labelledby="confirmTitle" aria-describedby="confirmText">
+    <h2 class="confirm-title" id="confirmTitle">Wirklich löschen?</h2>
+    <p class="confirm-text" id="confirmText">Dieser Vorgang kann nicht rückgängig gemacht werden.</p>
+    <div class="confirm-actions">
+      <button class="confirm-btn" id="confirmCancelBtn" type="button">Abbrechen</button>
+      <button class="confirm-btn confirm-btn--danger" id="confirmDeleteBtn" type="button">Löschen</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function DailyDosApp(){
+  'use strict';
+
+  // ==================== KONSTANTEN & KONFIG ====================
+  const APP_VERSION = '2026.10.05';
+  const SCHEMA_VERSION = 1;
+  const STORAGE_KEY = 'jmb-daily-dos';
+  const THEME_KEY = 'jmb-theme';
+  const DAY_NAMES = ['Mo','Di','Mi','Do','Fr','Sa','So'];
+  const DAY_LONG = ['Montag','Dienstag','Mittwoch','Donnerstag','Freitag','Samstag','Sonntag'];
+  const CATEGORY_STYLES = [
+    {accent:'var(--accent)',soft:'var(--accent-soft)'},
+    {accent:'var(--orange-fill)',soft:'var(--orange-soft)'},
+    {accent:'var(--purple)',soft:'var(--purple-soft)'},
+    {accent:'var(--green)',soft:'var(--green-soft)'},
+    {accent:'var(--cyan)',soft:'var(--cyan-soft)'},
+    {accent:'var(--indigo)',soft:'var(--indigo-soft)'},
+    {accent:'var(--pink)',soft:'var(--pink-soft)'}
+  ];
+
+  // ==================== STATE ====================
+  const state = {
+    schemaVersion: SCHEMA_VERSION,
+    categories: [],
+    entries: [],
+    selectedWeekStart: startOfWeekISO(new Date())
+  };
+  let editingCategoryId = null;
+  let pendingConfirmAction = null;
+  let lastFocusedElement = null;
+  let toastTimer = null;
+
+  // ==================== DOM ====================
+  const els = {
+    themeToggle: document.getElementById('themeToggle'),
+    metaThemeColor: document.getElementById('metaThemeColor'),
+    headerWeekLabel: document.getElementById('headerWeekLabel'),
+    weekRangeLabel: document.getElementById('weekRangeLabel'),
+    weekHint: document.getElementById('weekHint'),
+    prevWeekBtn: document.getElementById('prevWeekBtn'),
+    nextWeekBtn: document.getElementById('nextWeekBtn'),
+    currentWeekBtn: document.getElementById('currentWeekBtn'),
+    trackedHours: document.getElementById('trackedHours'),
+    goalHours: document.getElementById('goalHours'),
+    goalPercent: document.getElementById('goalPercent'),
+    progressCaption: document.getElementById('progressCaption'),
+    overallProgressBar: document.getElementById('overallProgressBar'),
+    dayChart: document.getElementById('dayChart'),
+    categoryList: document.getElementById('categoryList'),
+    addCategoryBtn: document.getElementById('addCategoryBtn'),
+    addCategoryInlineBtn: document.getElementById('addCategoryInlineBtn'),
+    logForm: document.getElementById('logForm'),
+    logCategory: document.getElementById('logCategory'),
+    logDate: document.getElementById('logDate'),
+    logStart: document.getElementById('logStart'),
+    logEnd: document.getElementById('logEnd'),
+    logNote: document.getElementById('logNote'),
+    durationPreview: document.getElementById('durationPreview'),
+    saveLogBtn: document.getElementById('saveLogBtn'),
+    balanceGrid: document.getElementById('balanceGrid'),
+    entryList: document.getElementById('entryList'),
+    categoryModalBackdrop: document.getElementById('categoryModalBackdrop'),
+    categoryModalTitle: document.getElementById('categoryModalTitle'),
+    closeCategoryModalBtn: document.getElementById('closeCategoryModalBtn'),
+    cancelCategoryBtn: document.getElementById('cancelCategoryBtn'),
+    categoryForm: document.getElementById('categoryForm'),
+    categoryName: document.getElementById('categoryName'),
+    goalHoursInput: document.getElementById('goalHoursInput'),
+    goalMinutesInput: document.getElementById('goalMinutesInput'),
+    dayPicker: document.getElementById('dayPicker'),
+    goalPreview: document.getElementById('goalPreview'),
+    categoryDangerRow: document.getElementById('categoryDangerRow'),
+    deleteCategoryBtn: document.getElementById('deleteCategoryBtn'),
+    confirmBackdrop: document.getElementById('confirmBackdrop'),
+    confirmTitle: document.getElementById('confirmTitle'),
+    confirmText: document.getElementById('confirmText'),
+    confirmCancelBtn: document.getElementById('confirmCancelBtn'),
+    confirmDeleteBtn: document.getElementById('confirmDeleteBtn'),
+    toast: document.getElementById('toast')
+  };
+
+  // ==================== PERSISTENZ ====================
+  function loadState(){
+    let raw = null;
+    try{ raw = localStorage.getItem(STORAGE_KEY); }
+    catch(error){ console.error('Daily Do’s: Speicher konnte nicht gelesen werden.', error); showToast('Lokaler Speicher ist nicht verfügbar.', true); return; }
+    if(!raw) return;
+    try{
+      const parsed = JSON.parse(raw);
+      const migrated = migrateState(parsed);
+      state.schemaVersion = migrated.schemaVersion;
+      state.categories = migrated.categories;
+      state.entries = migrated.entries;
+    }catch(error){
+      console.error('Daily Do’s: Gespeicherte Daten sind ungültig.', error);
+      showToast('Gespeicherte Daily-Do’s-Daten konnten nicht gelesen werden.', true);
+    }
+  }
+
+  function migrateState(data){
+    if(!data || typeof data !== 'object') return {schemaVersion:SCHEMA_VERSION,categories:[],entries:[]};
+    const categories = Array.isArray(data.categories) ? data.categories.map(normalizeCategory).filter(Boolean) : [];
+    const validIds = new Set(categories.map(category => category.id));
+    const entries = Array.isArray(data.entries) ? data.entries.map(normalizeEntry).filter(entry => entry && validIds.has(entry.categoryId)) : [];
+    return {schemaVersion:SCHEMA_VERSION,categories,entries};
+  }
+
+  function normalizeCategory(item){
+    if(!item || typeof item !== 'object' || typeof item.name !== 'string') return null;
+    const name = item.name.trim().slice(0,40);
+    if(!name) return null;
+    const goal = clampInt(item.weeklyGoalMinutes,0,10080);
+    const days = Array.isArray(item.plannedDays) ? [...new Set(item.plannedDays.map(Number).filter(day => day >= 1 && day <= 7))].sort() : [];
+    return {
+      id: typeof item.id === 'string' && item.id ? item.id : makeId(),
+      name,
+      weeklyGoalMinutes: goal,
+      plannedDays: days,
+      colorIndex: clampInt(item.colorIndex,0,CATEGORY_STYLES.length - 1),
+      createdAt: typeof item.createdAt === 'string' ? item.createdAt : new Date().toISOString()
+    };
+  }
+
+  function normalizeEntry(item){
+    if(!item || typeof item !== 'object') return null;
+    if(typeof item.categoryId !== 'string' || typeof item.date !== 'string') return null;
+    const duration = clampInt(item.durationMinutes,1,1440);
+    return {
+      id: typeof item.id === 'string' && item.id ? item.id : makeId(),
+      categoryId:item.categoryId,
+      date:item.date,
+      startTime:typeof item.startTime === 'string' ? item.startTime : '',
+      endTime:typeof item.endTime === 'string' ? item.endTime : '',
+      durationMinutes:duration,
+      note:typeof item.note === 'string' ? item.note.trim().slice(0,160) : '',
+      createdAt:typeof item.createdAt === 'string' ? item.createdAt : new Date().toISOString()
+    };
+  }
+
+  function saveState(){
+    const payload = {schemaVersion:SCHEMA_VERSION,appVersion:APP_VERSION,categories:state.categories,entries:state.entries};
+    try{ localStorage.setItem(STORAGE_KEY, JSON.stringify(payload)); return true; }
+    catch(error){ console.error('Daily Do’s: Speichern fehlgeschlagen.', error); showToast('Speichern fehlgeschlagen.', true); return false; }
+  }
+
+  // ==================== DOMAIN-LOGIK ====================
+  function addOrUpdateCategory(category){
+    const existingIndex = state.categories.findIndex(item => item.id === category.id);
+    if(existingIndex >= 0) state.categories[existingIndex] = category;
+    else state.categories.push(category);
+    saveState();
+    renderAll();
+  }
+
+  function removeCategory(categoryId){
+    state.categories = state.categories.filter(category => category.id !== categoryId);
+    state.entries = state.entries.filter(entry => entry.categoryId !== categoryId);
+    saveState();
+    renderAll();
+  }
+
+  function addEntry(entry){
+    state.entries.push(entry);
+    saveState();
+    renderAll();
+  }
+
+  function removeEntry(entryId){
+    state.entries = state.entries.filter(entry => entry.id !== entryId);
+    saveState();
+    renderAll();
+  }
+
+  function weekEntries(){
+    const start = parseISODate(state.selectedWeekStart);
+    const end = addDays(start,6);
+    return state.entries.filter(entry => {
+      const date = parseISODate(entry.date);
+      return date >= start && date <= end;
+    });
+  }
+
+  function minutesForCategory(categoryId, entries = weekEntries()){
+    return entries.reduce((sum,entry) => sum + (entry.categoryId === categoryId ? entry.durationMinutes : 0),0);
+  }
+
+  function calculateDuration(start,end){
+    if(!/^\d{2}:\d{2}$/.test(start) || !/^\d{2}:\d{2}$/.test(end)) return 0;
+    const [sh,sm] = start.split(':').map(Number);
+    const [eh,em] = end.split(':').map(Number);
+    const from = sh * 60 + sm;
+    const to = eh * 60 + em;
+    if(to <= from) return 0;
+    return to - from;
+  }
+
+  // ==================== RENDER ====================
+  function renderAll(){
+    renderWeekHeader();
+    renderSummary();
+    renderDayChart();
+    renderCategorySelect();
+    renderCategories();
+    renderBalance();
+    renderEntries();
+    updateDurationPreview();
+  }
+
+  function renderWeekHeader(){
+    const start = parseISODate(state.selectedWeekStart);
+    const end = addDays(start,6);
+    const current = state.selectedWeekStart === startOfWeekISO(new Date());
+    const range = formatWeekRange(start,end);
+    els.weekRangeLabel.textContent = range;
+    els.headerWeekLabel.textContent = current ? 'Diese Woche · ' + range : range;
+    els.weekHint.textContent = current ? 'Montag bis Sonntag · aktuell' : 'Montag bis Sonntag';
+  }
+
+  function renderSummary(){
+    const entries = weekEntries();
+    const tracked = entries.reduce((sum,entry) => sum + entry.durationMinutes,0);
+    const goal = state.categories.reduce((sum,category) => sum + category.weeklyGoalMinutes,0);
+    const percent = goal > 0 ? Math.round((tracked / goal) * 100) : 0;
+    els.trackedHours.textContent = formatHoursDecimal(tracked);
+    els.goalHours.textContent = formatDurationShort(goal);
+    els.goalPercent.textContent = percent + ' %';
+    els.progressCaption.textContent = formatDurationShort(tracked) + ' / ' + formatDurationShort(goal);
+    els.overallProgressBar.style.width = Math.min(percent,100) + '%';
+  }
+
+  function renderDayChart(){
+    clear(els.dayChart);
+    const start = parseISODate(state.selectedWeekStart);
+    const entries = weekEntries();
+    const totals = Array.from({length:7},(_,i) => {
+      const iso = toISODate(addDays(start,i));
+      return entries.filter(entry => entry.date === iso).reduce((sum,entry) => sum + entry.durationMinutes,0);
+    });
+    const max = Math.max(...totals,60);
+    totals.forEach((minutes,index) => {
+      const item = el('div','day-bar');
+      const value = el('div','day-bar__value', minutes ? formatDurationCompact(minutes) : '–');
+      const track = el('div','day-bar__track');
+      const fill = el('div','day-bar__fill');
+      fill.style.height = minutes ? Math.max(8,Math.round((minutes / max) * 100)) + '%' : '0%';
+      track.append(fill);
+      const label = el('div','day-bar__label',DAY_NAMES[index]);
+      item.append(value,track,label);
+      els.dayChart.append(item);
+    });
+  }
+
+  function renderCategorySelect(){
+    const selected = els.logCategory.value;
+    clear(els.logCategory);
+    if(state.categories.length === 0){
+      const option = document.createElement('option'); option.value=''; option.textContent='Zuerst Kategorie anlegen';
+      els.logCategory.append(option); els.logCategory.disabled=true; els.saveLogBtn.disabled=true; return;
+    }
+    els.logCategory.disabled=false; els.saveLogBtn.disabled=false;
+    state.categories.forEach(category => {
+      const option = document.createElement('option'); option.value=category.id; option.textContent=category.name; els.logCategory.append(option);
+    });
+    if(state.categories.some(category => category.id === selected)) els.logCategory.value=selected;
+  }
+
+  function renderCategories(){
+    clear(els.categoryList);
+    if(state.categories.length === 0){
+      els.categoryList.append(emptyState('Noch keine Kategorien','Lege z. B. Fitnessstudio, Lesen oder Deep Work an.'));
+      return;
+    }
+    const entries = weekEntries();
+    state.categories.forEach((category,index) => {
+      const actual = minutesForCategory(category.id,entries);
+      const percent = category.weeklyGoalMinutes > 0 ? Math.round((actual / category.weeklyGoalMinutes) * 100) : 0;
+      const style = styleForCategory(category,index);
+      const card = el('article','category-card');
+      card.style.setProperty('--category-accent',style.accent);
+      card.style.setProperty('--category-soft',style.soft);
+
+      const top = el('div','category-card__top');
+      const nameWrap = el('div','category-card__name-wrap');
+      nameWrap.append(el('span','category-dot'));
+      const text = document.createElement('div');
+      text.append(el('div','category-name',category.name));
+      text.append(el('div','category-meta',category.weeklyGoalMinutes ? 'Ziel: ' + formatDurationLong(category.weeklyGoalMinutes) + ' / Woche' : 'Kein Wochenziel gesetzt'));
+      nameWrap.append(text);
+      const edit = el('button','text-btn','Bearbeiten'); edit.type='button'; edit.dataset.editCategory=category.id;
+      top.append(nameWrap,edit);
+
+      const prog = el('div','category-progress');
+      const progHead = el('div','category-progress__head');
+      progHead.append(el('span','',formatDurationShort(actual) + ' erfasst'),el('span','',category.weeklyGoalMinutes ? percent + ' %' : '–'));
+      const bar = el('div','progress'); const fill=el('div','progress__bar'); fill.style.width = category.weeklyGoalMinutes ? Math.min(percent,100)+'%' : '0%'; bar.append(fill);
+      prog.append(progHead,bar);
+
+      const chips = el('div','day-chips');
+      DAY_NAMES.forEach((name,dayIndex) => {
+        const chip = el('span','day-chip' + (category.plannedDays.includes(dayIndex+1) ? ' is-planned' : ''),name);
+        chips.append(chip);
+      });
+      card.append(top,prog,chips);
+      els.categoryList.append(card);
+    });
+  }
+
+  function renderBalance(){
+    clear(els.balanceGrid);
+    if(state.categories.length === 0){ els.balanceGrid.append(emptyState('Noch keine Wochenziele','Deine Kategorien erscheinen hier automatisch.')); return; }
+    const entries = weekEntries();
+    state.categories.forEach((category,index) => {
+      const actual = minutesForCategory(category.id,entries);
+      const goal = category.weeklyGoalMinutes;
+      const percent = goal > 0 ? Math.round((actual / goal) * 100) : 0;
+      const style = styleForCategory(category,index);
+      const card = el('article','balance-card');
+      card.style.setProperty('--category-accent',style.accent);
+      card.style.setProperty('--category-soft',style.soft);
+      const head = el('div','balance-card__head'); head.append(el('span','category-dot'),el('div','category-name',category.name));
+      card.append(head);
+      card.append(el('div','balance-card__value',formatDurationShort(actual)));
+      card.append(el('div','balance-card__goal',goal ? 'Ziel ' + formatDurationShort(goal) : 'Ohne Zielzeit'));
+      const status = el('span','balance-card__status' + (goal > 0 && actual >= goal ? ' is-good' : ''),goal ? (actual >= goal ? 'Ziel erreicht' : percent + ' % erreicht') : 'Nur Tracking');
+      card.append(status);
+      els.balanceGrid.append(card);
+    });
+  }
+
+  function renderEntries(){
+    clear(els.entryList);
+    const categoriesById = new Map(state.categories.map(category => [category.id,category]));
+    const entries = weekEntries().slice().sort((a,b) => (b.date + 'T' + b.startTime).localeCompare(a.date + 'T' + a.startTime));
+    if(entries.length === 0){ els.entryList.append(emptyState('Noch keine Zeit erfasst','Sobald du einen Zeitraum speicherst, erscheint er hier.')); return; }
+    entries.forEach(entry => {
+      const category = categoriesById.get(entry.categoryId);
+      if(!category) return;
+      const row = el('article','entry-row');
+      row.append(el('div','entry-time',formatEntryDate(entry.date) + ' · ' + entry.startTime + '–' + entry.endTime));
+      const main = el('div','entry-main'); main.append(el('div','entry-title',category.name)); if(entry.note) main.append(el('div','entry-note',entry.note));
+      const actions = el('div','entry-actions');
+      actions.append(el('div','entry-duration',formatDurationShort(entry.durationMinutes)));
+      const del = el('button','entry-delete'); del.type='button'; del.dataset.deleteEntry=entry.id; del.setAttribute('aria-label','Eintrag löschen');
+      del.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M8 10v8M12 10v8M16 10v8M6 7l1 14h10l1-14"/></svg>';
+      actions.append(del);
+      row.append(main,actions);
+      els.entryList.append(row);
+    });
+  }
+
+  function renderDayPicker(selectedDays){
+    clear(els.dayPicker);
+    DAY_NAMES.forEach((name,index) => {
+      const button = el('button','day-toggle',name); button.type='button'; button.dataset.day=String(index+1); button.setAttribute('aria-pressed',selectedDays.includes(index+1) ? 'true' : 'false'); button.setAttribute('aria-label',DAY_LONG[index]);
+      els.dayPicker.append(button);
+    });
+  }
+
+  // ==================== DIALOGE ====================
+  function openCategoryModal(categoryId){
+    lastFocusedElement = document.activeElement;
+    editingCategoryId = categoryId || null;
+    const category = categoryId ? state.categories.find(item => item.id === categoryId) : null;
+    els.categoryModalTitle.textContent = category ? 'Kategorie bearbeiten' : 'Kategorie anlegen';
+    els.categoryName.value = category ? category.name : '';
+    const goal = category ? category.weeklyGoalMinutes : 0;
+    els.goalHoursInput.value = String(Math.floor(goal / 60));
+    els.goalMinutesInput.value = String(goal % 60);
+    renderDayPicker(category ? category.plannedDays : []);
+    els.categoryDangerRow.hidden = !category;
+    updateGoalPreview();
+    els.categoryModalBackdrop.classList.add('is-open');
+    els.categoryModalBackdrop.setAttribute('aria-hidden','false');
+    setTimeout(() => els.categoryName.focus(),30);
+  }
+
+  function closeCategoryModal(){
+    els.categoryModalBackdrop.classList.remove('is-open');
+    els.categoryModalBackdrop.setAttribute('aria-hidden','true');
+    editingCategoryId = null;
+    if(lastFocusedElement && typeof lastFocusedElement.focus === 'function') lastFocusedElement.focus();
+  }
+
+  function openConfirm(title,text,action){
+    pendingConfirmAction = action;
+    els.confirmTitle.textContent = title;
+    els.confirmText.textContent = text;
+    els.confirmBackdrop.classList.add('is-open');
+    els.confirmBackdrop.setAttribute('aria-hidden','false');
+    setTimeout(() => els.confirmDeleteBtn.focus(),30);
+  }
+
+  function closeConfirm(){
+    els.confirmBackdrop.classList.remove('is-open');
+    els.confirmBackdrop.setAttribute('aria-hidden','true');
+    pendingConfirmAction = null;
+  }
+
+  // ==================== EVENTS ====================
+  els.addCategoryBtn.addEventListener('click',() => openCategoryModal(null));
+  els.addCategoryInlineBtn.addEventListener('click',() => openCategoryModal(null));
+  els.closeCategoryModalBtn.addEventListener('click',closeCategoryModal);
+  els.cancelCategoryBtn.addEventListener('click',closeCategoryModal);
+  els.categoryModalBackdrop.addEventListener('click',event => { if(event.target === els.categoryModalBackdrop) closeCategoryModal(); });
+  els.confirmBackdrop.addEventListener('click',event => { if(event.target === els.confirmBackdrop) closeConfirm(); });
+  els.confirmCancelBtn.addEventListener('click',closeConfirm);
+  els.confirmDeleteBtn.addEventListener('click',() => { const action=pendingConfirmAction; closeConfirm(); if(action) action(); });
+
+  els.dayPicker.addEventListener('click',event => {
+    const button = event.target.closest('[data-day]'); if(!button) return;
+    const pressed = button.getAttribute('aria-pressed') === 'true';
+    button.setAttribute('aria-pressed',pressed ? 'false' : 'true');
+    updateGoalPreview();
+  });
+
+  els.goalHoursInput.addEventListener('input',updateGoalPreview);
+  els.goalMinutesInput.addEventListener('input',updateGoalPreview);
+
+  els.categoryForm.addEventListener('submit',event => {
+    event.preventDefault();
+    const name = els.categoryName.value.trim();
+    if(!name){ showToast('Bitte gib der Kategorie einen Namen.',true); els.categoryName.focus(); return; }
+    const hours = clampInt(els.goalHoursInput.value,0,168);
+    const minutes = clampInt(els.goalMinutesInput.value,0,59);
+    const goal = Math.min(10080,hours * 60 + minutes);
+    const plannedDays = Array.from(els.dayPicker.querySelectorAll('[data-day][aria-pressed="true"]')).map(button => Number(button.dataset.day)).sort();
+    const existing = editingCategoryId ? state.categories.find(item => item.id === editingCategoryId) : null;
+    const category = {
+      id: existing ? existing.id : makeId(),
+      name:name.slice(0,40),
+      weeklyGoalMinutes:goal,
+      plannedDays,
+      colorIndex: existing ? existing.colorIndex : nextColorIndex(),
+      createdAt: existing ? existing.createdAt : new Date().toISOString()
+    };
+    addOrUpdateCategory(category);
+    closeCategoryModal();
+    showToast(existing ? 'Kategorie aktualisiert.' : 'Kategorie angelegt.');
+  });
+
+  els.deleteCategoryBtn.addEventListener('click',() => {
+    const category = state.categories.find(item => item.id === editingCategoryId); if(!category) return;
+    const count = state.entries.filter(entry => entry.categoryId === category.id).length;
+    closeCategoryModal();
+    openConfirm('Kategorie löschen?',count ? '„' + category.name + '“ und ' + count + ' zugehörige Zeiteinträge werden dauerhaft gelöscht.' : '„' + category.name + '“ wird dauerhaft gelöscht.',() => {
+      removeCategory(category.id); showToast('Kategorie gelöscht.');
+    });
+  });
+
+  els.categoryList.addEventListener('click',event => {
+    const button = event.target.closest('[data-edit-category]'); if(button) openCategoryModal(button.dataset.editCategory);
+  });
+
+  els.logStart.addEventListener('input',updateDurationPreview);
+  els.logEnd.addEventListener('input',updateDurationPreview);
+  els.logForm.addEventListener('submit',event => {
+    event.preventDefault();
+    if(state.categories.length === 0){ openCategoryModal(null); return; }
+    const categoryId = els.logCategory.value;
+    const date = els.logDate.value;
+    const startTime = els.logStart.value;
+    const endTime = els.logEnd.value;
+    const duration = calculateDuration(startTime,endTime);
+    if(!state.categories.some(category => category.id === categoryId)){ showToast('Bitte wähle eine gültige Kategorie.',true); return; }
+    if(!date){ showToast('Bitte wähle ein Datum.',true); els.logDate.focus(); return; }
+    if(duration <= 0){ showToast('Die Endzeit muss nach der Startzeit liegen.',true); els.logEnd.focus(); return; }
+    addEntry({id:makeId(),categoryId,date,startTime,endTime,durationMinutes:duration,note:els.logNote.value.trim().slice(0,160),createdAt:new Date().toISOString()});
+    els.logNote.value='';
+    showToast(formatDurationLong(duration) + ' gespeichert.');
+  });
+
+  els.entryList.addEventListener('click',event => {
+    const button = event.target.closest('[data-delete-entry]'); if(!button) return;
+    const entry = state.entries.find(item => item.id === button.dataset.deleteEntry); if(!entry) return;
+    openConfirm('Eintrag löschen?','Der Zeiteintrag über ' + formatDurationLong(entry.durationMinutes) + ' wird dauerhaft entfernt.',() => { removeEntry(entry.id); showToast('Eintrag gelöscht.'); });
+  });
+
+  els.prevWeekBtn.addEventListener('click',() => changeWeek(-7));
+  els.nextWeekBtn.addEventListener('click',() => changeWeek(7));
+  els.currentWeekBtn.addEventListener('click',() => { state.selectedWeekStart=startOfWeekISO(new Date()); ensureLogDateInWeek(); renderAll(); });
+
+  document.addEventListener('keydown',event => {
+    if(event.key !== 'Escape') return;
+    if(els.confirmBackdrop.classList.contains('is-open')) closeConfirm();
+    else if(els.categoryModalBackdrop.classList.contains('is-open')) closeCategoryModal();
+  });
+
+  window.addEventListener('message',event => {
+    if(event.data && event.data.type === 'jmb-suppress-unload'){
+      try{ event.source && event.source.postMessage({type:'jmb-suppress-unload-ack'},'*'); }catch(error){}
+    }
+  });
+
+  // ==================== THEME ====================
+  function currentTheme(){ return document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light'; }
+  function applyTheme(theme){
+    document.documentElement.setAttribute('data-theme',theme);
+    els.metaThemeColor.setAttribute('content',theme === 'dark' ? '#000000' : '#f5f5f7');
+    els.themeToggle.setAttribute('aria-label',theme === 'dark' ? 'Helles Design aktivieren' : 'Dunkles Design aktivieren');
+    els.themeToggle.setAttribute('aria-pressed',theme === 'dark' ? 'true' : 'false');
+  }
+  els.themeToggle.addEventListener('click',() => {
+    const next = currentTheme() === 'dark' ? 'light' : 'dark';
+    try{ localStorage.setItem(THEME_KEY,next); }catch(error){}
+    applyTheme(next);
+  });
+  window.addEventListener('storage',event => { if(event.key === THEME_KEY && (event.newValue === 'light' || event.newValue === 'dark')) applyTheme(event.newValue); });
+
+  // ==================== HILFSFUNKTIONEN ====================
+  function changeWeek(days){ state.selectedWeekStart=toISODate(addDays(parseISODate(state.selectedWeekStart),days)); ensureLogDateInWeek(); renderAll(); }
+  function ensureLogDateInWeek(){
+    const today = new Date(); const start=parseISODate(state.selectedWeekStart); const end=addDays(start,6);
+    els.logDate.min = toISODate(start);
+    els.logDate.max = toISODate(end);
+    els.logDate.value = today >= start && today <= end ? toISODate(today) : state.selectedWeekStart;
+  }
+  function updateDurationPreview(){
+    const minutes = calculateDuration(els.logStart.value,els.logEnd.value);
+    els.durationPreview.textContent = minutes > 0 ? 'Dauer: ' + formatDurationLong(minutes) : 'Start- und Endzeit eintragen.';
+  }
+  function updateGoalPreview(){
+    const hours = clampInt(els.goalHoursInput.value,0,168); const minutes = clampInt(els.goalMinutesInput.value,0,59); const total=Math.min(10080,hours*60+minutes);
+    const days = els.dayPicker.querySelectorAll('[data-day][aria-pressed="true"]').length;
+    if(total === 0){ els.goalPreview.textContent='Noch kein Wochenziel gesetzt.'; return; }
+    els.goalPreview.textContent = formatDurationLong(total) + ' pro Woche' + (days ? ' · geplant an ' + days + (days===1 ? ' Tag' : ' Tagen') : '');
+  }
+  function nextColorIndex(){
+    const used = new Set(state.categories.map(category => category.colorIndex));
+    for(let i=0;i<CATEGORY_STYLES.length;i+=1) if(!used.has(i)) return i;
+    return state.categories.length % CATEGORY_STYLES.length;
+  }
+  function styleForCategory(category,index){ return CATEGORY_STYLES[Number.isInteger(category.colorIndex) ? category.colorIndex % CATEGORY_STYLES.length : index % CATEGORY_STYLES.length]; }
+  function makeId(){ return (window.crypto && typeof window.crypto.randomUUID === 'function') ? window.crypto.randomUUID() : 'dd-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2,10); }
+  function clampInt(value,min,max){ const num=parseInt(value,10); return Number.isFinite(num) ? Math.min(max,Math.max(min,num)) : min; }
+  function startOfWeekISO(date){ const copy=new Date(date.getFullYear(),date.getMonth(),date.getDate()); const day=copy.getDay(); const delta=day===0 ? -6 : 1-day; copy.setDate(copy.getDate()+delta); return toISODate(copy); }
+  function parseISODate(value){ const parts=value.split('-').map(Number); return new Date(parts[0],parts[1]-1,parts[2]); }
+  function toISODate(date){ const y=date.getFullYear(); const m=String(date.getMonth()+1).padStart(2,'0'); const d=String(date.getDate()).padStart(2,'0'); return y+'-'+m+'-'+d; }
+  function addDays(date,days){ const copy=new Date(date.getFullYear(),date.getMonth(),date.getDate()); copy.setDate(copy.getDate()+days); return copy; }
+  function formatWeekRange(start,end){
+    const sameMonth=start.getMonth()===end.getMonth() && start.getFullYear()===end.getFullYear();
+    const startText=start.toLocaleDateString('de-DE',sameMonth?{day:'2-digit'}:{day:'2-digit',month:'short'});
+    const endText=end.toLocaleDateString('de-DE',{day:'2-digit',month:'short',year:'numeric'});
+    return startText+' – '+endText;
+  }
+  function formatEntryDate(value){ return parseISODate(value).toLocaleDateString('de-DE',{weekday:'short',day:'2-digit',month:'2-digit'}); }
+  function formatHoursDecimal(minutes){ return (minutes/60).toLocaleString('de-DE',{minimumFractionDigits:minutes%60===0?0:1,maximumFractionDigits:1}); }
+  function formatDurationShort(minutes){
+    if(!minutes) return '0 Std.';
+    const h=Math.floor(minutes/60),m=minutes%60;
+    if(h && m) return h+' Std. '+m+' Min.';
+    if(h) return h+' Std.';
+    return m+' Min.';
+  }
+  function formatDurationLong(minutes){
+    const h=Math.floor(minutes/60),m=minutes%60;
+    const parts=[]; if(h) parts.push(h+' '+(h===1?'Stunde':'Stunden')); if(m) parts.push(m+' Minuten'); return parts.length?parts.join(' '):'0 Minuten';
+  }
+  function formatDurationCompact(minutes){ const h=Math.floor(minutes/60),m=minutes%60; return h ? (m ? h+'h '+m+'m' : h+'h') : m+'m'; }
+  function clear(node){ while(node.firstChild) node.removeChild(node.firstChild); }
+  function el(tag,className,text){ const node=document.createElement(tag); if(className) node.className=className; if(text !== undefined) node.textContent=text; return node; }
+  function emptyState(title,text){
+    const wrap=el('div','empty'); const icon=el('div','empty__icon'); icon.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></svg>'; wrap.append(icon,el('strong','',title),el('p','',text)); return wrap;
+  }
+  function showToast(message,isError){
+    clearTimeout(toastTimer); els.toast.textContent=message; els.toast.classList.toggle('is-error',Boolean(isError)); els.toast.classList.add('is-visible');
+    toastTimer=setTimeout(() => els.toast.classList.remove('is-visible'),2600);
+  }
+
+  // ==================== INIT ====================
+  loadState();
+  applyTheme(currentTheme());
+  ensureLogDateInWeek();
+  renderAll();
+})();
+</script>
+</body>
+</html>
