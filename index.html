@@ -75,6 +75,7 @@
     --sys-purple:#af52de;
     --sys-red:#ff3b30;
     --sys-green:#34c759;
+    --sys-teal:#00a5b9;
 
     /* Umgebungslicht hinter der Seite (8–14 % Deckkraft) */
     --ambient-a:rgba(0,113,227,.12);
@@ -136,6 +137,7 @@
     --sys-purple:#bf5af2;
     --sys-red:#ff453a;
     --sys-green:#30d158;
+    --sys-teal:#40c8d8;
 
     --ambient-a:rgba(10,132,255,.14);
     --ambient-b:rgba(191,90,242,.12);
@@ -566,35 +568,7 @@
     .reveal{opacity:1 !important;transform:none !important;}
     .ambient{display:none;}
   }
-
-
-  /* ---------- Zentrale Google-Drive-Sicherung (nur Headquarter) ---------- */
-  .cloud-panel{
-    margin-top:18px;padding:18px 20px;border-radius:22px;background:var(--bg-panel);
-    border:1px solid var(--card-line);box-shadow:var(--shadow-sm);display:grid;
-    grid-template-columns:minmax(0,1fr) auto;gap:16px;align-items:center;
-  }
-  .cloud-panel__main{display:flex;align-items:center;gap:14px;min-width:0;}
-  .cloud-panel__icon{width:46px;height:46px;border-radius:14px;display:grid;place-items:center;flex:0 0 auto;
-    background:var(--accent-dim);color:var(--accent);}
-  .cloud-panel__icon svg{width:25px;height:25px;}
-  .cloud-panel__title{font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:-.02em;}
-  .cloud-panel__status{margin-top:3px;color:var(--text-dim);font-size:13px;line-height:1.35;}
-  .cloud-panel__status strong{color:var(--text);font-weight:600;}
-  .cloud-panel__actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;}
-  .cloud-btn{appearance:none;border:0;border-radius:999px;padding:9px 14px;font:inherit;font-size:13px;font-weight:600;
-    background:var(--fill);color:var(--text);cursor:pointer;transition:transform .18s var(--ease),background .18s var(--ease);}
-  .cloud-btn:hover{background:var(--fill-strong);}.cloud-btn:active{transform:scale(.97);}
-  .cloud-btn--primary{background:var(--accent-fill);color:#fff;}.cloud-btn--primary:hover{background:var(--accent-fill-hover);}
-  .cloud-btn[hidden]{display:none!important}.cloud-btn:disabled{opacity:.55;cursor:default;transform:none;}
-  .cloud-dot{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:6px;background:var(--text-dim);vertical-align:1px;}
-  .cloud-dot.is-on{background:var(--green);box-shadow:0 0 0 4px var(--green-dim);}
-  .cloud-dot.is-busy{background:var(--amber-fill);box-shadow:0 0 0 4px rgba(255,159,10,.14);}
-  .cloud-dot.is-error{background:var(--red);box-shadow:0 0 0 4px var(--red-dim);}
-  @media (max-width:700px){.cloud-panel{grid-template-columns:1fr}.cloud-panel__actions{justify-content:flex-start}.cloud-btn{flex:1 1 auto;}}
-
 </style>
-<script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
 
@@ -632,29 +606,6 @@
             <span class="hero__status-label">Live</span>
             <span class="hero__time" id="hudTime">--:--:--</span>
           </div>
-        </div>
-      </section>
-
-
-
-      <section class="cloud-panel" id="cloudPanel" data-reveal aria-labelledby="cloudTitle">
-        <div class="cloud-panel__main">
-          <span class="cloud-panel__icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-              <path d="M7.5 18.5h9.2a4.3 4.3 0 0 0 .5-8.6A6.1 6.1 0 0 0 5.6 8.2 3.8 3.8 0 0 0 7.5 18.5z"/>
-              <path d="M12 10.5v5M9.9 12.6 12 10.5l2.1 2.1"/>
-            </svg>
-          </span>
-          <div>
-            <div class="cloud-panel__title" id="cloudTitle">Google Drive · Zentrales Backup</div>
-            <div class="cloud-panel__status" id="cloudStatus"><span class="cloud-dot" id="cloudDot"></span><strong>Nicht verbunden</strong> · lokale Daten bleiben erhalten</div>
-          </div>
-        </div>
-        <div class="cloud-panel__actions">
-          <button class="cloud-btn cloud-btn--primary" id="cloudConnectBtn" type="button">Google verbinden</button>
-          <button class="cloud-btn" id="cloudSaveBtn" type="button" hidden>Jetzt sichern</button>
-          <button class="cloud-btn" id="cloudLoadBtn" type="button" hidden>Cloud laden</button>
-          <button class="cloud-btn" id="cloudDisconnectBtn" type="button" hidden>Trennen</button>
         </div>
       </section>
 
@@ -752,6 +703,23 @@
             <span class="hex__foot"><span class="badge"><span class="badge__dot" aria-hidden="true"></span>Bereit</span></span>
           </button>
 
+          <!-- Fitness-Tracker: separate, direkt bearbeitbare App -->
+          <button class="hex" data-target="fitness" type="button" data-reveal style="--tile:var(--sys-teal);">
+            <span class="hex__top">
+              <span class="hex__icon-wrap" aria-hidden="true">
+                <svg class="hex__icon" viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="18" x2="5" y2="30"/><line x1="10" y1="13" x2="10" y2="35"/>
+                  <line x1="16" y1="18" x2="16" y2="30"/><line x1="16" y1="24" x2="32" y2="24"/>
+                  <line x1="32" y1="18" x2="32" y2="30"/><line x1="38" y1="13" x2="38" y2="35"/><line x1="43" y1="18" x2="43" y2="30"/>
+                </svg>
+              </span>
+              <svg class="hex__chev" viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 3l5 5-5 5"/></svg>
+            </span>
+            <span class="hex__title">Fitness</span>
+            <span class="hex__sub">Trainingsplan &amp; Fortschritt</span>
+            <span class="hex__foot"><span class="badge"><span class="badge__dot" aria-hidden="true"></span>Bereit</span></span>
+          </button>
+
         </div>
       </section>
     </div>
@@ -819,10 +787,18 @@
     journal:  { src: 'trading-journal-julian.html', label: 'Trading Journal wird geladen …' },
     projekte: { src: 'projekte-julian.html', label: 'Projekte werden geladen …' },
     budgetplanner: { src: 'budgetplanner-julian.html', label: 'Budgetplanner wird geladen …' },
-    dailydos: { src: 'daily-dos-julian.html', label: 'Daily Do’s wird geladen …' }
+    dailydos: { src: 'daily-dos-julian.html', label: 'Daily Do’s wird geladen …' },
+    fitness: { src: 'fitness-julian.html', label: 'Fitness wird geladen …' }
   };
 
   let currentTarget = null;
+
+  // Hält den Fitness-Tracker auch bei file://-iframes im gleichen Hell-/Dunkelmodus.
+  function syncFitnessTheme(){
+    if(currentTarget !== 'fitness') return;
+    try{ frame.contentWindow && frame.contentWindow.postMessage({type:'jmb-theme-sync', theme:document.documentElement.getAttribute('data-theme')}, '*'); }
+    catch(e){}
+  }
 
   function openApp(name, pushHistory){
     const t = targets[name];
@@ -880,6 +856,7 @@
 
   frame.addEventListener('load', () => {
     loader.classList.remove('is-visible');
+    syncFitnessTheme();
   });
 
   document.querySelectorAll('.hex[data-target]').forEach(btn => {
@@ -961,6 +938,7 @@
       if(meta) meta.setAttribute('content', t === 'dark' ? '#000000' : '#f5f5f7');
       btn.setAttribute('aria-label', t === 'dark' ? 'Helles Design aktivieren' : 'Dunkles Design aktivieren');
       btn.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false');
+      syncFitnessTheme();
     }
     function setTheme(t, animate){
       if(t === current() && !vt){ apply(t); return; }
@@ -986,6 +964,14 @@
     apply(current());
     btn.addEventListener('click', () => {
       const next = current() === 'dark' ? 'light' : 'dark';
+      try{ localStorage.setItem(KEY, next); }catch(e){}
+      setTheme(next, true);
+    });
+    // Fitness hat einen eigenen Theme-Button; dessen Wahl auch im Headquarter merken.
+    window.addEventListener('message', (event) => {
+      if(event.source !== frame.contentWindow || !event.data || event.data.type !== 'jmb-theme-preference') return;
+      const next = event.data.theme;
+      if(next !== 'light' && next !== 'dark') return;
       try{ localStorage.setItem(KEY, next); }catch(e){}
       setTheme(next, true);
     });
@@ -1097,484 +1083,5 @@
     mo.observe(app,  { attributes: true, attributeFilter: ['class'] });
   })();
 </script>
-
-<script>
-/* ========================================================================
-   JMB HEADQUARTER · ZENTRALE GOOGLE-DRIVE-SICHERUNG
-   - Google-Anmeldung ausschließlich hier im Headquarter.
-   - Sichert den gemeinsamen localStorage aller Unterseiten.
-   - Sichert zusätzlich die bekannten IndexedDB-Medien aus Projekte + Journal.
-   - Access-Token bleibt nur im Arbeitsspeicher und wird NICHT ins Backup geschrieben.
-   ======================================================================== */
-(function(){
-  'use strict';
-
-  const CLIENT_ID = '273314490848-f25ar1ji7u1iudbnir425ai1vivaonvn.apps.googleusercontent.com';
-  const DRIVE_SCOPE = 'https://www.googleapis.com/auth/drive.file';
-  const BACKUP_NAME = 'JMB-Headquarter-Backup.json';
-  const CONFLICT_PREFIX = 'JMB-Headquarter-Konflikt-';
-  const LS_PREFIX = 'jmb_hq_cloud_';
-  const LS_CONNECTED = LS_PREFIX + 'connected_v1';
-  const LS_FILE_ID = LS_PREFIX + 'fileid_v1';
-  const LS_LAST_SYNC = LS_PREFIX + 'lastsync_v1';
-  const LS_LAST_LOCAL_CHANGE = LS_PREFIX + 'lastlocalchange_v1';
-  const LS_DEVICE = LS_PREFIX + 'device_v1';
-
-  const statusEl = document.getElementById('cloudStatus');
-  const dotEl = document.getElementById('cloudDot');
-  const connectBtn = document.getElementById('cloudConnectBtn');
-  const saveBtn = document.getElementById('cloudSaveBtn');
-  const loadBtn = document.getElementById('cloudLoadBtn');
-  const disconnectBtn = document.getElementById('cloudDisconnectBtn');
-
-  let tokenClient = null;
-  let accessToken = null;
-  let tokenExpiresAt = 0;
-  let connected = false;
-  let busy = false;
-  let saveTimer = null;
-  let saveQueued = false;
-
-  const DB_SCHEMAS = [
-    {name:'werkbank_images_v1', stores:[{name:'images', keyPath:null, autoIncrement:false, indexes:[]}]},
-    {name:'jmb_journal_media_v1', stores:[{name:'media', keyPath:'id', autoIncrement:false, indexes:[
-      {name:'hash',keyPath:'hash',unique:false},{name:'kind',keyPath:'kind',unique:false},{name:'createdAt',keyPath:'createdAt',unique:false}
-    ]}]}
-  ];
-
-  function nowLabel(ts){
-    if(!ts) return '';
-    try{return new Date(ts).toLocaleString('de-DE',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});}catch(_){return '';}
-  }
-  function setStatus(kind, html){
-    dotEl.className = 'cloud-dot' + (kind ? ' is-' + kind : '');
-    statusEl.innerHTML = '<span class="cloud-dot' + (kind ? ' is-' + kind : '') + '"></span>' + html;
-  }
-  function renderStatus(message, kind){
-    connectBtn.hidden = connected;
-    saveBtn.hidden = !connected;
-    loadBtn.hidden = !connected;
-    disconnectBtn.hidden = !connected;
-    [connectBtn,saveBtn,loadBtn,disconnectBtn].forEach(b=>{ if(b) b.disabled=busy; });
-    if(message){ setStatus(kind||'', message); return; }
-    if(busy){ setStatus('busy','<strong>Synchronisiere …</strong> · Daten werden verschlüsselt per HTTPS an Google Drive übertragen'); return; }
-    if(connected){
-      const last = parseInt(localStorage.getItem(LS_LAST_SYNC)||'0',10)||0;
-      setStatus('on','<strong>Verbunden</strong>' + (last ? ' · zuletzt gesichert ' + nowLabel(last) : ' · bereit für automatische Sicherung'));
-    }else{
-      setStatus('','<strong>Nicht verbunden</strong> · lokale Daten bleiben erhalten');
-    }
-  }
-
-  function isExcludedStorageKey(key){
-    if(!key) return true;
-    if(key.startsWith(LS_PREFIX)) return true;
-    if(key === 'jmb_google_token_v1' || key === 'jmb_google_token_exp_v1' || key === 'jmb_google_connected_v1') return true;
-    if(key.startsWith('wb_drive') || key.startsWith('tj_drive')) return true;
-    if(key === 'kalenderJulian_calconnected_v1' || key === 'kalenderJulian_callastsync_v1') return true;
-    if(/(google|drive|oauth|calendar).*(token|expiry|expires|fileid|connected|lastsync)/i.test(key)) return true;
-    return false;
-  }
-
-  function collectLocalStorage(){
-    const data = {};
-    for(let i=0;i<localStorage.length;i++){
-      const key = localStorage.key(i);
-      if(!key || isExcludedStorageKey(key)) continue;
-      try{ data[key] = localStorage.getItem(key); }catch(_){ }
-    }
-    return data;
-  }
-
-  function bytesToBase64(bytes){
-    const chunk = 0x8000;
-    let binary = '';
-    for(let i=0;i<bytes.length;i+=chunk){
-      binary += String.fromCharCode.apply(null, bytes.subarray(i, Math.min(i+chunk,bytes.length)));
-    }
-    return btoa(binary);
-  }
-  function base64ToBytes(base64){
-    const binary = atob(base64||'');
-    const bytes = new Uint8Array(binary.length);
-    for(let i=0;i<binary.length;i++) bytes[i]=binary.charCodeAt(i);
-    return bytes;
-  }
-  function blobToBase64(blob){
-    return new Promise((resolve,reject)=>{
-      const r = new FileReader();
-      r.onload = ()=>{
-        const value = String(r.result||'');
-        resolve(value.slice(value.indexOf(',')+1));
-      };
-      r.onerror = ()=>reject(r.error||new Error('Datei konnte nicht gelesen werden.'));
-      r.readAsDataURL(blob);
-    });
-  }
-  async function encodeValue(value){
-    if(value instanceof File){
-      return {__jmbType:'File',name:value.name,type:value.type,lastModified:value.lastModified,data:await blobToBase64(value)};
-    }
-    if(value instanceof Blob){
-      return {__jmbType:'Blob',type:value.type,data:await blobToBase64(value)};
-    }
-    if(value instanceof Date) return {__jmbType:'Date',value:value.toISOString()};
-    if(value instanceof ArrayBuffer) return {__jmbType:'ArrayBuffer',data:bytesToBase64(new Uint8Array(value))};
-    if(ArrayBuffer.isView(value)) return {__jmbType:'TypedArray',ctor:value.constructor.name,data:bytesToBase64(new Uint8Array(value.buffer,value.byteOffset,value.byteLength))};
-    if(Array.isArray(value)) return Promise.all(value.map(encodeValue));
-    if(value && typeof value === 'object'){
-      const out = {};
-      for(const [k,v] of Object.entries(value)) out[k] = await encodeValue(v);
-      return out;
-    }
-    return value;
-  }
-  function decodeValue(value){
-    if(Array.isArray(value)) return value.map(decodeValue);
-    if(!value || typeof value !== 'object') return value;
-    if(value.__jmbType === 'Date') return new Date(value.value);
-    if(value.__jmbType === 'Blob') return new Blob([base64ToBytes(value.data)],{type:value.type||''});
-    if(value.__jmbType === 'File'){
-      const bytes=base64ToBytes(value.data);
-      try{return new File([bytes],value.name||'datei',{type:value.type||'',lastModified:value.lastModified||Date.now()});}
-      catch(_){return new Blob([bytes],{type:value.type||''});}
-    }
-    if(value.__jmbType === 'ArrayBuffer') return base64ToBytes(value.data).buffer;
-    if(value.__jmbType === 'TypedArray'){
-      const bytes=base64ToBytes(value.data);
-      const ctor=window[value.ctor];
-      try{return typeof ctor==='function'?new ctor(bytes.buffer):bytes;}catch(_){return bytes;}
-    }
-    const out={};
-    for(const [k,v] of Object.entries(value)) out[k]=decodeValue(v);
-    return out;
-  }
-
-  function openKnownDb(schema){
-    return new Promise((resolve,reject)=>{
-      if(!window.indexedDB){ resolve(null); return; }
-      const req=indexedDB.open(schema.name);
-      req.onupgradeneeded=()=>{
-        const db=req.result;
-        for(const st of schema.stores){
-          if(db.objectStoreNames.contains(st.name)) continue;
-          const options={autoIncrement:!!st.autoIncrement};
-          if(st.keyPath!==null) options.keyPath=st.keyPath;
-          const store=db.createObjectStore(st.name,options);
-          for(const ix of st.indexes||[]) store.createIndex(ix.name,ix.keyPath,{unique:!!ix.unique});
-        }
-      };
-      req.onsuccess=()=>resolve(req.result);
-      req.onerror=()=>reject(req.error||new Error('IndexedDB konnte nicht geöffnet werden.'));
-      req.onblocked=()=>reject(new Error('IndexedDB ist durch eine andere Seite blockiert.'));
-    });
-  }
-  function reqPromise(req){return new Promise((resolve,reject)=>{req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error);});}
-  function txPromise(tx){return new Promise((resolve,reject)=>{tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error);});}
-
-  async function collectIndexedDB(){
-    const result={};
-    for(const schema of DB_SCHEMAS){
-      let db=null;
-      try{
-        db=await openKnownDb(schema);
-        if(!db) continue;
-        const dbOut={version:db.version,stores:{}};
-        for(const st of schema.stores){
-          if(!db.objectStoreNames.contains(st.name)) continue;
-          const tx=db.transaction(st.name,'readonly');
-          const store=tx.objectStore(st.name);
-          const valuesReq=store.getAll();
-          const keysReq=store.getAllKeys();
-          const [values,keys]=await Promise.all([reqPromise(valuesReq),reqPromise(keysReq)]);
-          await txPromise(tx);
-          const records=[];
-          for(let i=0;i<values.length;i++) records.push({key:await encodeValue(keys[i]),value:await encodeValue(values[i])});
-          dbOut.stores[st.name]={keyPath:st.keyPath,records};
-        }
-        result[schema.name]=dbOut;
-      }catch(err){
-        console.warn('HQ Backup: IndexedDB konnte nicht gelesen werden:',schema.name,err);
-      }finally{try{db&&db.close();}catch(_){}}
-    }
-    return result;
-  }
-
-  async function buildSnapshot(){
-    return {
-      format:'JMB_HEADQUARTER_BACKUP',
-      version:2,
-      savedAt:Date.now(),
-      savedAtIso:new Date().toISOString(),
-      source:location.origin + location.pathname,
-      localStorage:collectLocalStorage(),
-      indexedDB:await collectIndexedDB()
-    };
-  }
-
-  async function restoreIndexedDB(bundle){
-    if(!bundle || typeof bundle!=='object') return;
-    for(const schema of DB_SCHEMAS){
-      const backupDb=bundle[schema.name];
-      if(!backupDb || !backupDb.stores) continue;
-      let db=null;
-      try{
-        db=await openKnownDb(schema);
-        if(!db) continue;
-        for(const st of schema.stores){
-          const backed=backupDb.stores[st.name];
-          if(!backed || !db.objectStoreNames.contains(st.name)) continue;
-          const tx=db.transaction(st.name,'readwrite');
-          const store=tx.objectStore(st.name);
-          store.clear();
-          for(const rec of backed.records||[]){
-            const value=decodeValue(rec.value), key=decodeValue(rec.key);
-            if(st.keyPath===null) store.put(value,key); else store.put(value);
-          }
-          await txPromise(tx);
-        }
-      }finally{try{db&&db.close();}catch(_){}}
-    }
-  }
-
-  async function applySnapshot(snapshot){
-    if(!snapshot || snapshot.format!=='JMB_HEADQUARTER_BACKUP' || !snapshot.localStorage) throw new Error('Ungültiges Headquarter-Backup.');
-    for(const [key,value] of Object.entries(snapshot.localStorage)){
-      if(isExcludedStorageKey(key)) continue;
-      localStorage.setItem(key,value);
-    }
-    await restoreIndexedDB(snapshot.indexedDB||{});
-    localStorage.setItem(LS_LAST_SYNC,String(Number(snapshot.savedAt)||Date.now()));
-    localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(Number(snapshot.savedAt)||Date.now()));
-    try{frame.src='about:blank'; currentTarget=null;}catch(_){ }
-  }
-
-  function multipart(metadata,json){
-    const boundary='jmb_hq_'+Date.now()+'_'+Math.random().toString(36).slice(2);
-    const body=new Blob([
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,JSON.stringify(metadata),'\r\n',
-      `--${boundary}\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n`,json,'\r\n',
-      `--${boundary}--`
-    ],{type:`multipart/related; boundary=${boundary}`});
-    return {body,contentType:`multipart/related; boundary=${boundary}`};
-  }
-
-  async function api(url,options){
-    const token=await ensureToken();
-    const opts=Object.assign({},options||{});
-    opts.headers=Object.assign({},opts.headers||{},{Authorization:'Bearer '+token});
-    const res=await fetch(url,opts);
-    if(!res.ok){
-      let detail=''; try{detail=await res.text();}catch(_){ }
-      throw new Error('Google Drive HTTP '+res.status+(detail?' · '+detail.slice(0,160):''));
-    }
-    return res;
-  }
-  async function findBackupFile(){
-    const cached=localStorage.getItem(LS_FILE_ID);
-    if(cached){
-      try{const r=await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(cached)}?fields=id,name,modifiedTime`);return await r.json();}
-      catch(_){localStorage.removeItem(LS_FILE_ID);}
-    }
-    const q=encodeURIComponent(`name='${BACKUP_NAME}' and trashed=false`);
-    const r=await api(`https://www.googleapis.com/drive/v3/files?q=${q}&spaces=drive&fields=files(id,name,modifiedTime)&orderBy=modifiedTime desc&pageSize=10`);
-    const data=await r.json();
-    const found=data.files&&data.files[0];
-    if(found&&found.id) localStorage.setItem(LS_FILE_ID,found.id);
-    return found||null;
-  }
-  async function downloadSnapshot(file){
-    if(!file||!file.id) return null;
-    const r=await api(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(file.id)}?alt=media`);
-    return await r.json();
-  }
-  async function uploadSnapshot(snapshot,name,fileId){
-    const content=JSON.stringify(snapshot);
-    const mp=multipart({name:name||BACKUP_NAME,mimeType:'application/json'},content);
-    const url=fileId
-      ? `https://www.googleapis.com/upload/drive/v3/files/${encodeURIComponent(fileId)}?uploadType=multipart`
-      : 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart';
-    const r=await api(url,{method:fileId?'PATCH':'POST',headers:{'Content-Type':mp.contentType},body:mp.body});
-    return await r.json();
-  }
-
-  async function saveNow(reason){
-    if(!connected) return false;
-    if(busy){saveQueued=true;return false;}
-    busy=true; renderStatus();
-    try{
-      const snapshot=await buildSnapshot();
-      const file=await findBackupFile();
-      const result=await uploadSnapshot(snapshot,BACKUP_NAME,file&&file.id);
-      if(result&&result.id) localStorage.setItem(LS_FILE_ID,result.id);
-      localStorage.setItem(LS_LAST_SYNC,String(snapshot.savedAt));
-      localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(snapshot.savedAt));
-      renderStatus('<strong>Gesichert</strong> · '+nowLabel(snapshot.savedAt)+' · automatische Sicherung aktiv','on');
-      return true;
-    }catch(err){
-      console.error('HQ Backup fehlgeschlagen:',err);
-      renderStatus('<strong>Sicherung fehlgeschlagen</strong> · lokal bleibt alles erhalten','error');
-      return false;
-    }finally{
-      busy=false;
-      setTimeout(()=>renderStatus(),1800);
-      if(saveQueued){saveQueued=false;scheduleSave('queued');}
-    }
-  }
-
-  async function saveConflictSnapshot(){
-    const snapshot=await buildSnapshot();
-    const stamp=new Date().toISOString().replace(/[:.]/g,'-');
-    await uploadSnapshot(snapshot,CONFLICT_PREFIX+stamp+'.json',null);
-  }
-
-  async function loadFromCloud(manual){
-    if(!connected) return false;
-    if(busy) return false;
-    busy=true; renderStatus();
-    try{
-      const file=await findBackupFile();
-      if(!file){renderStatus('<strong>Noch kein Cloud-Backup</strong> · zuerst „Jetzt sichern“ verwenden','');return false;}
-      const remote=await downloadSnapshot(file);
-      if(manual && !confirm('Cloud-Backup laden? Der gespeicherte Cloud-Stand wird auf dieses Gerät übernommen.')) return false;
-      if(manual){
-        const localChanged=+localStorage.getItem(LS_LAST_LOCAL_CHANGE)||0;
-        const lastSync=+localStorage.getItem(LS_LAST_SYNC)||0;
-        if(localChanged>lastSync) await saveConflictSnapshot();
-      }
-      await applySnapshot(remote);
-      renderStatus('<strong>Cloud-Stand geladen</strong> · Apps beim nächsten Öffnen mit diesen Daten','on');
-      return true;
-    }catch(err){
-      console.error('HQ Restore fehlgeschlagen:',err);
-      renderStatus('<strong>Cloud konnte nicht geladen werden</strong> · lokale Daten wurden nicht gelöscht','error');
-      return false;
-    }finally{busy=false;setTimeout(()=>renderStatus(),2200);}
-  }
-
-  async function reconcileAfterConnect(){
-    busy=true; renderStatus();
-    try{
-      const file=await findBackupFile();
-      const lastSync=parseInt(localStorage.getItem(LS_LAST_SYNC)||'0',10)||0;
-      const localChanged=parseInt(localStorage.getItem(LS_LAST_LOCAL_CHANGE)||'0',10)||0;
-      if(!file){
-        busy=false;
-        await saveNow('first-connect');
-        return;
-      }
-      const remote=await downloadSnapshot(file);
-      const remoteAt=Number(remote&&remote.savedAt)||0;
-      if(!lastSync){
-        await applySnapshot(remote);
-        renderStatus('<strong>Cloud-Stand übernommen</strong> · zentrales Backup ist aktiv','on');
-        return;
-      }
-      const localDirty=localChanged>lastSync;
-      const remoteDirty=remoteAt>lastSync;
-      if(localDirty && remoteDirty){
-        if(localChanged>remoteAt){
-          busy=false; await saveNow('local-newer'); return;
-        }
-        await saveConflictSnapshot();
-        await applySnapshot(remote);
-        renderStatus('<strong>Neueren Cloud-Stand geladen</strong> · lokaler Konflikt wurde separat in Drive gesichert','on');
-        return;
-      }
-      if(remoteDirty){await applySnapshot(remote);renderStatus('<strong>Neueren Cloud-Stand geladen</strong> · alles aktuell','on');return;}
-      if(localDirty){busy=false;await saveNow('local-dirty');return;}
-      renderStatus('<strong>Alles aktuell</strong> · automatische Sicherung aktiv','on');
-    }catch(err){
-      console.error('HQ Abgleich fehlgeschlagen:',err);
-      renderStatus('<strong>Abgleich fehlgeschlagen</strong> · lokale Daten bleiben erhalten','error');
-    }finally{busy=false;setTimeout(()=>renderStatus(),2200);}
-  }
-
-  function scheduleSave(reason){
-    localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(Date.now()));
-    if(!connected) return;
-    clearTimeout(saveTimer);
-    saveTimer=setTimeout(()=>saveNow(reason||'change'),1800);
-  }
-
-  function acceptToken(resp){
-    if(!resp || resp.error || !resp.access_token) throw new Error(resp&&resp.error?resp.error:'Google-Anmeldung fehlgeschlagen.');
-    accessToken=resp.access_token;
-    tokenExpiresAt=Date.now()+(parseInt(resp.expires_in,10)||3500)*1000-60000;
-    connected=true;
-    localStorage.setItem(LS_CONNECTED,'1');
-    renderStatus();
-    return accessToken;
-  }
-  function requestToken(prompt){
-    return new Promise((resolve,reject)=>{
-      if(!tokenClient){reject(new Error('Google-Anmeldung ist noch nicht bereit.'));return;}
-      const old=tokenClient.callback;
-      tokenClient.callback=(resp)=>{
-        tokenClient.callback=old;
-        try{resolve(acceptToken(resp));}catch(err){reject(err);}
-      };
-      try{tokenClient.requestAccessToken({prompt:prompt||''});}catch(err){tokenClient.callback=old;reject(err);}
-    });
-  }
-  async function ensureToken(){
-    if(accessToken && Date.now()<tokenExpiresAt) return accessToken;
-    return requestToken('');
-  }
-  async function connect(){
-    if(location.protocol==='file:'){
-      alert('Google-Anmeldung funktioniert nicht zuverlässig über file://. Bitte den Ordner über einen lokalen Webserver oder dein normales Hosting öffnen und diese Adresse in Google Cloud als Authorized JavaScript Origin hinterlegen.');
-      return;
-    }
-    try{await requestToken('consent');await reconcileAfterConnect();}
-    catch(err){console.error(err);connected=false;renderStatus('<strong>Google-Verbindung fehlgeschlagen</strong> · bitte erneut versuchen','error');}
-  }
-  function disconnect(){
-    if(accessToken && window.google&&google.accounts&&google.accounts.oauth2){try{google.accounts.oauth2.revoke(accessToken,()=>{});}catch(_){}}
-    accessToken=null;tokenExpiresAt=0;connected=false;
-    localStorage.removeItem(LS_CONNECTED);
-    renderStatus();
-  }
-  function initGoogle(tries){
-    tries=tries||0;
-    if(window.google&&google.accounts&&google.accounts.oauth2){
-      tokenClient=google.accounts.oauth2.initTokenClient({client_id:CLIENT_ID,scope:DRIVE_SCOPE,callback:()=>{}});
-      if(localStorage.getItem(LS_CONNECTED)==='1' && location.protocol!=='file:'){
-        requestToken('').then(()=>reconcileAfterConnect()).catch(()=>{connected=false;renderStatus('<strong>Neu verbinden erforderlich</strong> · Google-Sitzung ist abgelaufen','');});
-      }else renderStatus();
-      return;
-    }
-    if(tries<60) setTimeout(()=>initGoogle(tries+1),200);
-    else renderStatus('<strong>Google-Anmeldung konnte nicht geladen werden</strong> · Internetverbindung prüfen','error');
-  }
-
-  if(!localStorage.getItem(LS_DEVICE)){
-    try{localStorage.setItem(LS_DEVICE,(crypto.randomUUID?crypto.randomUUID():'dev_'+Date.now()+'_'+Math.random().toString(36).slice(2)));}catch(_){ }
-  }
-  if(!localStorage.getItem(LS_LAST_LOCAL_CHANGE)) localStorage.setItem(LS_LAST_LOCAL_CHANGE,String(Date.now()));
-
-  connectBtn.addEventListener('click',connect);
-  saveBtn.addEventListener('click',()=>saveNow('manual'));
-  loadBtn.addEventListener('click',()=>loadFromCloud(true));
-  disconnectBtn.addEventListener('click',disconnect);
-
-  // localStorage-Änderungen aus einem eingebetteten same-origin iframe landen hier.
-  window.addEventListener('storage',(event)=>{
-    if(!event.key || isExcludedStorageKey(event.key)) return;
-    scheduleSave('storage');
-  });
-  // Zusätzlicher Bridge-Hook der fünf Unterseiten (auch für IndexedDB/Dateien).
-  window.addEventListener('message',(event)=>{
-    if(event.source!==frame.contentWindow) return;
-    if(event.data&&event.data.type==='jmb-hq-data-changed') scheduleSave(event.data.reason||'child');
-  });
-  document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden'&&connected){const l=+localStorage.getItem(LS_LAST_LOCAL_CHANGE)||0,s=+localStorage.getItem(LS_LAST_SYNC)||0;if(l>s) saveNow('visibility');}});
-  setInterval(()=>{if(connected&&!busy){const l=+localStorage.getItem(LS_LAST_LOCAL_CHANGE)||0,s=+localStorage.getItem(LS_LAST_SYNC)||0;if(l>s) saveNow('interval');}},30000);
-
-  renderStatus();
-  initGoogle(0);
-})();
-</script>
-
 </body>
 </html>
