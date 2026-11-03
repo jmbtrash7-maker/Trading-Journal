@@ -1383,6 +1383,22 @@
   /* Wächst per JS mit dem Inhalt mit (siehe autosizeTextarea) statt intern zu scrollen —
      aktuell für die Zusammenfassung im Buch-Eintrag-Formular. */
   .field-group textarea.textarea-autosize{resize:none; overflow:hidden;}
+  /* Diktier-Zeile unter den Textfeldern im Trade-Formular (siehe attachTradeDictation):
+     Status links, schlichter Mikrofon-Button rechts. Bewusst dezent. */
+  .dict-row{display:flex; align-items:center; justify-content:flex-end; gap:10px; margin-top:6px; min-height:28px;}
+  .dict-status{flex:1; min-width:0; font-size:12px; color:var(--ui-text-faint); white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+  .dict-status.error{color:var(--ui-negative);}
+  .dict-btn{
+    display:inline-flex; align-items:center; gap:6px; flex:0 0 auto;
+    background:var(--ui-surface-subtle); border:1px solid var(--ui-border-strong); color:var(--ui-text-muted);
+    padding:5px 10px; border-radius:7px; font-size:12px; font-weight:700; cursor:pointer;
+  }
+  .dict-btn svg{width:14px; height:14px; flex:0 0 auto;}
+  .dict-btn:hover:not(:disabled){color:var(--ui-text); border-color:var(--ui-border);}
+  .dict-btn:disabled{opacity:.45; cursor:not-allowed;}
+  .dict-btn.recording{color:var(--ui-negative); border-color:var(--ui-negative); background:var(--ui-negative-soft);}
+  .dict-btn.recording svg{animation:dictPulse 1.2s ease-in-out infinite;}
+  @keyframes dictPulse{0%,100%{opacity:1;} 50%{opacity:.35;}}
   /* Mini-Toolbar über der Zusammenfassung im Buch-Eintrag-Formular (Fett/Überschrift/
      Schriftgröße) — bewusst schlicht gehalten, gleiche Optik wie die übrigen Buttons. */
   .rte-toolbar{display:flex; align-items:center; gap:6px; margin-bottom:8px;}
@@ -16884,7 +16900,7 @@ html[data-motion="on"] :is(.mjmp-nav-btn,.mjmp-nav-add):active{transform:scale(.
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.10.20-kino-trailer"; // [Momo-Einbau 2026.10.01]
+const APP_VERSION = "2026.11.03-diktat"; // [Momo-Einbau 2026.10.01]
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -28660,6 +28676,7 @@ function openTradeModal(area, existing){
 }
 
 function closeModal(){
+  stopDictation();
   document.removeEventListener("paste", handlePasteEvent);
   clearModalRoot();
   STATE.draft = null;
@@ -29191,7 +29208,158 @@ function replaceTradeSlot(id, html){
   return true;
 }
 // Eingabefelder, die in austauschbaren Bereichen liegen, direkt ins Draft schreiben.
+/* =========================================================================
+   DIKTIERFUNKTION (Sprache → Text) für die Textfelder im Trade-Formular
+   Nutzt die Web Speech API des Browsers (Chrome, Edge, Safari – Firefox kann es
+   nicht). Chrome/Edge schicken das Audio zur Erkennung an ihre Server, daher ist
+   eine Internetverbindung nötig. Erkannter Text wird an der Cursor-Position
+   eingefügt und über ein "input"-Event ins Draft-Objekt übernommen (gleicher Weg
+   wie beim Tippen) – kein render(), nur lokale DOM-Updates.
+   ========================================================================= */
+const DICT_FIELD_IDS = ["f_notes","f_emotionen","f_verbesserung","f_kriterienBegruendung","f_grundNichtGenommen"];
+const DICT_SILENCE_MS = 45000; // nach so langer Stille automatisch beenden (Mikro nicht ewig offen lassen)
+const DICT_MIC_SVG = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="17" x2="12" y2="22"/></svg>`;
+let DICT_ACTIVE = null; // laufende Erkennung: {rec, ta, btn, status, stopped, fatal, lastActivity, watch}
+
+function dictRecognitionCtor(){ return window.SpeechRecognition || window.webkitSpeechRecognition || null; }
+
+// Hängt unter jedes unterstützte Textfeld im Bereich `scope` eine Diktier-Zeile.
+// Mehrfachaufrufe sind harmlos (data-dict-wired verhindert doppelte Buttons).
+function attachTradeDictation(scope){
+  if(!scope) return;
+  const supported = !!dictRecognitionCtor();
+  DICT_FIELD_IDS.forEach(id=>{
+    const ta = scope.querySelector("#"+id);
+    if(!ta || ta.disabled || ta.dataset.dictWired) return;
+    ta.dataset.dictWired = "1";
+    // Merken, ob der Nutzer selbst einen Cursor gesetzt hat – sonst wird am Ende angehängt.
+    ta.addEventListener("focus", ()=>{ ta.dataset.dictCaret = "1"; });
+    const row = document.createElement("div");
+    row.className = "dict-row";
+    row.innerHTML = `<span class="dict-status" aria-live="polite"></span><button type="button" class="dict-btn" title="Text per Mikrofon einsprechen">${DICT_MIC_SVG}<span class="dict-btn-label">Diktieren</span></button>`;
+    ta.insertAdjacentElement("afterend", row);
+    const btn = row.querySelector(".dict-btn"), status = row.querySelector(".dict-status");
+    if(!supported){
+      btn.disabled = true;
+      btn.title = "Spracheingabe wird von diesem Browser nicht unterstützt – Chrome, Edge oder Safari verwenden.";
+      return;
+    }
+    btn.addEventListener("click", ()=>{
+      if(DICT_ACTIVE && DICT_ACTIVE.ta === ta) stopDictation();
+      else startDictation(ta, btn, status);
+    });
+  });
+}
+
+// Fügt erkannten Text an der Cursor-Position ein (mit Leerzeichen/Großschreibung).
+function insertDictationText(ta, raw){
+  let text = String(raw||"").replace(/\s+/g," ").trim();
+  if(!text) return;
+  const val = ta.value;
+  const hasCaret = ta.dataset.dictCaret === "1";
+  const start = hasCaret ? ta.selectionStart : val.length;
+  const end   = hasCaret ? ta.selectionEnd   : val.length;
+  const before = val.slice(0, start), after = val.slice(end);
+  const prev = before.replace(/[ \t]+$/,"");
+  // Satzanfang (leeres Feld, nach . ! ? oder Zeilenumbruch) → ersten Buchstaben groß.
+  if(!prev || /[.!?\n]$/.test(prev)) text = text.charAt(0).toUpperCase() + text.slice(1);
+  const sepBefore = (before && !/\s$/.test(before)) ? " " : "";
+  const sepAfter  = (after && !/^\s/.test(after)) ? " " : "";
+  ta.value = before + sepBefore + text + sepAfter + after;
+  const caret = (before + sepBefore + text).length;
+  ta.setSelectionRange(caret, caret);
+  ta.dataset.dictCaret = "1"; // nächster Satz direkt dahinter
+  ta.dispatchEvent(new Event("input", {bubbles:true}));
+}
+
+function dictErrorText(code){
+  switch(code){
+    case "not-allowed":
+    case "service-not-allowed": return "Mikrofon blockiert – Zugriff über das Schloss-Symbol in der Adressleiste erlauben.";
+    case "audio-capture":       return "Kein Mikrofon gefunden.";
+    case "network":             return "Spracherkennung nicht erreichbar (Internet nötig; Brave/Firefox unterstützen sie nicht).";
+    case "language-not-supported": return "Deutsch wird von der Spracherkennung dieses Browsers nicht unterstützt.";
+    default:                    return "Spracheingabe abgebrochen (" + code + ").";
+  }
+}
+
+function startDictation(ta, btn, status){
+  stopDictation();
+  const SR = dictRecognitionCtor();
+  if(!SR) return;
+  const rec = new SR();
+  rec.lang = "de-DE";
+  rec.continuous = true;
+  rec.interimResults = true;
+  const s = {rec, ta, btn, status, stopped:false, fatal:null, lastActivity:Date.now(), watch:null};
+  DICT_ACTIVE = s;
+  btn.classList.add("recording");
+  btn.querySelector(".dict-btn-label").textContent = "Stopp";
+  status.classList.remove("error");
+  status.textContent = "Hört zu …";
+
+  rec.onresult = (e)=>{
+    if(DICT_ACTIVE !== s) return;
+    s.lastActivity = Date.now();
+    let interim = "";
+    for(let i=e.resultIndex; i<e.results.length; i++){
+      const r = e.results[i];
+      if(r.isFinal) insertDictationText(ta, r[0].transcript);
+      else interim += r[0].transcript;
+    }
+    status.textContent = interim ? "… " + interim.trim() : "Hört zu …";
+  };
+  rec.onerror = (e)=>{
+    // "no-speech"/"aborted" sind harmlos – Chrome startet danach einfach neu (siehe onend).
+    if(e.error === "no-speech" || e.error === "aborted") return;
+    s.fatal = e.error;
+  };
+  rec.onend = ()=>{
+    // Chrome/Edge beenden die Erkennung nach Sprechpausen von selbst → solange der
+    // Nutzer nicht gestoppt hat, nahtlos neu starten.
+    if(!s.stopped && !s.fatal && DICT_ACTIVE === s && document.body.contains(ta)){
+      try{ rec.start(); return; }catch(_){}
+    }
+    finishDictation(s);
+  };
+  // Wächter: Formular geschlossen / Feld neu gezeichnet oder lange Stille → beenden.
+  s.watch = setInterval(()=>{
+    if(DICT_ACTIVE !== s) return;
+    if(!document.body.contains(ta)){ stopDictation(); return; }
+    if(Date.now() - s.lastActivity > DICT_SILENCE_MS){ s.silenced = true; stopDictation(); }
+  }, 1000);
+  try{ rec.start(); }
+  catch(err){ s.fatal = "start-failed"; finishDictation(s); }
+}
+
+function stopDictation(){
+  const s = DICT_ACTIVE;
+  if(!s) return;
+  s.stopped = true;
+  try{ s.rec.stop(); }catch(_){ finishDictation(s); }
+  // Falls der Browser kein onend mehr liefert: UI trotzdem nach kurzer Zeit zurücksetzen.
+  setTimeout(()=>finishDictation(s), 1500);
+}
+
+function finishDictation(s){
+  if(s.done) return;
+  s.done = true;
+  if(s.watch) clearInterval(s.watch);
+  if(DICT_ACTIVE === s) DICT_ACTIVE = null;
+  s.btn.classList.remove("recording");
+  const label = s.btn.querySelector(".dict-btn-label");
+  if(label) label.textContent = "Diktieren";
+  if(s.fatal){
+    s.status.classList.add("error");
+    s.status.textContent = dictErrorText(s.fatal);
+  } else {
+    s.status.classList.remove("error");
+    s.status.textContent = s.silenced ? "Automatisch beendet (Stille)." : "";
+  }
+}
+
 function wireTradeSlotInputs(scope){
+  attachTradeDictation(scope);
   const on=(id,fn)=>{ const el=scope.querySelector("#"+id); if(el && !el.disabled && !el.dataset.tradeWired){ el.dataset.tradeWired="1"; el.addEventListener("input",fn); } };
   on("f_kriterienBegruendung", e=>{ STATE.draft.kriterienBegruendung = e.target.value; });
   on("f_grundNichtGenommen",   e=>{ STATE.draft.grundNichtGenommen = e.target.value; });
@@ -29384,6 +29552,9 @@ function wireModal(){
 
   const verbesserungInput = document.getElementById("f_verbesserung");
   if(verbesserungInput) verbesserungInput.addEventListener("input", (e)=>{ STATE.draft.verbesserung = e.target.value; });
+
+  // Mikrofon-Diktat für Notizen/Emotionen/Verbesserung (Slot-Felder: siehe wireTradeSlotInputs).
+  attachTradeDictation(document);
 
   // Begründung, "Warum nicht genommen?" und R/€/Risiko liegen in austauschbaren Bereichen
   // (siehe replaceTradeSlot) – Bindung daher zentral über wireTradeSlotInputs.
