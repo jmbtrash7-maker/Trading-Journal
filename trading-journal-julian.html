@@ -16900,7 +16900,7 @@ html[data-motion="on"] :is(.mjmp-nav-btn,.mjmp-nav-add):active{transform:scale(.
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.11.03-diktat"; // [Momo-Einbau 2026.10.01]
+const APP_VERSION = "2026.11.04-diktat-mental"; // [Momo-Einbau 2026.10.01]
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -27778,6 +27778,12 @@ function mentalWeekSidebarHtml(){
   return `<div class="week-sidebar-list">${cards}</div>`;
 }
 
+// Schlüssel für STATE.mentalWeekEvaluations: "Jahr-Monat(0-basiert)-Wochenindex"
+// (gleiches Format, das der KI-Export beim Auslesen per split("-") erwartet).
+// War zwischenzeitlich verloren gegangen → Wochen-Ansicht stürzte beim Öffnen ab.
+function mentalWeekKey(year, month, weekIndex){
+  return `${year}-${month}-${weekIndex}`;
+}
 function openMentalWeekDetail(weekIndex){
   const cal = STATE.diaryCalendarMonth;
   STATE.viewingMentalWeek = { year: cal.year, month: cal.month, weekIndex };
@@ -28021,6 +28027,7 @@ function wireMentalWeekDetail(){
       if(sizeSelect.value) applyBuchFontSize(evalInput, parseInt(sizeSelect.value, 10));
       sizeSelect.value = "";
     });
+    attachMentalDictation();
   }
   const evalSaveBtn = document.getElementById("mentalWeekEvalSaveBtn");
   if(evalSaveBtn) evalSaveBtn.addEventListener("click", ()=>{
@@ -28208,6 +28215,7 @@ function alignMentalWeekSidebar(){
 }
 
 function wireDiaryView(){
+  attachMentalDictation();
   const saveBtn = document.getElementById("diarySaveTodayBtn");
   const hint = document.getElementById("diarySavedHint");
 
@@ -28291,6 +28299,7 @@ function openDiaryDayModal(dateStr){
 }
 
 function closeDiaryDayModal(){
+  stopDictation();
   clearModalRoot();
   STATE.diarySelectedDay = null;
 }
@@ -28341,6 +28350,7 @@ function wireDiaryDayModal(dateStr){
   const delBtn = document.getElementById("diaryModalDeleteBtn");
 
   wireDiarySliders("diaryModalField_rating_");
+  attachMentalDictation();
 
   const close = ()=>{ closeDiaryDayModal(); render(); };
 
@@ -29209,7 +29219,8 @@ function replaceTradeSlot(id, html){
 }
 // Eingabefelder, die in austauschbaren Bereichen liegen, direkt ins Draft schreiben.
 /* =========================================================================
-   DIKTIERFUNKTION (Sprache → Text) für die Textfelder im Trade-Formular
+   DIKTIERFUNKTION (Sprache → Text) für die Textfelder im Trade-Formular und im
+   Mental-Bereich (Tages-Eintrag, Tages-Fenster aus dem Kalender, Wochen-Auswertung)
    Nutzt die Web Speech API des Browsers (Chrome, Edge, Safari – Firefox kann es
    nicht). Chrome/Edge schicken das Audio zur Erkennung an ihre Server, daher ist
    eine Internetverbindung nötig. Erkannter Text wird an der Cursor-Position
@@ -29227,13 +29238,38 @@ function dictRecognitionCtor(){ return window.SpeechRecognition || window.webkit
 // Mehrfachaufrufe sind harmlos (data-dict-wired verhindert doppelte Buttons).
 function attachTradeDictation(scope){
   if(!scope) return;
+  DICT_FIELD_IDS.forEach(id=> attachDictationTo(scope.querySelector("#"+id)));
+}
+
+// Mental-Bereich: 4 Tages-Felder (Heute-Formular + Tages-Fenster) und Wochen-Auswertung.
+// Wird aus wireDiaryView / wireDiaryDayModal / wireMentalWeekDetail aufgerufen.
+function attachMentalDictation(){
+  DIARY_FIELDS.forEach(f=>{
+    attachDictationTo(document.getElementById("diaryField_"+f.key));
+    attachDictationTo(document.getElementById("diaryModalField_"+f.key));
+  });
+  attachDictationTo(document.getElementById("mentalWeekEvalInput"));
+}
+
+function dictIsRich(el){ return !!(el && el.isContentEditable); }
+
+// Diktier-Zeile direkt unter ein einzelnes Feld setzen (Textarea oder Rich-Text-Feld).
+function attachDictationTo(ta){
+  if(!ta || ta.disabled || ta.dataset.dictWired) return;
   const supported = !!dictRecognitionCtor();
-  DICT_FIELD_IDS.forEach(id=>{
-    const ta = scope.querySelector("#"+id);
-    if(!ta || ta.disabled || ta.dataset.dictWired) return;
+  {
     ta.dataset.dictWired = "1";
-    // Merken, ob der Nutzer selbst einen Cursor gesetzt hat – sonst wird am Ende angehängt.
-    ta.addEventListener("focus", ()=>{ ta.dataset.dictCaret = "1"; });
+    if(dictIsRich(ta)){
+      // Rich-Text: letzte Cursor-Position im Feld merken, damit dort eingefügt wird.
+      const save = ()=>{
+        const sel = window.getSelection();
+        if(sel && sel.rangeCount && ta.contains(sel.anchorNode)) ta._dictRange = sel.getRangeAt(0).cloneRange();
+      };
+      ["keyup","mouseup","input","blur"].forEach(ev=> ta.addEventListener(ev, save));
+    } else {
+      // Merken, ob der Nutzer selbst einen Cursor gesetzt hat – sonst wird am Ende angehängt.
+      ta.addEventListener("focus", ()=>{ ta.dataset.dictCaret = "1"; });
+    }
     const row = document.createElement("div");
     row.className = "dict-row";
     row.innerHTML = `<span class="dict-status" aria-live="polite"></span><button type="button" class="dict-btn" title="Text per Mikrofon einsprechen">${DICT_MIC_SVG}<span class="dict-btn-label">Diktieren</span></button>`;
@@ -29248,13 +29284,14 @@ function attachTradeDictation(scope){
       if(DICT_ACTIVE && DICT_ACTIVE.ta === ta) stopDictation();
       else startDictation(ta, btn, status);
     });
-  });
+  }
 }
 
 // Fügt erkannten Text an der Cursor-Position ein (mit Leerzeichen/Großschreibung).
 function insertDictationText(ta, raw){
   let text = String(raw||"").replace(/\s+/g," ").trim();
   if(!text) return;
+  if(dictIsRich(ta)){ insertDictationRich(ta, text); return; }
   const val = ta.value;
   const hasCaret = ta.dataset.dictCaret === "1";
   const start = hasCaret ? ta.selectionStart : val.length;
@@ -29270,6 +29307,38 @@ function insertDictationText(ta, raw){
   ta.setSelectionRange(caret, caret);
   ta.dataset.dictCaret = "1"; // nächster Satz direkt dahinter
   ta.dispatchEvent(new Event("input", {bubbles:true}));
+}
+
+// Rich-Text-Feld (contenteditable): an gemerkter Cursor-Position einfügen, sonst am Ende.
+// insertText hält die Formatierung an der Stelle bei und löst selbst ein "input"-Event aus.
+function insertDictationRich(el, text){
+  const sel = window.getSelection();
+  let range = el._dictRange && el.contains(el._dictRange.startContainer) ? el._dictRange.cloneRange() : null;
+  if(!range){ range = document.createRange(); range.selectNodeContents(el); range.collapse(false); }
+  el.focus({preventScroll:true});
+  sel.removeAllRanges(); sel.addRange(range);
+  const pre = document.createRange();
+  pre.selectNodeContents(el); pre.setEnd(range.startContainer, range.startOffset);
+  const before = pre.toString().replace(/\u00a0/g," ");
+  const prev = before.replace(/[ \t]+$/,"");
+  const atBlockStart = range.startOffset === 0 && range.startContainer.nodeType !== 3;
+  if(!prev || atBlockStart || /[.!?\n]$/.test(prev)) text = text.charAt(0).toUpperCase() + text.slice(1);
+  const post = document.createRange();
+  post.selectNodeContents(el); post.setStart(range.endContainer, range.endOffset);
+  const after = post.toString().replace(/\u00a0/g," ");
+  const insert = ((before && !/\s$/.test(before) && !atBlockStart) ? " " : "") + text
+               + ((after && !/^\s/.test(after)) ? " " : "");
+  let ok = false;
+  try{ ok = document.execCommand("insertText", false, insert); }catch(_){ ok = false; }
+  if(!ok){
+    // Fallback ohne execCommand: Textknoten direkt einsetzen.
+    const node = document.createTextNode(insert);
+    range.deleteContents(); range.insertNode(node);
+    range.setStartAfter(node); range.collapse(true);
+    sel.removeAllRanges(); sel.addRange(range);
+    el.dispatchEvent(new Event("input", {bubbles:true}));
+  }
+  if(sel.rangeCount) el._dictRange = sel.getRangeAt(0).cloneRange();
 }
 
 function dictErrorText(code){
