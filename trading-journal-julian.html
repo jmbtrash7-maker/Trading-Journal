@@ -960,6 +960,50 @@
   .rp-pair > div{display:flex; flex-direction:column; min-width:0;}
   .rp-pair .equity-card{flex:1 1 auto;}
   .rp-wd-card{flex:1 1 auto; margin-bottom:26px;}
+  /* Psychologische Heatmap (Bericht → Treiber & Muster), siehe psyHeatmapHtml.
+     Zellfarbe kommt per --psy-fill/--psy-alpha aus dem JS (Ø Disziplin oder dominante Emotion). */
+  .psy-heat-panel{position:relative;}
+  .psy-heat-toolbar{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:10px 16px; margin-bottom:14px;}
+  .psy-legend{display:flex; flex-wrap:wrap; align-items:center; gap:6px 12px; font-size:11.5px; color:var(--ui-text-faint);}
+  .psy-legend-item{display:inline-flex; align-items:center; gap:5px;}
+  .psy-legend-item i{width:10px; height:10px; border-radius:3px; display:inline-block;}
+  .psy-legend-scale{width:90px; height:8px; border-radius:4px; background:linear-gradient(90deg, hsl(0,58%,46%), hsl(65,58%,46%), hsl(130,58%,46%));}
+  .psy-legend-nodata{background:transparent; border:1px dashed var(--ui-border-strong);}
+  .psy-hm-scroll{overflow-x:auto; padding-bottom:2px;}
+  .psy-hm-grid{display:grid; gap:5px; min-width:max-content; width:100%;}
+  .psy-hm-colhead{font-size:11px; font-weight:700; letter-spacing:.5px; text-transform:uppercase; color:var(--ui-text-faint); text-align:center; padding-bottom:2px;}
+  .psy-hm-rowhead{font-size:12.5px; font-weight:600; color:var(--ui-text-muted); display:flex; align-items:center; padding-right:8px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:150px;}
+  .psy-hm-rowhead.psy-hm-total{color:var(--ui-text-faint); font-weight:500; margin-top:6px;}
+  .psy-cell{
+    min-height:52px; border-radius:8px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px;
+    border:1px solid var(--ui-border); background:var(--ui-surface-subtle); color:var(--ui-text-faint); outline:none;
+  }
+  .psy-cell.psy-hm-total{margin-top:6px; min-height:40px;}
+  .psy-cell.filled{background:color-mix(in srgb, var(--psy-fill) var(--psy-alpha), transparent); border-color:color-mix(in srgb, var(--psy-fill) 70%, transparent); color:var(--ui-text); cursor:pointer;}
+  .psy-cell.nodata{border-style:dashed; border-color:var(--ui-border-strong); color:var(--ui-text-muted); cursor:pointer;}
+  .psy-cell.filled:hover, .psy-cell.nodata:hover, .psy-cell:focus-visible{box-shadow:0 0 0 2px var(--ui-text-faint);}
+  .psy-cell-main{font-size:13.5px; font-weight:700; line-height:1.15;}
+  .psy-cell.empty .psy-cell-main{font-weight:400; opacity:.5;}
+  .psy-cell-sub{font-size:10.5px; opacity:.75;}
+  .psy-tip{
+    position:absolute; z-index:30; min-width:210px; max-width:260px; padding:10px 12px; border-radius:10px; pointer-events:none;
+    background:var(--ui-surface); border:1px solid var(--ui-border-strong); box-shadow:0 10px 28px rgba(0,0,0,.35); font-size:12.5px;
+  }
+  .psy-tip-title{font-weight:800; margin-bottom:6px; color:var(--ui-text);}
+  .psy-tip-row{display:flex; justify-content:space-between; gap:12px; padding:2px 0; color:var(--ui-text-muted);}
+  .psy-tip-row b{color:var(--ui-text); font-weight:700; text-align:right;}
+  .psy-tip-note{margin-top:6px; font-size:11.5px; color:var(--ui-text-faint);}
+  .psy-insights{margin-top:16px; padding-top:14px; border-top:1px solid var(--ui-border); display:grid; grid-template-columns:repeat(auto-fit, minmax(240px,1fr)); gap:10px;}
+  .psy-insight{padding:11px 13px; border-radius:10px; background:var(--ui-surface-subtle); border:1px solid var(--ui-border);}
+  .psy-insight.warn{border-left:3px solid var(--ui-negative);}
+  .psy-insight-q{font-size:11px; font-weight:800; letter-spacing:.4px; text-transform:uppercase; color:var(--ui-text-faint); margin-bottom:5px;}
+  .psy-insight-a{font-size:13.5px; line-height:1.45; color:var(--ui-text-muted);}
+  .psy-insight-a b{color:var(--ui-text);}
+  .psy-insight-a .pos{color:var(--ui-positive);} .psy-insight-a .neg{color:var(--ui-negative);}
+  .psy-tip .pos{color:var(--ui-positive);} .psy-tip .neg{color:var(--ui-negative);}
+  .psy-insight-foot{grid-column:1 / -1; font-size:11.5px; color:var(--ui-text-faint);}
+  .psy-insight-empty, .psy-empty{grid-column:1 / -1; font-size:13px; color:var(--ui-text-muted); text-align:center; padding:6px 10px;}
+  .psy-empty{padding:26px 20px;}
   .rp-wd-chart{flex:1 1 auto; display:flex; gap:6px; margin-top:12px;}
   .rp-wd{flex:1 1 0; min-width:0; display:flex; flex-direction:column;}
   .rp-wd-plot{position:relative; flex:1 1 auto; min-height:110px; display:flex; flex-direction:column;}
@@ -1350,6 +1394,24 @@
   .form-section{background:var(--ui-surface-subtle); border:1px solid var(--ui-border); border-radius:14px; padding:20px 20px 2px; margin-bottom:20px;}
   .form-section-title{font-size:11px; font-weight:800; letter-spacing:1px; text-transform:uppercase; color:var(--ui-accent); margin-bottom:16px;}
   .form-section .field-group:last-child, .form-section .two-col:last-child, .form-section .three-col:last-child{margin-bottom:18px;}
+  /* Trade-Modal: Sektion "Psychologie" (Hauptemotion + Disziplin-Score, siehe psyFormSectionHtml) */
+  .psy-form-hint{font-size:11px; font-weight:500; letter-spacing:0; text-transform:none; color:var(--ui-text-faint); margin-left:6px;}
+  .psy-chip-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .psy-chip{display:inline-flex; align-items:center; gap:7px;}
+  .psy-dot{width:8px; height:8px; border-radius:50%; background:var(--psy-c); flex:0 0 auto;}
+  .chip.psy-chip.selected{background:color-mix(in srgb, var(--psy-c) 22%, transparent); border-color:var(--psy-c); color:var(--ui-text);}
+  .psy-score-row{display:grid; grid-template-columns:repeat(5, minmax(0,1fr)); gap:8px;}
+  .psy-score-btn{
+    display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 4px; border-radius:10px; cursor:pointer;
+    background:transparent; border:1px solid var(--ui-border-strong); color:var(--ui-text-muted); transition:var(--ui-motion-fast);
+  }
+  .psy-score-btn b{font-size:16px; line-height:1.1;}
+  .psy-score-btn span{font-size:10.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:100%;}
+  .psy-score-btn:hover{color:var(--ui-text); border-color:var(--ui-text-faint);}
+  .psy-score-btn.selected{background:color-mix(in srgb, var(--psy-c) 24%, transparent); border-color:var(--psy-c); color:var(--ui-text);}
+  .psy-view-value{display:flex; flex-wrap:wrap; gap:8px;}
+  .psy-view-pill{display:inline-flex; align-items:center; gap:7px; padding:4px 10px; border-radius:var(--ui-radius-pill); font-size:12.5px; font-weight:600;
+    border:1px solid var(--psy-c); background:color-mix(in srgb, var(--psy-c) 14%, transparent); color:var(--ui-text);}
   /* ---------- Trade-Modal: einklappbare Sektionen (Setup-Check, Trade-Reflexion, Screenshots) ---------- */
   .form-accordion{border:1px solid var(--ui-border); border-radius:14px; margin-bottom:20px; overflow:hidden; background:var(--ui-surface-subtle); transition:border-color .15s;}
   .form-accordion.open{border-color:var(--ui-border-strong);}
@@ -16900,7 +16962,7 @@ html[data-motion="on"] :is(.mjmp-nav-btn,.mjmp-nav-add):active{transform:scale(.
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.11.04-diktat-mental"; // [Momo-Einbau 2026.10.01]
+const APP_VERSION = "2026.11.09-psy-heatmap"; // [Momo-Einbau 2026.10.01]
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -20618,6 +20680,7 @@ const STATE = {
   berichtDateFrom: "",
   berichtDateTo: "",
   breakdownDim: "markt",
+  psyHeatMode: "score", // Psychologische Heatmap: "score" (Ø Disziplin) oder "emotion" (dominante Emotion)
   berichtFiltersExpanded: true,
   berichtCompareMode: "gesamt", // "gesamt" | "vergleich" (nur bei Live+EOD gleichzeitig aktiv)
   bericht20: false,          // Bericht-Modus "20 Trades": Gegenüberstellung der 20er-Runden statt Live/EOD
@@ -28598,6 +28661,8 @@ function emptyTrade(area){
     notizen: "",
     emotionen: "",
     verbesserung: "",
+    emotion: null,          // Hauptemotion (Schlüssel aus PSY_EMOTIONS) – für die Psychologische Heatmap
+    disciplineScore: null,  // 1 = katastrophal … 5 = eiskalte Ausführung
     customCategories: {},
     screenshots: { htf: [], ltf: [], sonstige: [] },
     createdAt: Date.now(),
@@ -28635,6 +28700,8 @@ function copyTradeToEod(liveTrade){
     notizen: liveTrade.notizen || "",
     emotionen: liveTrade.emotionen || "",
     verbesserung: liveTrade.verbesserung || "",
+    emotion: liveTrade.emotion || null,
+    disciplineScore: liveTrade.disciplineScore ?? null,
     customCategories: JSON.parse(JSON.stringify(liveTrade.customCategories||{})),
     categoryValueIds: JSON.parse(JSON.stringify(liveTrade.categoryValueIds||{})),
     screenshots: {
@@ -28802,6 +28869,7 @@ function renderTradeDetailModal(){
         ${t.kriterien === "Nicht erfüllt" ? `<div class="view-row" style="margin-top:18px;"><div class="view-label">Kriterien nicht erfüllt — wieso?</div><div class="view-value" style="white-space:pre-wrap;">${t.kriterienBegruendung ? escHtml(t.kriterienBegruendung) : "—"}</div></div>` : ""}
         ${t.grundNichtGenommen ? `<div class="view-row" style="margin-top:18px;"><div class="view-label">Warum nicht genommen?</div><div class="view-value" style="white-space:pre-wrap;">${escHtml(t.grundNichtGenommen)}</div></div>` : ""}
         ${t.notizen ? `<div class="view-row" style="margin-top:18px;"><div class="view-label">Wie ist dieser Trade entstanden? Was war meine Idee?</div><div class="view-value" style="white-space:pre-wrap;">${escHtml(t.notizen)}</div></div>` : ""}
+        ${psyTradeViewRowHtml(t)}
         ${t.emotionen ? `<div class="view-row" style="margin-top:18px;"><div class="view-label">Welche Emotionen hatte ich vor und nach dem Trade?</div><div class="view-value" style="white-space:pre-wrap;">${escHtml(t.emotionen)}</div></div>` : ""}
         ${t.verbesserung ? `<div class="view-row" style="margin-top:18px;"><div class="view-label">Was mache ich beim nächsten Trade besser?</div><div class="view-value" style="white-space:pre-wrap;">${escHtml(t.verbesserung)}</div></div>` : ""}
 
@@ -29067,6 +29135,8 @@ function renderModal(){
         </div>
         <div class="trade-modal-slot" id="tradeErgebnisSlot">${ergebnisSectionHtml(d, area)}</div>
       </div>
+
+      ${psyFormSectionHtml(d)}
 
       <div class="form-accordion${acc.reflexion?" open":""}" data-accordion="reflexion">
         <button type="button" class="form-accordion-header" data-accordiontoggle="reflexion">
@@ -29624,6 +29694,7 @@ function wireModal(){
 
   // Mikrofon-Diktat für Notizen/Emotionen/Verbesserung (Slot-Felder: siehe wireTradeSlotInputs).
   attachTradeDictation(document);
+  wirePsyFormInputs();
 
   // Begründung, "Warum nicht genommen?" und R/€/Risiko liegen in austauschbaren Bereichen
   // (siehe replaceTradeSlot) – Bindung daher zentral über wireTradeSlotInputs.
@@ -30208,6 +30279,11 @@ function berichtBodyHtml(){
       </div>
 
       <div class="report-detail-block">
+        <div class="section-title report-subsection-title">Psychologische Heatmap <span class="section-title-sub">· Wann kippt deine Disziplin?</span></div>
+        <div id="psyHeatmapWrap">${psyHeatmapHtml(filteredTrades)}</div>
+      </div>
+
+      <div class="report-detail-block">
         <div class="section-title report-subsection-title">Auswertung nach Entry-Modellen</div>
         ${entryModelBreakdownHtml(filteredTrades)}
       </div>
@@ -30252,6 +30328,350 @@ function refreshBerichtBody(){
 // wechselt der Nutzer den Filter, ändert sich diese Auswertung mit. Die Detailseite beim
 // Klick auf eine Karte (siehe computeEntryModelDetail) nutzt denselben Bereichs-Filter,
 // damit dort exakt die Trades auftauchen, die in die Kartenzahlen eingeflossen sind.
+/* =========================================================================
+   PSYCHOLOGISCHE HEATMAP (Bericht → Treiber & Muster)
+   Datenbasis: pro Trade zwei neue Felder, erfasst im Trade-Formular (Sektion "Psychologie"):
+     t.emotion          – Schlüssel aus PSY_EMOTIONS (eine Hauptemotion)
+     t.disciplineScore  – 1 (katastrophal) … 5 (eiskalte Ausführung)
+   Alles andere existiert bereits: date, session (= Zeitblock), r (= PnL in R), eurResult.
+   Persistenz läuft wie bei jedem Trade-Feld über JournalMutations → localStorage/Backup/Drive.
+   Die Heatmap nutzt exakt die Trades des Bericht-Filters (Bereich, Zeitraum, Kategorien).
+   Interaktionen (Modus-Umschalter, Tooltip) aktualisieren nur #psyHeatmapWrap – kein render().
+   ========================================================================= */
+const PSY_EMOTIONS = Object.freeze([
+  Object.freeze({ key:"discipline", label:"Disziplin", color:"#3fae7a", good:true  }),
+  Object.freeze({ key:"patience",   label:"Geduld",    color:"#4f9fc4", good:true  }),
+  Object.freeze({ key:"fear",       label:"Angst",     color:"#d6a23f", good:false }),
+  Object.freeze({ key:"fomo",       label:"FOMO",      color:"#e0743a", good:false }),
+  Object.freeze({ key:"greed",      label:"Gier",      color:"#d24b4b", good:false })
+]);
+const PSY_SCORE_LABELS = Object.freeze({1:"Katastrophal", 2:"Schwach", 3:"Okay", 4:"Gut", 5:"Eiskalt"});
+const PSY_WEEKDAYS = Object.freeze(["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"]);
+const PSY_WEEKDAYS_SHORT = Object.freeze(["Mo","Di","Mi","Do","Fr","Sa","So"]);
+const PSY_NO_SESSION = "Ohne Session";
+const PSY_MIN_CELL_N = 2;   // Mindestanzahl bewerteter Trades, damit ein Zeitfenster als "Einbruch" gilt
+const PSY_FEW_DATA_N = 10;  // darunter: Hinweis "noch wenige Daten"
+let PSY_HEAT_CELLS = {};    // zuletzt gerenderte Zellen (für den Tooltip), Key "row|col"
+
+function psyEmotionMeta(key){ return PSY_EMOTIONS.find(e=>e.key===key) || null; }
+function psyEmotionLabel(key){ const m = psyEmotionMeta(key); return m ? m.label : ""; }
+function psyScoreOf(t){
+  const n = Number(t && t.disciplineScore);
+  return (Number.isInteger(n) && n>=1 && n<=5) ? n : null;
+}
+function psyNum(v, digits){ return Number(v).toLocaleString("de-DE",{minimumFractionDigits:digits, maximumFractionDigits:digits}); }
+// Farbe für Ø-Disziplin 1…5: Rot → Amber → Grün (gleichmäßiger Farbton-Verlauf).
+function psyScoreColor(avg){
+  const t = Math.max(0, Math.min(1, (avg-1)/4));
+  return `hsl(${Math.round(t*130)}, 58%, 46%)`;
+}
+
+/* ---------- Trade-Formular ---------- */
+function psyFormSectionHtml(d){
+  const emo = d.emotion || null;
+  const score = psyScoreOf(d);
+  const chips = PSY_EMOTIONS.map(e=>`<button type="button" class="chip psy-chip${emo===e.key?" selected":""}" data-psyemotion="${e.key}" style="--psy-c:${e.color}"><span class="psy-dot" aria-hidden="true"></span>${e.label}</button>`).join("");
+  const scores = [1,2,3,4,5].map(n=>`<button type="button" class="psy-score-btn${score===n?" selected":""}" data-psyscore="${n}" style="--psy-c:${psyScoreColor(n)}" title="${n} = ${PSY_SCORE_LABELS[n]}"><b>${n}</b><span>${PSY_SCORE_LABELS[n]}</span></button>`).join("");
+  return `
+      <div class="form-section psy-form-section">
+        <div class="form-section-title">Psychologie <span class="psy-form-hint">fließt in die Psychologische Heatmap im Bericht</span></div>
+        <div class="field-group">
+          <label class="fg-label">Hauptemotion in diesem Trade</label>
+          <div class="psy-chip-row" id="psyEmotionGroup">${chips}</div>
+        </div>
+        <div class="field-group">
+          <label class="fg-label">Disziplin-Score <span class="psy-form-hint">1 = katastrophal · 5 = eiskalte Ausführung</span></label>
+          <div class="psy-score-row" id="psyScoreGroup">${scores}</div>
+        </div>
+      </div>`;
+}
+
+// Einzelauswahl mit "nochmal klicken = abwählen". Bewusst KEIN data-chipgroup, damit der
+// allgemeine Chip-Handler (der das Modal neu zeichnet) nicht greift – nur lokale Klassen.
+function wirePsyFormInputs(){
+  const emoGroup = document.getElementById("psyEmotionGroup");
+  if(emoGroup) emoGroup.addEventListener("click", (e)=>{
+    const btn = e.target.closest("[data-psyemotion]");
+    if(!btn) return;
+    const key = btn.dataset.psyemotion;
+    STATE.draft.emotion = STATE.draft.emotion===key ? null : key;
+    emoGroup.querySelectorAll("[data-psyemotion]").forEach(b=> b.classList.toggle("selected", b.dataset.psyemotion===STATE.draft.emotion));
+  });
+  const scoreGroup = document.getElementById("psyScoreGroup");
+  if(scoreGroup) scoreGroup.addEventListener("click", (e)=>{
+    const btn = e.target.closest("[data-psyscore]");
+    if(!btn) return;
+    const n = parseInt(btn.dataset.psyscore, 10);
+    STATE.draft.disciplineScore = psyScoreOf(STATE.draft)===n ? null : n;
+    scoreGroup.querySelectorAll("[data-psyscore]").forEach(b=> b.classList.toggle("selected", parseInt(b.dataset.psyscore,10)===STATE.draft.disciplineScore));
+  });
+}
+
+function psyTradeViewRowHtml(t){
+  const meta = psyEmotionMeta(t.emotion);
+  const score = psyScoreOf(t);
+  if(!meta && score===null) return "";
+  const parts = [];
+  if(meta) parts.push(`<span class="psy-view-pill" style="--psy-c:${meta.color}"><span class="psy-dot" aria-hidden="true"></span>${meta.label}</span>`);
+  if(score!==null) parts.push(`<span class="psy-view-pill" style="--psy-c:${psyScoreColor(score)}">Disziplin ${score}/5 · ${PSY_SCORE_LABELS[score]}</span>`);
+  return `<div class="view-row" style="margin-top:18px;"><div class="view-label">Psychologie</div><div class="view-value psy-view-value">${parts.join("")}</div></div>`;
+}
+
+/* ---------- Aggregation ---------- */
+function psyEmptyAgg(){ return { n:0, closed:0, sumR:0, wins:0, losses:0, eurN:0, sumEur:0, scoreN:0, sumScore:0, lowScoreN:0, psyN:0, emo:{} }; }
+function psyAddToAgg(a, t){
+  a.n++;
+  if(t.r!==null && t.r!==undefined && isFinite(t.r)){
+    a.closed++; a.sumR += t.r;
+    if(t.r>0) a.wins++; else if(t.r<0) a.losses++;
+  }
+  if(t.eurResult!==null && t.eurResult!==undefined && isFinite(t.eurResult)){ a.eurN++; a.sumEur += t.eurResult; }
+  const s = psyScoreOf(t);
+  if(s!==null){ a.scoreN++; a.sumScore += s; if(s<=2) a.lowScoreN++; }
+  if(psyEmotionMeta(t.emotion)) a.emo[t.emotion] = (a.emo[t.emotion]||0) + 1;
+  if(s!==null || psyEmotionMeta(t.emotion)) a.psyN++;
+}
+function psyAvgScore(a){ return a.scoreN ? a.sumScore/a.scoreN : null; }
+// Dominante Emotion: häufigste; bei Gleichstand gewinnt die "problematischere" (Gier > FOMO > Angst > …),
+// damit ein Risiko im Zweifel sichtbar bleibt statt geschönt zu werden.
+function psyDominantEmotion(a){
+  let best = null, bestN = 0;
+  [...PSY_EMOTIONS].reverse().forEach(e=>{ const n = a.emo[e.key]||0; if(n>bestN){ best = e; bestN = n; } });
+  return best ? { meta:best, n:bestN } : null;
+}
+
+// Nur echte, genommene Trades: EOD-Setups mit "nicht genommen" haben keine Ausführung.
+// Sind Live UND EOD aktiv, zählt eine EOD-Kopie eines Live-Trades nicht doppelt
+// (gleiche Ausführung, gleiche Emotion – sonst würde die Psych-Statistik verzerrt).
+function psyRelevantTrades(trades){
+  const ids = new Set(trades.map(t=>t.id));
+  return trades.filter(t=> t.genommen!==false && t.date && !(t.copiedFromLiveId && ids.has(t.copiedFromLiveId)));
+}
+
+function psyAggregate(trades){
+  const rel = psyRelevantTrades(trades);
+  const cfgSessions = (STATE.config.sessions||[]).slice();
+  const seen = new Set();
+  rel.forEach(t=> seen.add(t.session || PSY_NO_SESSION));
+  const rows = cfgSessions.filter(s=>seen.has(s));
+  seen.forEach(s=>{ if(!rows.includes(s) && s!==PSY_NO_SESSION) rows.push(s); });
+  if(seen.has(PSY_NO_SESSION)) rows.push(PSY_NO_SESSION);
+  const cells = {}, days = PSY_WEEKDAYS.map(()=>psyEmptyAgg()), total = psyEmptyAgg(), byEmotion = {}, byScoreBand = { high:psyEmptyAgg(), low:psyEmptyAgg() };
+  rel.forEach(t=>{
+    const d = new Date(t.date+"T12:00:00");
+    if(isNaN(d.getTime())) return;
+    const col = (d.getDay()+6)%7;
+    const row = t.session || PSY_NO_SESSION;
+    const key = row+"|"+col;
+    if(!cells[key]) cells[key] = psyEmptyAgg();
+    psyAddToAgg(cells[key], t); psyAddToAgg(days[col], t); psyAddToAgg(total, t);
+    if(psyEmotionMeta(t.emotion)){ if(!byEmotion[t.emotion]) byEmotion[t.emotion] = psyEmptyAgg(); psyAddToAgg(byEmotion[t.emotion], t); }
+    const s = psyScoreOf(t);
+    if(s!==null && s>=4) psyAddToAgg(byScoreBand.high, t);
+    if(s!==null && s<=2) psyAddToAgg(byScoreBand.low, t);
+  });
+  const weekend = days[5].n>0 || days[6].n>0;
+  const cols = weekend ? [0,1,2,3,4,5,6] : [0,1,2,3,4];
+  return { rows, cols, cells, days, total, byEmotion, byScoreBand };
+}
+
+/* ---------- Darstellung ---------- */
+function psyCellStyle(a, mode){
+  if(!a || !a.n) return "";
+  if(mode==="emotion"){
+    const dom = psyDominantEmotion(a);
+    if(!dom) return "";
+    const share = dom.n / Math.max(1, Object.values(a.emo).reduce((x,y)=>x+y,0));
+    return `--psy-fill:${dom.meta.color}; --psy-alpha:${Math.round(35 + share*45)}%;`;
+  }
+  const avg = psyAvgScore(a);
+  if(avg===null) return "";
+  return `--psy-fill:${psyScoreColor(avg)}; --psy-alpha:${Math.round(40 + Math.min(1, a.scoreN/4)*40)}%;`;
+}
+function psyCellInner(a, mode){
+  if(!a || !a.n) return `<span class="psy-cell-main">·</span>`;
+  let main = "–";
+  if(mode==="emotion"){ const dom = psyDominantEmotion(a); if(dom) main = dom.meta.label; }
+  else { const avg = psyAvgScore(a); if(avg!==null) main = psyNum(avg,1); }
+  return `<span class="psy-cell-main">${escHtml(main)}</span><span class="psy-cell-sub">${a.n} Trade${a.n===1?"":"s"}</span>`;
+}
+function psyCellClass(a, mode){
+  if(!a || !a.n) return "psy-cell empty";
+  const has = mode==="emotion" ? !!psyDominantEmotion(a) : psyAvgScore(a)!==null;
+  return "psy-cell" + (has ? " filled" : " nodata");
+}
+
+function psyHeatmapHtml(trades){
+  const agg = psyAggregate(trades);
+  const mode = STATE.psyHeatMode==="emotion" ? "emotion" : "score";
+  PSY_HEAT_CELLS = {};
+  if(!agg.total.n){
+    return `<div class="panel psy-heat-panel"><div class="psy-empty">Keine genommenen Trades im aktuellen Filter.</div></div>`;
+  }
+  const head = `<div class="psy-hm-corner"></div>` + agg.cols.map(c=>`<div class="psy-hm-colhead">${PSY_WEEKDAYS_SHORT[c]}</div>`).join("");
+  const body = agg.rows.map(row=>{
+    const cells = agg.cols.map(col=>{
+      const key = row+"|"+col;
+      const a = agg.cells[key];
+      PSY_HEAT_CELLS[key] = { title:`${PSY_WEEKDAYS[col]} · ${row}`, a };
+      return `<div class="${psyCellClass(a,mode)}" style="${psyCellStyle(a,mode)}" data-psycell="${escAttr(key)}" tabindex="${a&&a.n?0:-1}">${psyCellInner(a,mode)}</div>`;
+    }).join("");
+    return `<div class="psy-hm-rowhead" title="${escAttr(row)}">${escHtml(row)}</div>${cells}`;
+  }).join("");
+  const dayRow = `<div class="psy-hm-rowhead psy-hm-total">Alle Sessions</div>` + agg.cols.map(col=>{
+    const key = "Σ|"+col;
+    const a = agg.days[col];
+    PSY_HEAT_CELLS[key] = { title:`${PSY_WEEKDAYS[col]} · alle Sessions`, a };
+    return `<div class="${psyCellClass(a,mode)} psy-hm-total" style="${psyCellStyle(a,mode)}" data-psycell="${escAttr(key)}" tabindex="${a.n?0:-1}">${psyCellInner(a,mode)}</div>`;
+  }).join("");
+  const legend = mode==="emotion"
+    ? PSY_EMOTIONS.map(e=>`<span class="psy-legend-item"><i style="background:${e.color}"></i>${e.label}</span>`).join("")
+    : `<span class="psy-legend-item">1 Katastrophal</span><span class="psy-legend-scale" aria-hidden="true"></span><span class="psy-legend-item">5 Eiskalt</span>`;
+  return `
+    <div class="panel psy-heat-panel">
+      <div class="psy-heat-toolbar">
+        <div class="subtab-row" id="psyHeatModeToggle">
+          <button type="button" data-psymode="score" class="subtab ${mode==="score"?"active":""}">Ø Disziplin</button>
+          <button type="button" data-psymode="emotion" class="subtab ${mode==="emotion"?"active":""}">Dominante Emotion</button>
+        </div>
+        <div class="psy-legend">${legend}<span class="psy-legend-item"><i class="psy-legend-nodata"></i>ohne Psych-Daten</span></div>
+      </div>
+      <div class="psy-hm-scroll">
+        <div class="psy-hm-grid" style="grid-template-columns:minmax(96px,max-content) repeat(${agg.cols.length}, minmax(64px,1fr));">
+          ${head}${body}${dayRow}
+        </div>
+      </div>
+      <div class="psy-tip" id="psyHeatTip" hidden></div>
+      ${psyInsightsHtml(agg)}
+    </div>`;
+}
+
+function psyTooltipHtml(title, a){
+  if(!a || !a.n) return `<div class="psy-tip-title">${escHtml(title)}</div><div class="psy-tip-row">Kein Handel</div>`;
+  const dom = psyDominantEmotion(a);
+  const avg = psyAvgScore(a);
+  const hit = (a.wins+a.losses) ? Math.round(a.wins/(a.wins+a.losses)*100) : null;
+  const rows = [
+    ["Trades", `${a.n}${a.closed<a.n ? ` (${a.n-a.closed} offen)` : ""}`],
+    ["Gesamt-PnL", a.closed ? `<span class="${rpTone(a.sumR)}">${formatR(a.sumR)}</span>${a.eurN ? ` · ${formatEUR(a.sumEur)}` : ""}` : "–"],
+    ["Ø pro Trade", a.closed ? formatR(a.sumR/a.closed) : "–"],
+    ["Trefferquote", hit===null ? "–" : hit+" %"],
+    ["Dominante Emotion", dom ? `${dom.meta.label} (${dom.n}×)` : "–"],
+    ["Ø Disziplin", avg===null ? "–" : `${psyNum(avg,1)} / 5`]
+  ];
+  const missing = a.n - a.psyN;
+  return `<div class="psy-tip-title">${escHtml(title)}</div>`
+    + rows.map(([k,v])=>`<div class="psy-tip-row"><span>${k}</span><b>${v}</b></div>`).join("")
+    + (missing>0 ? `<div class="psy-tip-note">${missing} Trade${missing===1?"":"s"} ohne Emotion/Disziplin erfasst</div>` : "");
+}
+
+/* ---------- Analyse-Insights ---------- */
+function psyInsightsHtml(agg){
+  const scored = agg.total.scoreN, emoN = Object.values(agg.byEmotion).reduce((x,a)=>x+a.n,0);
+  const coverage = `Grundlage: ${agg.total.psyN} von ${agg.total.n} Trades mit Psych-Daten im aktuellen Filter.`;
+  if(!agg.total.psyN){
+    return `<div class="psy-insights"><div class="psy-insight-empty">Noch keine Trades mit Hauptemotion oder Disziplin-Score. Erfasse beides im Trade-Formular unter <b>Psychologie</b> – ab dann füllt sich die Heatmap automatisch.</div></div>`;
+  }
+  const items = [];
+
+  // 1) Wann bricht die Disziplin ein? – Zeitfenster (Tag × Session) mit dem niedrigsten Ø-Score.
+  const windows = Object.keys(agg.cells).map(k=>({ k, a:agg.cells[k] })).filter(x=>x.a.scoreN>=PSY_MIN_CELL_N);
+  if(windows.length){
+    windows.sort((x,y)=> psyAvgScore(x.a)-psyAvgScore(y.a) || x.a.sumR-y.a.sumR);
+    const w = windows[0]; const [row,col] = w.k.split("|");
+    const avg = psyAvgScore(w.a);
+    const dom = psyDominantEmotion(w.a);
+    const rTxt = w.a.closed ? ` – ${formatR(w.a.sumR)} gesamt, Ø ${formatR(w.a.sumR/w.a.closed)} pro Trade` : "";
+    items.push(`<div class="psy-insight ${avg<3?"warn":""}"><div class="psy-insight-q">Wann bricht deine Disziplin am ehesten ein?</div>
+      <div class="psy-insight-a"><b>${PSY_WEEKDAYS[+col]} · ${escHtml(row)}</b> ist dein schwächstes Zeitfenster: Ø ${psyNum(avg,1)}/5 Disziplin${dom ? `, meist <b>${dom.meta.label}</b>` : ""} (${w.a.scoreN} bewertete Trades${rTxt}).</div></div>`);
+  }
+  // …und an welchem Wochentag am häufigsten (Anteil der Trades mit Score ≤ 2)?
+  const dayRates = agg.days.map((a,i)=>({i,a})).filter(x=>x.a.scoreN>=PSY_MIN_CELL_N && x.a.lowScoreN>0);
+  if(dayRates.length){
+    dayRates.sort((x,y)=> y.a.lowScoreN/y.a.scoreN - x.a.lowScoreN/x.a.scoreN || x.a.sumR-y.a.sumR);
+    const d = dayRates[0];
+    items.push(`<div class="psy-insight"><div class="psy-insight-q">An welchem Wochentag am häufigsten?</div>
+      <div class="psy-insight-a">Am <b>${PSY_WEEKDAYS[d.i]}</b>: ${Math.round(d.a.lowScoreN/d.a.scoreN*100)} % deiner bewerteten Trades mit Disziplin 1–2 (${d.a.lowScoreN} von ${d.a.scoreN}).</div></div>`);
+  }
+  if(!windows.length && scored){
+    items.push(`<div class="psy-insight"><div class="psy-insight-q">Wann bricht deine Disziplin am ehesten ein?</div><div class="psy-insight-a">Noch kein Zeitfenster mit mindestens ${PSY_MIN_CELL_N} bewerteten Trades.</div></div>`);
+  }
+
+  // 2) Welche Emotion kostet am meisten Geld? – niedrigste R-Summe (nur geschlossene Trades).
+  const emos = Object.keys(agg.byEmotion).map(k=>({ meta:psyEmotionMeta(k), a:agg.byEmotion[k] })).filter(x=>x.a.closed>0);
+  if(emos.length){
+    emos.sort((x,y)=> x.a.sumR-y.a.sumR);
+    const worst = emos[0];
+    const best = emos[emos.length-1];
+    const hit = (worst.a.wins+worst.a.losses) ? Math.round(worst.a.wins/(worst.a.wins+worst.a.losses)*100)+" % Trefferquote" : "";
+    const eur = worst.a.eurN ? ` (${formatEUR(worst.a.sumEur)})` : "";
+    const answer = worst.a.sumR<0
+      ? `<b>${worst.meta.label}</b> kostet dich am meisten: <span class="neg">${formatR(worst.a.sumR)}</span>${eur} über ${worst.a.closed} Trade${worst.a.closed===1?"":"s"} – Ø ${formatR(worst.a.sumR/worst.a.closed)}${hit?`, ${hit}`:""}.`
+      : `Aktuell steht keine Emotion im Minus. Am schwächsten: <b>${worst.meta.label}</b> mit ${formatR(worst.a.sumR)}.`;
+    const bestTxt = (best!==worst && best.a.sumR>0) ? ` Am meisten verdienst du mit <b>${best.meta.label}</b> (<span class="pos">${formatR(best.a.sumR)}</span>).` : "";
+    items.push(`<div class="psy-insight ${worst.a.sumR<0?"warn":""}"><div class="psy-insight-q">Welche Emotion kostet dich am meisten Geld?</div><div class="psy-insight-a">${answer}${bestTxt}</div></div>`);
+  }
+
+  // 3) Zahlt sich Disziplin aus? – Score 4–5 vs. 1–2 im direkten Vergleich.
+  const hi = agg.byScoreBand.high, lo = agg.byScoreBand.low;
+  if(hi.closed && lo.closed){
+    items.push(`<div class="psy-insight"><div class="psy-insight-q">Zahlt sich Disziplin aus?</div>
+      <div class="psy-insight-a">Disziplin 4–5: Ø <span class="${rpTone(hi.sumR)}">${formatR(hi.sumR/hi.closed)}</span> pro Trade (${hi.closed}) · Disziplin 1–2: Ø <span class="${rpTone(lo.sumR)}">${formatR(lo.sumR/lo.closed)}</span> (${lo.closed}).</div></div>`);
+  }
+
+  const few = agg.total.psyN < PSY_FEW_DATA_N
+    ? ` Noch wenige Daten – lies das als Tendenz, nicht als Statistik.` : "";
+  return `<div class="psy-insights">${items.join("")}<div class="psy-insight-foot">${coverage}${few}${emoN||scored ? "" : ""}</div></div>`;
+}
+
+/* ---------- Interaktion (nur lokal) ---------- */
+function refreshPsyHeatmap(){
+  const wrap = document.getElementById("psyHeatmapWrap");
+  if(!wrap) return;
+  wrap.innerHTML = psyHeatmapHtml(getBerichtFilteredTrades());
+  wirePsyHeatmap();
+}
+function wirePsyHeatmap(){
+  const wrap = document.getElementById("psyHeatmapWrap");
+  if(!wrap) return;
+  const toggle = document.getElementById("psyHeatModeToggle");
+  if(toggle) toggle.addEventListener("click", (e)=>{
+    const btn = e.target.closest("[data-psymode]");
+    if(!btn || btn.dataset.psymode===STATE.psyHeatMode) return;
+    STATE.psyHeatMode = btn.dataset.psymode;
+    refreshPsyHeatmap();
+  });
+  const panel = wrap.querySelector(".psy-heat-panel");
+  const tip = document.getElementById("psyHeatTip");
+  if(!panel || !tip) return;
+  let pinned = null;
+  const show = (cell)=>{
+    const info = PSY_HEAT_CELLS[cell.dataset.psycell];
+    if(!info) return;
+    tip.innerHTML = psyTooltipHtml(info.title, info.a);
+    tip.hidden = false;
+    const pr = panel.getBoundingClientRect(), cr = cell.getBoundingClientRect();
+    const tw = tip.offsetWidth, th = tip.offsetHeight;
+    let left = cr.left - pr.left + cr.width/2 - tw/2;
+    left = Math.max(8, Math.min(left, pr.width - tw - 8));
+    let top = cr.top - pr.top - th - 8;
+    if(top < 8) top = cr.bottom - pr.top + 8; // kein Platz oben → unter die Zelle
+    tip.style.left = left+"px"; tip.style.top = top+"px";
+  };
+  const hide = ()=>{ if(!pinned) tip.hidden = true; };
+  panel.querySelectorAll("[data-psycell]").forEach(cell=>{
+    cell.addEventListener("mouseenter", ()=>{ if(!pinned) show(cell); });
+    cell.addEventListener("mouseleave", hide);
+    cell.addEventListener("focus", ()=> show(cell));
+    cell.addEventListener("blur", ()=>{ pinned = null; tip.hidden = true; });
+    // Touch/Klick: Tooltip anheften bzw. wieder lösen
+    cell.addEventListener("click", ()=>{
+      if(pinned===cell){ pinned = null; tip.hidden = true; return; }
+      pinned = cell; show(cell);
+    });
+  });
+}
+
 function entryModelBreakdownHtml(trades){
   const byArt = {};
   trades.forEach(t=>{ if(t.art) (byArt[t.art] = byArt[t.art] || []).push(t); });
@@ -31133,6 +31553,7 @@ function wireBerichtFilterPanelBody(){
 function wireBerichtBody(){
   DriveBackupUI.wire();
   wireChallenge20Picker();
+  wirePsyHeatmap();
 
   document.querySelectorAll("[data-openentrymodel]").forEach(el=>{
     el.addEventListener("click", ()=> openEntryModelDetail(el.dataset.openentrymodel));
@@ -31396,6 +31817,8 @@ function tradesToRows(trades){
     row["Warum nicht genommen"]=t.grundNichtGenommen||"";
     row["Wie ist der Trade entstanden"]=t.notizen||"";
     row["Emotionen vor/nach dem Trade"]=t.emotionen||"";
+    row.Hauptemotion=psyEmotionLabel(t.emotion);
+    row["Disziplin-Score"]=psyScoreOf(t)??"";
     row["Was besser machen"]=t.verbesserung||"";
     return row;
   });
@@ -31593,6 +32016,7 @@ function kiTradeBlock(t, meta){
   if(t.eurResult!==null && t.eurResult!==undefined) money.push(`Ergebnis €: ${kiEur(t.eurResult)}`);
   if(money.length) lines.push(`- ${money.join(" | ")}`);
   if(t.area==="eod") lines.push(`- Setup genommen: ${kiVal(t.genommen)}${t.copiedFromLiveId ? " (Kopie eines Live-Trades)" : ""}`);
+  if(t.emotion || psyScoreOf(t)!==null) lines.push(`- Psychologie: Hauptemotion ${psyEmotionLabel(t.emotion)||"–"} | Disziplin ${psyScoreOf(t)??"–"}/5`);
   const texts = [
     ["Kriterien – wieso nicht erfüllt", t.kriterienBegruendung],
     ["Warum nicht genommen", t.grundNichtGenommen],
