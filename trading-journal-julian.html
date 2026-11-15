@@ -1640,6 +1640,7 @@
   .area-toggle button[data-area=backtest].on{background:var(--ui-accent); border-color:var(--ui-accent); color:#1a1330;}
   .area-toggle button[data-area=eod].on{background:var(--ui-warning); border-color:var(--ui-warning);}
   .area-toggle button[data-mode20].on{background:var(--ui-info); border-color:var(--ui-info);}
+  .area-toggle button[data-weekly].on{background:var(--ui-accent); border-color:var(--ui-accent); color:#1a1330;}
 
   .equity-card{background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:var(--ui-radius-panel); padding:18px; margin-bottom:26px;}
 
@@ -1675,6 +1676,46 @@
   .compare-table td:first-child{font-family:var(--ui-font-body); color:var(--ui-text-muted); font-size:13px;}
   .compare-table tr:last-child td{border-bottom:none;}
   .compare-rings{display:flex; flex-direction:column; gap:16px;}
+  /* Bericht → "Wochenanalyse": KW-Navigation, Drop-Zone, Galerie, Wochen-Archiv (siehe weeklyPageHtml) */
+  .wk-head{display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:14px 24px; margin-bottom:16px;}
+  .wk-nav{display:flex; align-items:center; gap:14px;}
+  .wk-arrow{width:38px; height:38px; border-radius:10px; font-size:22px; line-height:1; cursor:pointer;
+    background:var(--ui-surface-subtle); border:1px solid var(--ui-border-strong); color:var(--ui-text-muted);}
+  .wk-arrow:hover{color:var(--ui-text); border-color:var(--ui-text-faint);}
+  .wk-title{min-width:170px;}
+  .wk-kw{font-size:22px; font-weight:800; color:var(--ui-text); display:flex; align-items:baseline; gap:8px; flex-wrap:wrap;}
+  .wk-kw span{font-size:14px; font-weight:600; color:var(--ui-text-faint);}
+  .wk-kw em{font-style:normal; font-size:11px; font-weight:800; letter-spacing:.5px; text-transform:uppercase; color:var(--ui-accent);}
+  .wk-range{font-size:13px; color:var(--ui-text-muted); margin-top:2px;}
+  .wk-jump{display:flex; flex-wrap:wrap; align-items:center; gap:10px;}
+  .wk-field{display:inline-flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--ui-text-faint); text-transform:uppercase; letter-spacing:.4px;}
+  .wk-field input{background:var(--ui-surface-subtle); border:1px solid var(--ui-border-strong); color:var(--ui-text); border-radius:8px; padding:6px 8px; font-size:13px;}
+  .wk-field input[type=number]{width:64px; -moz-appearance:textfield;}
+  .wk-field input#wkYearInput{width:78px;}
+  .wk-field input[type=number]::-webkit-inner-spin-button, .wk-field input[type=number]::-webkit-outer-spin-button{-webkit-appearance:none; margin:0;}
+  .wk-drop{display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; text-align:center; cursor:pointer;
+    padding:26px 18px; margin-bottom:18px; border-radius:var(--ui-radius-card); border:1.5px dashed var(--ui-border-strong);
+    background:var(--ui-surface-subtle); color:var(--ui-text-muted); transition:border-color .15s, background .15s; outline:none;}
+  .wk-drop:hover, .wk-drop:focus-visible{border-color:var(--ui-text-faint); color:var(--ui-text);}
+  .wk-drop.over{border-color:var(--ui-accent); background:color-mix(in srgb, var(--ui-accent) 10%, var(--ui-surface-subtle)); color:var(--ui-text);}
+  .wk-drop.busy{opacity:.6; pointer-events:none;}
+  .wk-drop-icon svg{width:30px; height:30px;}
+  .wk-drop-title{font-size:14.5px; font-weight:600;}
+  .wk-drop-sub{font-size:12.5px; color:var(--ui-text-faint);}
+  .wk-gallery-head{font-size:12px; font-weight:700; letter-spacing:.4px; text-transform:uppercase; color:var(--ui-text-faint); margin-bottom:10px;}
+  .wk-gallery{display:grid; grid-template-columns:repeat(auto-fill, minmax(320px,1fr)); gap:14px; margin-bottom:22px;}
+  .wk-shot{margin:0; display:flex; flex-direction:column; background:var(--ui-surface); border:1px solid var(--ui-border); border-radius:var(--ui-radius-card); overflow:hidden;}
+  .wk-shot-img{display:block; padding:0; border:none; background:var(--ui-surface-subtle); cursor:zoom-in; aspect-ratio:16 / 10; overflow:hidden;}
+  .wk-shot-img img{width:100%; height:100%; object-fit:contain; display:block;}
+  .wk-shot figcaption{padding:9px 12px 11px; display:flex; flex-direction:column; gap:7px;}
+  .wk-shot-meta{display:flex; align-items:center; justify-content:space-between; gap:8px; font-size:11.5px; color:var(--ui-text-faint);}
+  .wk-shot-del{background:transparent; border:none; color:var(--ui-text-faint); cursor:pointer; font-size:13px; padding:2px 6px; border-radius:6px;}
+  .wk-shot-del:hover{color:var(--ui-negative); background:var(--ui-negative-soft);}
+  .wk-shot-note{background:transparent; border:1px solid transparent; border-radius:7px; padding:5px 7px; color:var(--ui-text); font-size:13px;}
+  .wk-shot-note:hover{border-color:var(--ui-border);} .wk-shot-note:focus{border-color:var(--ui-border-strong); outline:none;}
+  .wk-empty{text-align:center; padding:22px 16px; color:var(--ui-text-faint); font-size:13.5px; margin-bottom:18px;}
+  .wk-arch-row{display:flex; flex-wrap:wrap; gap:8px;}
+  .wk-arch-chip span{font-size:11px; opacity:.7; margin-left:4px;}
   /* Bericht → "20 Trades": Runden-Auswahl + Gegenüberstellungstabelle */
   .cmp20-picker{margin-bottom:14px;}
   .cmp20-picker-head{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
@@ -16962,7 +17003,7 @@ html[data-motion="on"] :is(.mjmp-nav-btn,.mjmp-nav-add):active{transform:scale(.
 // HEUTIGE Datum setzen (Format JJJJ.MM.TT) — das war schon zweimal vergessen worden.
 // Diese Zeile IMMER als Erstes prüfen, bevor irgendetwas anderes an trading-journal.html
 // bearbeitet wird, egal wie klein die eigentliche Änderung ist.
-const APP_VERSION = "2026.11.09-psy-heatmap"; // [Momo-Einbau 2026.10.01]
+const APP_VERSION = "2026.11.15-wochenanalyse"; // [Momo-Einbau 2026.10.01]
 
 const DEFAULT_CONFIG = {
   markets:      ["XAUUSD","GBPUSD","DAX","BTCUSD","EURUSD"],
@@ -17466,6 +17507,7 @@ const LS_ENTRYCHECK = "tj_entrychecklist_v1"; // Entry-Checklisten pro Entry-Mod
 const LS_NEWS = "tj_news_v1"; // Wirtschafts-News, manuell gepflegt: [{id,date,time,country,impact,title}]
 const LS_MENTALEVAL = "tj_mentaleval_v1"; // Freitext-Auswertung pro Mental-Wochen-Zusammenfassung: { "JAHR-MONAT-WOCHENINDEX": "Text" }
 const LS_BUECHER = "tj_buecher_v1"; // Einträge auf der "Mindset of a Trader"-Seite: [{id,titel,autor,genre,image,text,createdAt,updatedAt}]
+const LS_WEEKLY = "tj_weekly_shots_v1"; // Bericht → "Wochenanalyse": Screenshot-Einträge je KW [{id, weekKey, ref, name, note, createdAt}]
 const LS_ANALYSE = "tj_analyse_v1"; // Live-Reiter "Analyse": aktueller Bias-Stand je Markt { marketKey: {bias,marktdynamik,kerzendynamik,phase,updatedAt} }
 const LS_SCHEMA_VERSION = "tj_schema_version_v1"; // rein technische lokale Schema-Version; nicht Backup-/Cloud-Inhalt
 const LS_RECOVERY = "tj_recovery_checkpoint_v1"; // Import/Restore-Rollback; lokal, nie Backup/Cloud
@@ -17567,7 +17609,8 @@ const JULIAN_DOMAIN_STORES = Object.freeze({
   news: Object.freeze({ owner:"NewsDomain", stateKey:"news", storageKey:LS_NEWS, backupKey:"news", accountScoped:false }),
   mentalWeekEvaluations: Object.freeze({ owner:"MentalDomain", stateKey:"mentalWeekEvaluations", storageKey:LS_MENTALEVAL, backupKey:"mentalWeekEvaluations", accountScoped:false }),
   buecher: Object.freeze({ owner:"MindsetLibraryDomain", stateKey:"buecher", storageKey:LS_BUECHER, backupKey:"buecher", accountScoped:false }),
-  analyseEntries: Object.freeze({ owner:"MarketAnalysisDomain", stateKey:"analyseEntries", storageKey:LS_ANALYSE, backupKey:"analyseEntries", accountScoped:false })
+  analyseEntries: Object.freeze({ owner:"MarketAnalysisDomain", stateKey:"analyseEntries", storageKey:LS_ANALYSE, backupKey:"analyseEntries", accountScoped:false }),
+  weeklyShots: Object.freeze({ owner:"WeeklyReviewDomain", stateKey:"weeklyShots", storageKey:LS_WEEKLY, backupKey:"weeklyShots", accountScoped:false })
 });
 
 const JournalChangeBus = (() => {
@@ -18387,7 +18430,8 @@ function buildCanonicalDomainPayload(){
     entryChecklists:STATE.entryChecklists,
     mentalWeekEvaluations:STATE.mentalWeekEvaluations,
     buecher:STATE.buecher,
-    analyseEntries:STATE.analyseEntries
+    analyseEntries:STATE.analyseEntries,
+    weeklyShots:STATE.weeklyShots
   };
 }
 
@@ -18410,6 +18454,7 @@ function restoreCanonicalDomainPayload(payload){
   STATE.mentalWeekEvaluations = payload.mentalWeekEvaluations && typeof payload.mentalWeekEvaluations==="object" ? payload.mentalWeekEvaluations : {};
   STATE.buecher = Array.isArray(payload.buecher) ? payload.buecher : [];
   STATE.analyseEntries = payload.analyseEntries && typeof payload.analyseEntries==="object" ? payload.analyseEntries : {};
+  STATE.weeklyShots = Array.isArray(payload.weeklyShots) ? payload.weeklyShots : [];
 }
 
 const RecoveryManager = (() => {
@@ -19298,6 +19343,7 @@ const MediaManager = (() => {
       ["htf","ltf","sonstige"].forEach(k=>(sh[k]||[]).forEach(add));
     });
     (STATE.insights||[]).forEach(i=>(i.screenshots||[]).forEach(add));
+    (STATE.weeklyShots||[]).forEach(w=>add(w && w.ref));
     (STATE.buecher||[]).forEach(b=>{
       add(b.image);
       if(b.file && b.file.mediaRef) add(b.file.mediaRef);
@@ -19836,6 +19882,7 @@ function backupDataCounts(payload){
     mentalWeekEvaluations:(payload.mentalWeekEvaluations && typeof payload.mentalWeekEvaluations==="object") ? Object.keys(payload.mentalWeekEvaluations).length : 0,
     books:Array.isArray(payload.buecher) ? payload.buecher.length : 0,
     analysisMarkets:(payload.analyseEntries && typeof payload.analyseEntries==="object") ? Object.keys(payload.analyseEntries).length : 0,
+    weeklyShots:Array.isArray(payload.weeklyShots) ? payload.weeklyShots.length : 0,
     media:Array.isArray(payload.mediaBundle) ? payload.mediaBundle.length : 0
   });
 }
@@ -19919,6 +19966,7 @@ function collectManagedMediaRefsFromPayload(payload){
     ["htf","ltf","sonstige"].forEach(k=>(Array.isArray(sh[k])?sh[k]:[]).forEach(add));
   });
   (payload.insights||[]).forEach(i=>(Array.isArray(i&&i.screenshots)?i.screenshots:[]).forEach(add));
+  (payload.weeklyShots||[]).forEach(w=>add(w&&w.ref));
   (payload.buecher||[]).forEach(b=>{
     if(!b)return;
     add(b.image);
@@ -20008,6 +20056,7 @@ function validateBackupPayload(data,opts){
     ["mentalWeekEvaluations",v=>v===undefined||(v&&typeof v==="object"&&!Array.isArray(v))],
     ["buecher",v=>v===undefined||Array.isArray(v)],
     ["analyseEntries",v=>v===undefined||(v&&typeof v==="object"&&!Array.isArray(v))],
+    ["weeklyShots",v=>v===undefined||Array.isArray(v)],
     ["mediaBundle",v=>v===undefined||Array.isArray(v)]
   ];
   for(const [key,isValid] of optionalChecks){
@@ -20120,6 +20169,7 @@ async function applyImportedPayload(data,opts){
     if(data.mentalWeekEvaluations&&typeof data.mentalWeekEvaluations==="object") STATE.mentalWeekEvaluations=JSON.parse(JSON.stringify(data.mentalWeekEvaluations));
     if(Array.isArray(data.buecher)) STATE.buecher=JSON.parse(JSON.stringify(data.buecher));
     if(data.analyseEntries&&typeof data.analyseEntries==="object") STATE.analyseEntries=JSON.parse(JSON.stringify(data.analyseEntries));
+    if(Array.isArray(data.weeklyShots)) STATE.weeklyShots=JSON.parse(JSON.stringify(data.weeklyShots));
 
     JournalInvariantEngine.repairState({persist:false,origin:source});
     await MediaManager.migrateLegacyState({persist:false,origin:source});
@@ -20263,7 +20313,8 @@ function loadBootDomainState(){
     news:asArray(parseStoredJson(LS_NEWS,[])),
     mentalWeekEvaluations:asObject(parseStoredJson(LS_MENTALEVAL,{})),
     buecher:asArray(parseStoredJson(LS_BUECHER,[])),
-    analyseEntries:asObject(parseStoredJson(LS_ANALYSE,{}))
+    analyseEntries:asObject(parseStoredJson(LS_ANALYSE,{})),
+    weeklyShots:asArray(parseStoredJson(LS_WEEKLY,[]))
   };
 }
 
@@ -20683,6 +20734,8 @@ const STATE = {
   psyHeatMode: "score", // Psychologische Heatmap: "score" (Ø Disziplin) oder "emotion" (dominante Emotion)
   berichtFiltersExpanded: true,
   berichtCompareMode: "gesamt", // "gesamt" | "vergleich" (nur bei Live+EOD gleichzeitig aktiv)
+  berichtWeekly: false,      // Bericht-Modus "Wochenanalyse": eigene Seite mit Screenshots je Kalenderwoche
+  weeklyWeekKey: null,       // aktuell angezeigte KW ("2026-W46"); null = laufende Woche
   bericht20: false,          // Bericht-Modus "20 Trades": Gegenüberstellung der 20er-Runden statt Live/EOD
   bericht20Rounds: null,     // gewählte Runden (1-basiert); null = Standard (die letzten zwei Runden)
   notesSearchQuery: "",
@@ -21135,7 +21188,8 @@ const SyncEntityAdapters = (() => {
     news:arrayById("news"),
     mentalWeekEvaluations:objectByKey("mentalWeekEvaluations"),
     buecher:arrayById("buecher"),
-    analyseEntries:objectByKey("analyseEntries")
+    analyseEntries:objectByKey("analyseEntries"),
+    weeklyShots:arrayById("weeklyShots")
   };
 
   function adapter(domain){
@@ -24785,7 +24839,7 @@ const JournalViewModules = (() => {
     }),
     bericht:standard({
       id:"bericht",label:"Bericht",
-      domains:["trades","config","diaryEntries","mentalWeekEvaluations"],
+      domains:["trades","config","diaryEntries","mentalWeekEvaluations","weeklyShots"],
       render:renderBericht,
       wire:wireBericht,
       afterMount:()=>{renderCharts();stopSessionClock();}
@@ -30180,7 +30234,7 @@ function renderBericht(){
 
     ${berichtTopRowHtml()}
 
-    <div class="panel filter-panel">
+    <div class="panel filter-panel" id="berichtFilterPanel"${STATE.berichtWeekly?" hidden":""}>
       <div class="filter-panel-title-row">
         <div class="filter-panel-title" id="filterPanelTitle">FILTER${!STATE.berichtFiltersExpanded ? activeFilterCountLabel() : ""}</div>
         <div class="filter-panel-title-actions">
@@ -30191,18 +30245,273 @@ function renderBericht(){
       <div id="filterPanelBody">${filterPanelBodyHtml()}</div>
     </div>
 
-    <div id="berichtBody">${berichtBodyHtml()}</div>
+    <div id="berichtBody"${STATE.berichtWeekly?" hidden":""}>${berichtBodyHtml()}</div>
+    <div id="berichtWeeklyPage"${STATE.berichtWeekly?"":" hidden"}>${STATE.berichtWeekly ? weeklyPageHtml() : ""}</div>
   `;
 }
+
+/* =========================================================================
+   BERICHT → WOCHENANALYSE
+   Eigene Seite im Bericht (Modus wie "20 Trades"): Screenshots der Wochenanalyse je
+   Kalenderwoche (ISO-KW, Woche Mo–So). Hochladen per Klick, Drag & Drop oder Strg+V.
+   Ziel-Woche = die gerade angezeigte KW (Standard: laufende Woche, per Pfeilen, KW/Jahr
+   oder Datum wählbar).
+   Daten: STATE.weeklyShots (Domain "weeklyShots", localStorage + Backup + Drive-Sync);
+   die Bilder selbst liegen im MediaManager (IndexedDB) und sind über w.ref referenziert.
+   Kleine PNGs werden unverändert gespeichert (Text bleibt scharf), große auf 2400 px
+   als JPEG komprimiert, damit Backups nicht ausufern.
+   Alle Interaktionen aktualisieren nur #berichtWeeklyPage – kein render().
+   ========================================================================= */
+const WEEKLY_RAW_MAX_BYTES = 1.5 * 1024 * 1024;  // bis zu dieser Größe Original behalten
+const WEEKLY_MAX_WIDTH = 2400;
+
+function wkIsoInfo(d){
+  const t = new Date(Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()));
+  const day = t.getUTCDay() || 7;
+  t.setUTCDate(t.getUTCDate() + 4 - day);            // Donnerstag der Woche bestimmt das ISO-Jahr
+  const year = t.getUTCFullYear();
+  const week = Math.ceil(((t - Date.UTC(year,0,1)) / 86400000 + 1) / 7);
+  return { year, week };
+}
+function wkKeyOf(d){ const i = wkIsoInfo(d); return `${i.year}-W${String(i.week).padStart(2,"0")}`; }
+function wkParseKey(key){
+  const m = /^(\d{4})-W(\d{1,2})$/.exec(String(key||""));
+  return m ? { year:+m[1], week:+m[2] } : null;
+}
+function wkWeeksInYear(year){ return wkIsoInfo(new Date(year,11,28)).week; }
+function wkKeyFromYearWeek(year, week){
+  const w = Math.max(1, Math.min(wkWeeksInYear(year), week));
+  return `${year}-W${String(w).padStart(2,"0")}`;
+}
+function wkMonday(key){
+  const p = wkParseKey(key) || wkIsoInfo(new Date());
+  const mon = startOfWeek(new Date(p.year, 0, 4));   // 4. Januar liegt immer in KW 1
+  mon.setDate(mon.getDate() + (p.week-1)*7);
+  return mon;
+}
+function wkShiftKey(key, dir){ const d = wkMonday(key); d.setDate(d.getDate() + 7*dir); return wkKeyOf(d); }
+function wkCurrentKey(){ return wkKeyOf(new Date()); }
+function wkActiveKey(){ return wkParseKey(STATE.weeklyWeekKey) ? STATE.weeklyWeekKey : wkCurrentKey(); }
+function wkFmt(d, withYear){
+  const s = String(d.getDate()).padStart(2,"0") + "." + String(d.getMonth()+1).padStart(2,"0") + ".";
+  return withYear ? s + d.getFullYear() : s;
+}
+function wkRangeLabel(key){
+  const mon = wkMonday(key), sun = new Date(mon); sun.setDate(mon.getDate()+6);
+  return `${wkFmt(mon)} – ${wkFmt(sun, true)}`;
+}
+function wkLabel(key){ const p = wkParseKey(key); return p ? `KW ${p.week} · ${p.year}` : key; }
+function wkIsoDate(d){ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`; }
+function wkShotsFor(key){
+  return (STATE.weeklyShots||[]).filter(w=>w && w.weekKey===key).sort((a,b)=>(a.createdAt||0)-(b.createdAt||0));
+}
+
+function weeklyPageHtml(){
+  const key = wkActiveKey();
+  const p = wkParseKey(key);
+  const isCurrent = key===wkCurrentKey();
+  return `
+    <div class="wk-page">
+      <div class="panel wk-head">
+        <div class="wk-nav">
+          <button type="button" class="wk-arrow" data-wknav="-1" title="Vorherige Woche" aria-label="Vorherige Woche">‹</button>
+          <div class="wk-title">
+            <div class="wk-kw">KW ${p.week} <span>${p.year}</span>${isCurrent ? `<em>diese Woche</em>` : ""}</div>
+            <div class="wk-range">${wkRangeLabel(key)}</div>
+          </div>
+          <button type="button" class="wk-arrow" data-wknav="1" title="Nächste Woche" aria-label="Nächste Woche">›</button>
+        </div>
+        <div class="wk-jump">
+          <button type="button" class="btn btn-sm btn-ghost" data-wknav="today"${isCurrent?" disabled":""}>Diese Woche</button>
+          <label class="wk-field">KW <input type="number" id="wkKwInput" min="1" max="${wkWeeksInYear(p.year)}" value="${p.week}"></label>
+          <label class="wk-field">Jahr <input type="number" id="wkYearInput" min="2000" max="2100" value="${p.year}"></label>
+          <label class="wk-field">Datum <input type="date" id="wkDateInput" value="${wkIsoDate(wkMonday(key))}" title="Beliebiges Datum wählen – springt in dessen Kalenderwoche"></label>
+        </div>
+      </div>
+
+      <div class="wk-drop" id="wkDrop" tabindex="0" role="button" aria-label="Screenshots hinzufügen">
+        <input type="file" id="wkFileInput" accept="image/png,image/jpeg,image/webp" multiple hidden>
+        <div class="wk-drop-icon" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-8 9"/></svg></div>
+        <div class="wk-drop-title">PNG hierher ziehen, mit <b>Strg+V</b> einfügen oder klicken</div>
+        <div class="wk-drop-sub">Wird gespeichert in <b>${wkLabel(key)}</b> · ${wkRangeLabel(key)}</div>
+      </div>
+
+      <div id="wkGallery">${weeklyGalleryHtml(key)}</div>
+      ${weeklyArchiveHtml(key)}
+    </div>`;
+}
+
+function weeklyGalleryHtml(key){
+  const shots = wkShotsFor(key);
+  if(!shots.length){
+    return `<div class="wk-empty">Für ${wkLabel(key)} sind noch keine Screenshots hinterlegt.</div>`;
+  }
+  const items = shots.map((w,i)=>{
+    const d = new Date(w.createdAt||Date.now());
+    const added = `${["So","Mo","Di","Mi","Do","Fr","Sa"][d.getDay()]} ${wkFmt(d)} · ${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}`;
+    return `
+      <figure class="wk-shot" data-wkshot="${escAttr(w.id)}">
+        <button type="button" class="wk-shot-img" data-wkopen="${escAttr(w.id)}" title="Groß anzeigen (Doppelklick im Bild = Vollbild)">
+          <img ${MediaManager.imgAttrs(w.ref)} alt="Screenshot ${i+1}" loading="lazy">
+        </button>
+        <figcaption>
+          <div class="wk-shot-meta"><span>#${i+1} · hinzugefügt ${added}</span>
+            <button type="button" class="wk-shot-del" data-wkdel="${escAttr(w.id)}" title="Screenshot löschen" aria-label="Screenshot löschen">✕</button>
+          </div>
+          <input type="text" class="wk-shot-note" data-wknote="${escAttr(w.id)}" value="${escAttr(w.note||"")}" placeholder="Notiz (optional)…">
+        </figcaption>
+      </figure>`;
+  }).join("");
+  return `<div class="wk-gallery-head">${shots.length} Screenshot${shots.length===1?"":"s"} in ${wkLabel(key)}</div><div class="wk-gallery">${items}</div>`;
+}
+
+function weeklyArchiveHtml(activeKey){
+  const counts = {};
+  (STATE.weeklyShots||[]).forEach(w=>{ if(w && w.weekKey) counts[w.weekKey] = (counts[w.weekKey]||0) + 1; });
+  const keys = Object.keys(counts).sort().reverse();
+  if(!keys.length) return "";
+  const chips = keys.map(k=>`<button type="button" class="chip wk-arch-chip${k===activeKey?" selected":""}" data-wkgo="${escAttr(k)}" title="${escAttr(wkRangeLabel(k))}">${wkLabel(k)} <span>${counts[k]}</span></button>`).join("");
+  return `<div class="wk-archive"><div class="section-title report-subsection-title">Alle Wochen <span class="section-title-sub">· ${keys.length} mit Screenshots</span></div><div class="wk-arch-row">${chips}</div></div>`;
+}
+
+function setBerichtWeekly(on){
+  STATE.berichtWeekly = !!on;
+  refreshBerichtTopRow();
+  const filter = document.getElementById("berichtFilterPanel");
+  const body = document.getElementById("berichtBody");
+  const page = document.getElementById("berichtWeeklyPage");
+  if(filter) filter.hidden = STATE.berichtWeekly;
+  if(body) body.hidden = STATE.berichtWeekly;
+  if(page){
+    page.hidden = !STATE.berichtWeekly;
+    if(STATE.berichtWeekly) refreshWeeklyPage();
+    else page.innerHTML = "";
+  }
+  // Charts wurden evtl. im versteckten Zustand gezeichnet → beim Zurückkehren neu aufbauen.
+  if(!STATE.berichtWeekly) refreshBerichtBody();
+}
+
+function refreshWeeklyPage(){
+  const page = document.getElementById("berichtWeeklyPage");
+  if(!page || page.hidden) return;
+  page.innerHTML = weeklyPageHtml();
+  wireWeeklyPage();
+  MediaManager.hydrateRoot(page);
+}
+
+function wkGoTo(key){
+  if(!wkParseKey(key)) return;
+  STATE.weeklyWeekKey = key===wkCurrentKey() ? null : key;
+  refreshWeeklyPage();
+}
+
+async function weeklyIngestFiles(fileList){
+  const files = [...(fileList||[])].filter(f=>f && /^image\//.test(f.type||""));
+  if(!files.length){ toast("Bitte Bilddateien (PNG/JPG) verwenden."); return; }
+  const key = wkActiveKey();
+  const drop = document.getElementById("wkDrop");
+  if(drop) drop.classList.add("busy");
+  let saved = 0;
+  try{
+    for(const file of files){
+      const res = (file.size <= WEEKLY_RAW_MAX_BYTES)
+        ? await MediaManager.ingestAttachmentFile(file, {kind:"weekly"})
+        : await MediaManager.ingestImageFile(file, {kind:"weekly", maxWidth:WEEKLY_MAX_WIDTH});
+      const rec = { id:uid(), weekKey:key, ref:res.ref, name:file.name||"", note:"", createdAt:Date.now() };
+      if(JournalMutations.upsertRecord("weeklyShots", rec, {origin:"weekly-upload"})) saved++;
+    }
+  }catch(err){
+    console.error(err);
+    toast("Screenshot konnte nicht gespeichert werden: " + (err && err.message ? err.message : err));
+  }finally{
+    if(drop) drop.classList.remove("busy");
+  }
+  if(saved) toast(`${saved} Screenshot${saved===1?"":"s"} in ${wkLabel(key)} gespeichert.`);
+  refreshWeeklyPage();
+}
+
+function wireWeeklyPage(){
+  const page = document.getElementById("berichtWeeklyPage");
+  if(!page) return;
+  page.querySelectorAll("[data-wknav]").forEach(btn=> btn.addEventListener("click", ()=>{
+    const v = btn.dataset.wknav;
+    wkGoTo(v==="today" ? wkCurrentKey() : wkShiftKey(wkActiveKey(), parseInt(v,10)));
+  }));
+  const kw = document.getElementById("wkKwInput"), yr = document.getElementById("wkYearInput");
+  const jumpYW = ()=>{
+    const y = parseInt(yr.value,10), w = parseInt(kw.value,10);
+    if(y>=2000 && y<=2100 && w>=1) wkGoTo(wkKeyFromYearWeek(y,w));
+  };
+  [kw,yr].forEach(el=>{ if(!el) return;
+    el.addEventListener("change", jumpYW);
+    el.addEventListener("keydown", e=>{ if(e.key==="Enter"){ e.preventDefault(); jumpYW(); } });
+  });
+  const dt = document.getElementById("wkDateInput");
+  if(dt) dt.addEventListener("change", ()=>{ if(dt.value) wkGoTo(wkKeyOf(new Date(dt.value+"T12:00:00"))); });
+
+  const drop = document.getElementById("wkDrop"), input = document.getElementById("wkFileInput");
+  if(drop && input){
+    drop.addEventListener("click", ()=> input.click());
+    drop.addEventListener("keydown", e=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); input.click(); } });
+    input.addEventListener("change", ()=>{ weeklyIngestFiles(input.files); input.value=""; });
+    ["dragenter","dragover"].forEach(ev=> drop.addEventListener(ev, e=>{ e.preventDefault(); drop.classList.add("over"); }));
+    ["dragleave","dragend"].forEach(ev=> drop.addEventListener(ev, ()=> drop.classList.remove("over")));
+    drop.addEventListener("drop", e=>{
+      e.preventDefault(); drop.classList.remove("over");
+      weeklyIngestFiles(e.dataTransfer && e.dataTransfer.files);
+    });
+  }
+  // Daneben fallen gelassene Bilder nicht vom Browser "öffnen" lassen, sondern ebenfalls übernehmen.
+  const wrap = page.querySelector(".wk-page");
+  if(wrap){
+    wrap.addEventListener("dragover", e=>{ if(e.dataTransfer && [...e.dataTransfer.types].includes("Files")) e.preventDefault(); });
+    wrap.addEventListener("drop", e=>{
+      if(e.defaultPrevented || !(e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length)) return;
+      e.preventDefault(); weeklyIngestFiles(e.dataTransfer.files);
+    });
+  }
+
+  page.querySelectorAll("[data-wkopen]").forEach(btn=> btn.addEventListener("click", ()=>{
+    const w = (STATE.weeklyShots||[]).find(x=>x.id===btn.dataset.wkopen);
+    if(w) openLightbox(w.ref);
+  }));
+  page.querySelectorAll("[data-wkdel]").forEach(btn=> btn.addEventListener("click", ()=>{
+    if(!confirm("Diesen Screenshot aus der Wochenanalyse löschen?")) return;
+    if(JournalMutations.removeRecord("weeklyShots", btn.dataset.wkdel, {origin:"weekly-delete"})) refreshWeeklyPage();
+  }));
+  page.querySelectorAll("[data-wknote]").forEach(inp=> inp.addEventListener("change", ()=>{
+    const w = (STATE.weeklyShots||[]).find(x=>x.id===inp.dataset.wknote);
+    if(!w) return;
+    JournalMutations.upsertRecord("weeklyShots", Object.assign({}, w, {note:inp.value.trim()}), {origin:"weekly-note"});
+  }));
+  page.querySelectorAll("[data-wkgo]").forEach(btn=> btn.addEventListener("click", ()=> wkGoTo(btn.dataset.wkgo)));
+}
+
+// Strg+V: nur wenn die Wochenanalyse sichtbar ist und kein Trade-Formular offen ist
+// (dort gilt weiterhin handlePasteEvent). Einmalig global registriert.
+document.addEventListener("paste", (e)=>{
+  if(STATE.draft) return;
+  const page = document.getElementById("berichtWeeklyPage");
+  if(!page || page.hidden || !STATE.berichtWeekly || STATE.view!=="bericht") return;
+  const items = (e.clipboardData && e.clipboardData.items) || [];
+  const files = [];
+  for(const item of items){ if(item.kind==="file" && /^image\//.test(item.type||"")){ const f = item.getAsFile(); if(f) files.push(f); } }
+  if(!files.length) return;
+  e.preventDefault();
+  weeklyIngestFiles(files);
+});
 
 function berichtTopRowHtml(){
   // Im "20 Trades"-Modus sind Live/EOD bewusst nicht als aktiv markiert — ein Klick darauf
   // verlässt den Modus wieder (siehe wireBerichtTopRow), die Bereichsauswahl bleibt erhalten.
+  // Im Modus "Wochenanalyse" ist nur dieser Knopf aktiv; ein Klick auf einen anderen verlässt ihn.
+  const weekly = !!STATE.berichtWeekly;
   const areaBtns = ["live","eod"].map(a=>{
-    const on = !STATE.bericht20 && STATE.berichtAreas[a];
+    const on = !weekly && !STATE.bericht20 && STATE.berichtAreas[a];
     return `<button data-area="${a}" class="${on?"on":""}">${AREA_LABEL[a]}</button>`;
-  }).join("") + `<button data-mode20="1" class="${STATE.bericht20?"on":""}" title="20er-Runden deiner Live-Trades gegenüberstellen">20 Trades</button>`;
-  const canCompare = !STATE.bericht20 && STATE.berichtAreas.live && STATE.berichtAreas.eod;
+  }).join("") + `<button data-mode20="1" class="${!weekly && STATE.bericht20?"on":""}" title="20er-Runden deiner Live-Trades gegenüberstellen">20 Trades</button>`
+    + `<button data-weekly="1" class="${weekly?"on":""}" title="Screenshots deiner Wochenanalyse je Kalenderwoche">Wochenanalyse</button>`;
+  const canCompare = !weekly && !STATE.bericht20 && STATE.berichtAreas.live && STATE.berichtAreas.eod;
   const compareActive = canCompare && STATE.berichtCompareMode === "vergleich";
   return `
     <div class="row-between" id="berichtTopRow" style="align-items:flex-start;">
@@ -31472,6 +31781,11 @@ function wireBericht(){
   wireBerichtFilterPanelHeader();
   wireBerichtFilterPanelBody();
   wireBerichtBody();
+  // Rückkehr in den Bericht, während der Modus "Wochenanalyse" noch aktiv ist
+  if(STATE.berichtWeekly){
+    wireWeeklyPage();
+    MediaManager.hydrateRoot(document.getElementById("berichtWeeklyPage"));
+  }
 }
 
 // Kopfzeile des Filterbereichs (Zurücksetzen / Ein-/Ausblenden) liegt AUSSERHALB von
@@ -31496,6 +31810,19 @@ function wireBerichtFilterPanelHeader(){
 
 function wireBerichtTopRow(){
   document.getElementById("areaToggle").addEventListener("click",(e)=>{
+    // "Wochenanalyse": eigene Seite innerhalb des Berichts (lokaler Wechsel, kein render()).
+    if(e.target.closest("button[data-weekly]")){
+      setBerichtWeekly(!STATE.berichtWeekly);
+      return;
+    }
+    // Aus der Wochenanalyse zurück: Klick auf Live/EOD/20 Trades verlässt nur die Seite;
+    // bei "20 Trades" wird direkt dieser Modus geöffnet.
+    if(STATE.berichtWeekly){
+      if(e.target.closest("button[data-mode20]")) STATE.bericht20 = true;
+      else if(STATE.bericht20 && e.target.closest("button[data-area]")) STATE.bericht20 = false;
+      setBerichtWeekly(false);
+      return;
+    }
     // "20 Trades" ist ein eigener Modus neben Live/EOD (kein Bereich): Umschalten per Klick.
     if(e.target.closest("button[data-mode20]")){
       STATE.bericht20 = !STATE.bericht20;
